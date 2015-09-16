@@ -1,0 +1,18 @@
+print "parameters: defining variables"
+
+icurrent = 2
+idelay = 100
+iduration = 100
+
+tstop = 300
+dt = 0.010
+dt2 = 0.02
+
+v_init = -65
+celsius = 37
+
+Input_Leak_gl = 1e-4
+
+// Name is arbitrary but must match UserSimulation.m
+strdef fname
+fname = "dataS0R11.dat"

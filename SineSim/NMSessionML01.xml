@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmsession xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		   xsi:noNamespaceSchemaLocation="../NMSessionMLDev/NMSessMLMATLAB.xsd"
+		   notificationmode="NONE"
+		   logecho="true"
+		   showwebpage="true"
+		   id="NMSessionML01">
+	
+	<simset>
+		<id>NMSessionML01</id>
+		<simtype>SIM_SINESIM</simtype>
+		<commentline>
+			<comment>Each of the following is a separate simulation</comment>
+		</commentline>
+		<commentline>
+			<comment>                    Param01 Param02</comment>
+		</commentline>
+		<simdef notifications="true">
+			<id>SineSimRun01</id> 
+			<param01>3.0e+0</param01>	
+			<param02>2.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<id>SineSimRun02</id>
+			<param01>6.0e+0</param01>
+			<param02>1.0e+0</param02>
+		</simdef>
+        <simdef notifications="false">
+			<id>SineSimRun03</id>
+			<param01>9.0e+0</param01>
+			<param02>1.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<commentline>
+				<comment>Deliberate error in Run 4</comment>
+			</commentline>
+			<id>SineSimRun04</id>
+			<param01>3.re+0</param01>
+			<param02>1.0e+0</param02>
+		</simdef>
+		
+		<simdef notifications="false">
+			<id>SineSimRun05</id>
+			<param01>3.0e+0</param01>
+			<param02>3.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<id>SineSimRun06</id>
+			<param01>3.0e+0</param01>
+			<param02>4.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<id>SineSimRun07</id>
+			<param01>3.0e+0</param01>
+			<param02>5.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<id>SineSimRun08</id>
+			<param01>3.0e+0</param01>
+			<param02>6.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<id>SineSimRun09</id>
+			<param01>3.0e+0</param01>
+			<param02>7.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<id>SineSimRun10</id>
+			<param01>3.0e+0</param01>
+			<param02>8.0e+0</param02>
+		</simdef>
+		<simdef notifications="false">
+			<id>SineSimRun11</id>
+			<param01>3.0e+0</param01>
+			<param02>9.0e+0</param02>
+		</simdef>
+	</simset>
+	
+	<sessionscript>
+		<locationinfo>
+			<userinfo>
+				myNMStaticData
+			</userinfo>
+			<customdir>
+				SineSim
+			</customdir>
+			<resultsdir>
+				SineSim
+			</resultsdir>
+		</locationinfo>
+		
+		<machineset singlemachine="false" usedualkey="true" polldelay="21">
+			<machine>
+				<machinetype>MACHINE_ID_GOES_HERE</machinetype>
+				<numsimulators>4</numsimulators>
+				<workdir>REMOTE_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+		</machineset>
+	</sessionscript>
+	
+</nmsession>

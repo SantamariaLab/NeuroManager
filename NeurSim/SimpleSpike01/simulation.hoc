@@ -1,0 +1,58 @@
+print "simulation: setting up vectors"
+
+objref stim, tvec, vvec, cvec
+
+// time, voltage, current vectors
+tvec = new Vector()
+vvec = new Vector()
+cvec = new Vector()
+
+soma stim = new IClamp(0.5)
+stim.amp = icurrent
+stim.del = idelay
+stim.dur = iduration
+
+// We develop our own run() to avoid using nrngui.hoc, which
+// introduces hidden problems
+
+proc initialize() {
+  finitialize(v_init)
+  fcurrent()
+}
+
+tvec.record(&t,dt2)
+vvec.record(&soma.v(0.1),dt2)
+cvec.record(&stim.i,dt2)
+
+// $1 is iterations per step
+proc step(){local i
+   for i=1,$1{
+    fadvance()
+  }
+}
+
+proc savedata(){local i localobj tfil
+  print "writing to ", $s4 
+  tfil = new File()
+  tfil.wopen($s4)
+  for i=0,$o1.size()-1 {
+         tfil.printf("%g\t%g\t%g\n", $o1.x[i], $o2.x[i], $o3.x[i])
+  }
+  tfil.close()
+}
+
+proc integrate(){ local tnsteps
+  tnsteps = $1/dt
+    step(tnsteps)
+}
+
+proc go(){
+  initialize()
+  integrate(tstop)
+}
+
+print "simulation: go()"
+go()
+print "simulation: saving data"
+savedata(tvec,vvec,cvec,fname)
+quit()

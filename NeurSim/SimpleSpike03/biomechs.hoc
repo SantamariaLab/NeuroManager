@@ -1,0 +1,16 @@
+// For SimpleSpike03, all changes occur within the NaF mod file itself
+// and do not show up here.
+proc somacurrents(){
+         cm=1.6
+         insert Leak
+         insert NaF  
+         insert Khh
+}
+
+soma {
+     somacurrents()
+}
+global_ra = 250
+forall Ra = global_ra
+
+

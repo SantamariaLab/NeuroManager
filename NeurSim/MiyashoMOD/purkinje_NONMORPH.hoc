@@ -1,0 +1,72 @@
+/*
+PurkinjeNONMORPH.hoc
+A hoc file for a cerebellar Purkinje neuron.
+Coded by MIYASHO Tsugumichi and MIYAKAWA Hiroyoshi.
+This model runs on NEURON (version 3.2.3).
+Description of this model can be found in 
+"Low-threshold potassium channels and a low-threshold calcium channel regulate
+Ca2+ spike firing in the dendrites of cerebellar Purkinje neurons : a modeling study"
+(T. Miyasho et al., Brain Res 891, 2001, 106-115)
+
+Morphology of the cell was taken from a paper by D.P.Shelton (Neuroscience 14, 1985, 111-131).
+Most of the channels despriptions were taken from a paper by E.De.Shutter and 
+J.M.Bower. (J. Neurophysiol., 71, 1994, 375-400)
+
+MODIFIED FOR No-GUI OPERATION and no morphology
+by dbs 
+*/
+
+/* Insert biomechanisms into soma */
+    soma               {cm=0.8    
+         insert Leak gl_Leak = 0.00006 el_Leak = -80
+	 insert NaF  gnabar_NaF = 10
+         insert NaP
+         insert CaP2 cai = 4e-5 cao = 2.4 gcabar_CaP2 = 0.0005
+         insert CaT cai = 4e-5 cao = 2.4  gcabar_CaT = 0
+         insert CaEdbs cai = 4e-5 cao = 2.4  gcabar_CaEdbs = 0
+         insert Khh
+         insert KM
+         insert KA 
+         insert KD  gkbar_KD  = 0
+         insert Kh   gkbar_Kh = 0.0005
+         insert cad taur_cad = 2 cainf_cad = 4e-5
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+
+/* Insert biomechanisms into smooth dendrites */
+    for i=0,84 SmoothDendrite[i]  {cm=0.8  
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 4e-5 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 4e-5 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaEdbs cai = 4e-5 cao = 2.4  gcabar_CaEdbs = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+
+/* Insert biomechanisms into spiny dendrites */
+    for i=0,1001 SpinyDendrite[i]   {cm=1.5
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 4e-5 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 4e-5 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaEdbs cai = 4e-5 cao = 2.4  gcabar_CaEdbs = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+
+/* Set globals */
+global_ra = 250
+forall Ra = global_ra
+celsius = 37
+

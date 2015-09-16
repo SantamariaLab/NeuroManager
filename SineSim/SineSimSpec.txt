@@ -1,0 +1,44 @@
+SIMSETDEF SineSimSet SIM_SINESIM
+% command simsetid   simtype
+%
+% Each of the following is a separate simulation 
+% xxxxx is the RUNID. Use SIMDEFN instead to get notifications for that
+% specific simulation. 
+% Comments (obviously) start with % in column one.
+% No end-of-line comments
+% 10 parameters max not including the first two tokens (SIMDEF and simid),
+% but that is changeable. 
+%
+% command simid        param01 param02
+SIMDEFN   SineSimRun01 3.0e+0  2.0e+0 
+SIMDEF    SineSimRun02 6.0e+0  1.0e+0 
+SIMDEF    SineSimRun03 9.0e+0  1.0e+0 
+
+% Deliberate error in following line
+SIMDEFN   SineSimRun04 3.re+0  2.0e+0 
+
+SIMDEF    SineSimRun05 3.0e+0  3.0e+0 
+SIMDEF    SineSimRun06 3.0e+0  4.0e+0 
+SIMDEF    SineSimRun07 3.0e+0  5.0e+0 
+SIMDEF    SineSimRun08 3.0e+0  6.0e+0 
+SIMDEF    SineSimRun09 3.0e+0  7.0e+0 
+SIMDEF    SineSimRun10 3.0e+0  8.0e+0 
+SIMDEF    SineSimRun11 3.0e+0  9.0e+0 
+
+% SIMDEFN SineSimRun12 3.0e+0 10.0e+0 
+% SIMDEF  SineSimRun13 3.0e+0 11.0e+0 
+
+% Commented parameter sets will not be run
+% SIMDEF SineSimRun14 3.0e+0 12.0e+0 
+% SIMDEF SineSimRun15 3.0e+0 13.0e+0 
+% SIMDEF SineSimRun16 3.0e+0 14.0e+0 
+% SIMDEF SineSimRun17 3.0e+0 15.0e+0 
+% SIMDEF SineSimRun18 3.0e+0 16.0e+0 
+% SIMDEF SineSimRun19 3.0e+0 17.0e+0 
+% SIMDEF SineSimRun20 3.0e+0 18.0e+0 
+% SIMDEF SineSimRun21 3.0e+0 19.0e+0 
+% SIMDEF SineSimRun22 3.0e+0 20.0e+0 
+% SIMDEF SineSimRun23 3.0e+0 21.0e+0 
+% SIMDEF SineSimRun24 3.0e+0 22.0e+0 
+% SIMDEF SineSimRun25 3.0e+0 23.0e+0 
+% SIMDEF SineSimRun26 3.0e+0 24.0e+0 

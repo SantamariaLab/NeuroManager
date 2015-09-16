@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmsession xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		   xsi:noNamespaceSchemaLocation="../../NMSessionMLDev/NMSessMLMATLAB.xsd"
+		   notificationmode="NONE"
+		   logecho="true"
+		   showwebpage="true"
+		   id="NMSessionML03">
+		   
+	<simset>
+		<id>NMSessionML03SS</id>
+		<simtype>SIM_NEUR_PURKINJE_MIYASHO2001_KH</simtype>
+		<commentline>
+			<comment>cmd    id            curr  vinit delay stimdur tstep tstop   rcdintvl Kh_soma  Kh_smooth Kh_spiny</comment>
+		</commentline>
+		<simdef notifications="true">
+			<id>KhStudyneg0800A</id> 
+			<param01>-0.80</param01>	
+			<param02>-65.0</param02>
+			<param03>20.0</param03>
+			<param04>400.0</param04>
+			<param05>0.025</param05>
+			<param06>1000.0</param06>
+			<param07>0.1</param07>
+			<param08>0.0005</param08>
+			<param09>0.0000</param09>
+			<param10>0.0000</param10>
+		</simdef>
+		<simdef notifications="true">
+			<id>KhStudyneg0600A</id>
+			<param01>-0.60</param01>	
+			<param02>-65.0</param02>
+			<param03>20.0</param03>
+			<param04>400.0</param04>
+			<param05>0.025</param05>
+			<param06>1000.0</param06>
+			<param07>0.1</param07>
+			<param08>0.0005</param08>
+			<param09>0.0000</param09>
+			<param10>0.0000</param10>
+		</simdef>
+		<simdef notifications="true">
+			<id>KhStudyneg0400A</id>
+			<param01>-0.40</param01>	
+			<param02>-65.0</param02>
+			<param03>20.0</param03>
+			<param04>400.0</param04>
+			<param05>0.025</param05>
+			<param06>1000.0</param06>
+			<param07>0.1</param07>
+			<param08>0.0005</param08>
+			<param09>0.0000</param09>
+			<param10>0.0000</param10>
+		</simdef>
+		<simdef notifications="true">
+			<id>KhStudyneg0200A</id>
+			<param01>-0.20</param01>	
+			<param02>-65.0</param02>
+			<param03>20.0</param03>
+			<param04>400.0</param04>
+			<param05>0.025</param05>
+			<param06>1000.0</param06>
+			<param07>0.1</param07>
+			<param08>0.0005</param08>
+			<param09>0.0000</param09>
+			<param10>0.0000</param10>
+		</simdef>
+		<simdef notifications="true">
+			<id>KhStudypos0000A</id>
+			<param01>-0.00</param01>	
+			<param02>-65.0</param02>
+			<param03>20.0</param03>
+			<param04>400.0</param04>
+			<param05>0.025</param05>
+			<param06>1000.0</param06>
+			<param07>0.1</param07>
+			<param08>0.0005</param08>
+			<param09>0.0000</param09>
+			<param10>0.0000</param10>
+		</simdef>
+		<simdef notifications="true">
+			<id>KhStudypos0200A</id>
+			<param01>0.20</param01>	
+			<param02>-65.0</param02>
+			<param03>20.0</param03>
+			<param04>400.0</param04>
+			<param05>0.025</param05>
+			<param06>1000.0</param06>
+			<param07>0.1</param07>
+			<param08>0.0005</param08>
+			<param09>0.0000</param09>
+			<param10>0.0000</param10>
+		</simdef>
+		<simdef notifications="true">
+			<id>KhStudypos0400A</id>
+			<param01>0.40</param01>	
+			<param02>-65.0</param02>
+			<param03>20.0</param03>
+			<param04>400.0</param04>
+			<param05>0.025</param05>
+			<param06>1000.0</param06>
+			<param07>0.1</param07>
+			<param08>0.0005</param08>
+			<param09>0.0000</param09>
+			<param10>0.0000</param10>
+		</simdef>
+	</simset>
+	
+	<sessionscript>
+		<locationinfo>
+			<userinfo>
+				myNMStaticData
+			</userinfo>
+			<customdir>
+				NeurSim/MiyashoMOD/KhStudy
+			</customdir>
+			<modeldir>
+				NeurSim/MiyashoMOD
+			</modeldir>
+			<resultsdir>
+				NeurSim/MiyashoMOD/KhStudy
+			</resultsdir>
+			<!-- The choice of absolute paths here is under debate -->
+			<addlsearchpath>YOUR_ABSOLUTE_MiyashoMOD_DIRECTORY_GOES_HERE
+			</addlsearchpath>
+			<addlsearchpath>YOUR_ABSOLUTE_NeurSim_DIRECTORY_GOES_HERE
+			</addlsearchpath>
+		</locationinfo>
+		
+		<machineset singlemachine="false" usedualkey="true" polldelay="21">
+			<machine>
+				<machinetype>MYSERVER01</machinetype>
+				<numsimulators>2</numsimulators>
+				<workdir>MYSERVER01_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+			<machine>
+				<machinetype>MYSERVER02</machinetype>
+				<numsimulators>2</numsimulators>
+				<workdir>MYSERVER02_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+			<machine>
+				<machinetype>SGECLUSTERQUEUE01</machinetype>
+				<numsimulators>2</numsimulators>
+				<workdir>SGECLUSTERQUEUE01_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+			<machine>
+				<machinetype>SGECLUSTERQUEUE02</machinetype>
+				<numsimulators>1</numsimulators>
+				<workdir>SGECLUSTERQUEUE02_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+		</machineset>
+	</sessionscript>
+	
+</nmsession>

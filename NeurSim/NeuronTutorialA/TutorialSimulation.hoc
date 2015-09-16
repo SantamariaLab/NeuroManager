@@ -1,0 +1,25 @@
+// Tutorial Simulation: a mod file version of Neuron first tutorial 
+// These modifications save the data for plotting by the surrounding MATLAB code.
+objref tvec, vvec, cvec
+// time, voltage, current vectors
+tvec = new Vector()
+vvec = new Vector()
+cvec = new Vector()
+
+tvec.record(&t,dt)
+vvec.record(&soma.v(0.5),dt)
+cvec.record(&stim.i,dt)
+
+proc savedata(){local i localobj tfil
+  // This print will appear in nrnivoutput.txt in the simulation's directory
+  print "Tutorial Simulation: writing to ", $s4 
+  tfil = new File()
+  tfil.wopen($s4)
+  for i=0,$o1.size()-1 {
+         tfil.printf("%g\t%g\t%g\n", $o1.x[i], $o2.x[i], $o3.x[i])
+  }
+  tfil.close()
+}
+
+run()  // Defined via nrngui.hoc
+savedata(tvec,vvec,cvec,fname)

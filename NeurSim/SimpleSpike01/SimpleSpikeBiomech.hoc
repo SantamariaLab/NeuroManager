@@ -1,0 +1,12 @@
+// SimpleSpikeBiomech
+// Defines the biomechanisms in play.
+
+// Replace the tutorial version (which works as well)
+//  with a mod file version for demo purposes.
+//soma insert hh
+soma insert Leak gl_Leak = Input_Leak_gl 
+soma insert NaF		// Use default values
+soma insert Khh		// Use default values
+
+//el_Leak = -68
+

@@ -1,0 +1,17 @@
+
+proc somacurrents(){
+         cm=1.6
+		 // Here for SimpleSpike02C we use the default value for gl_Leak
+		 // and manipulate it by rewriting the Leak.mod file.
+         insert Leak  el_Leak = -80
+         insert NaF  
+         insert Khh
+}
+
+soma {
+     somacurrents()
+}
+global_ra = 250
+forall Ra = global_ra
+
+

@@ -1,0 +1,18 @@
+SIMSETDEF GPUSimSet SIM_GPUSIM
+% Each of the following is a separate simulation 
+% xxxxx is the RUNID. Use SIMDEFN instead to get notifications for that
+% specific simulation. 
+% Comments (obviously) start with % in column one.
+% No end-of-line comments
+% 10 parameters max not including the first two tokens, but that is changeable.
+SIMDEFN GPUSimRun01 30.0 4.0 50.0  6.0
+SIMDEFN GPUSimRun02 30.0 4.0 70.0  6.0 
+SIMDEFN GPUSimRun03 30.0 4.0 90.0  6.0 
+SIMDEFN GPUSimRun04 30.0 4.0 110.0 6.0 
+SIMDEFN GPUSimRun05 30.0 4.0 130.0 6.0 
+SIMDEFN GPUSimRun06 30.0 4.0 150.0 6.0 
+SIMDEFN GPUSimRun07 40.0 4.0 150.0 6.0 
+SIMDEFN GPUSimRun08 50.0 4.0 150.0 6.0 
+SIMDEFN GPUSimRun09 60.0 4.0 150.0 6.0 
+SIMDEFN GPUSimRun10 70.0 4.0 150.0 6.0 
+

@@ -1,0 +1,16 @@
+SIMSETDEF SimpleSpike02A SIM_NEURON_SIMPLESPIKE02A
+% In SimpleSpike02, we are manipulating our three input variables, but using the 
+% model files found in the Example01 directory.  We are doing a parameter sweep 
+% of input current and change up duration midway for illustration.
+%      ID	         Current Current Duration  Input_Leak_gl	
+SIMDEF Simulation01  1 		 100               1e-4			
+SIMDEF Simulation02  2 		 100               1e-4			
+SIMDEF Simulation03  3 		 100               1e-4			
+SIMDEF Simulation04  4 		 100               1e-4			
+SIMDEF Simulation05  5 		 100               1e-4			
+
+SIMDEF Simulation06  6 		 150               1e-4			
+SIMDEF Simulation07  7 		 150               1e-4			
+SIMDEF Simulation08  8 		 150               1e-4			
+SIMDEF Simulation09  9 		 150               1e-4			
+SIMDEF Simulation10  10		 150               1e-4			

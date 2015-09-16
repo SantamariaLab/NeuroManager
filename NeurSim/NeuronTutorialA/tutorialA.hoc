@@ -1,0 +1,22 @@
+create soma
+access soma
+
+soma nseg = 1
+soma diam = 18.8
+soma L = 18.8
+soma Ra = 123.0
+
+soma insert hh
+
+objectvar stim
+soma stim = new IClamp(0.5)
+
+stim.del = 100
+stim.dur = 100
+stim.amp = 0.1
+
+tstop = 300
+
+strdef fname
+// This name is arbitrary
+fname = "dataS0R11.dat"

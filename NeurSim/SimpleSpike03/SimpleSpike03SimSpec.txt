@@ -1,0 +1,34 @@
+SIMSETDEF SimpleSpike03 SIM_NEURON_SIMPLESPIKE03
+% In SimpleSpike03, we are manipulating some of the NaF model file state transition 
+% parameters that are seen in the NeuroML XML version of the NaF model file, which is
+% then stylesheeted into a mod file.  All of the simulation controls, such as 
+% duration or step size, are contained in the parameters.hoc file which is 
+% constructed by the UserSimulation.m file associated with the 
+% SIM_NEURON_SIMPLESPIKE03 simulator type.
+%
+% From the simulator/simulation point of view,  we have pulled out eight free 
+%     parameters (mAlphaA, mAlphak, mBetaA, mBetak, hAlphaA, hAlphak, hBetaA, 
+%     hBetak); all the rest are part of the simulator. 
+
+% The first simulation is the same as the default values in the file
+%      ID	       mAlphaA mAlphak mBetaA mBetak hAlphaA hAlphak hBetaA hBetak 
+SIMDEF SSpike03_01 35	   0.1     7      -0.05  0.225   0.1     7.5    0.0555556
+
+% The following simulations introduce variations on the first simulation (SSpike03_01)
+%      ID	       mAlphaA mAlphak mBetaA mBetak hAlphaA hAlphak hBetaA hBetak 
+% Bracket mAlphaA
+SIMDEF SSpike03_02 33	   0.1     7      -0.05  0.225   0.1     7.5    0.0555556 
+SIMDEF SSpike03_03 34	   0.1     7      -0.05  0.225   0.1     7.5    0.0555556 
+
+SIMDEF SSpike03_04 36	   0.1     7      -0.05  0.225   0.1     7.5    0.0555556 
+SIMDEF SSpike03_05 37	   0.1     7      -0.05  0.225   0.1     7.5    0.0555556 
+
+% Drop m values slightly; raise h values slightly
+SIMDEF SSpike03_06 34.65   0.09    6.3    -0.045 0.25    0.11    8.2    0.0555565
+ 
+% Drop m values substantially; raise h values substantially
+SIMDEF SSpike03_07 33      0.07    5.5    -0.035 0.30    0.16    9.0    0.0555600
+
+% Bracket hAlphaA
+SIMDEF SSpike03_08 35	   0.1     7      -0.15  0.215   0.1     7.5    0.0555556 
+SIMDEF SSpike03_09 35	   0.1     7      -0.05  0.235   0.1     7.5    0.0555556

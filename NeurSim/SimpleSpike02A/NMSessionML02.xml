@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmsession xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		   xsi:noNamespaceSchemaLocation="../../NMSessionMLDev/NMSessMLMATLAB.xsd"
+		   notificationmode="NONE"
+		   logecho="true"
+		   showwebpage="true"
+		   id="NMSessionML02">
+
+<simset>
+		<id>NMSessionML02SS</id>
+		<simtype>SIM_NEURON_SIMPLESPIKE02A</simtype>
+		<commentline>
+			<comment>In SimpleSpike02, we are manipulating our three input variables, but using the </comment>
+		</commentline>
+		<commentline>
+			<comment>model files found in the Example01 directory.  We are doing a parameter sweep</comment>
+		</commentline>
+		<commentline>
+			<comment>of input current and change up duration midway for illustration.</comment>
+		</commentline>
+		<commentline>
+			<comment>      ID	         Current Duration  Input_Leak_gl</comment>
+		</commentline>
+		<simdef notifications="true">
+			<id>Simulation01</id> 
+			<param01>1</param01>	
+			<param02>100</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation02</id>
+			<param01>2</param01>	
+			<param02>100</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation03</id>
+			<param01>3</param01>	
+			<param02>100</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation04</id>
+			<param01>4</param01>	
+			<param02>100</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		
+		<simdef notifications="false">
+			<id>Simulation05</id>
+			<param01>5</param01>	
+			<param02>100</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation06</id>
+			<param01>6</param01>	
+			<param02>150</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation07</id>
+			<param01>7</param01>	
+			<param02>150</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation08</id>
+			<param01>8</param01>	
+			<param02>150</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation09</id>
+			<param01>9</param01>	
+			<param02>150</param02>
+			<param03>1e-4</param03>
+		</simdef>
+		<simdef notifications="false">
+			<id>Simulation10</id>
+			<param01>10</param01>	
+			<param02>150</param02>
+			<param03>1e-4</param03>
+		</simdef>
+	</simset>
+	
+	<sessionscript>
+		<locationinfo>
+			<userinfo>
+				myNMStaticData
+			</userinfo>
+			<customdir>
+				NeurSim/SimpleSpike02A
+			</customdir>
+			<modeldir>
+				NeurSim/SimpleSpike01
+			</modeldir>
+			<resultsdir>
+				NeurSim/SimpleSpike02A
+			</resultsdir>
+		</locationinfo>
+		
+		<machineset singlemachine="false" usedualkey="true" polldelay="21">
+			<machine>
+				<machinetype>MYSERVER01</machinetype>
+				<numsimulators>4</numsimulators>
+				<workdir>MYSERVER01_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+			<machine>
+				<machinetype>MYSERVER02</machinetype>
+				<numsimulators>0</numsimulators>
+				<workdir>MYSERVER02_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+			<machine>
+				<machinetype>MYSGECLUSTERQUEUE</machinetype>
+				<numsimulators>4</numsimulators>
+				<workdir>MYSGECLUSTERQUEUE_WORK_DIRECTORY_GOES_HERE</workdir>
+			</machine>
+		</machineset>
+	</sessionscript>
+	
+</nmsession>

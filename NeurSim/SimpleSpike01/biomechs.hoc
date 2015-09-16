@@ -1,0 +1,16 @@
+print "biomechs: inserting biomechanisms"
+
+proc somacurrents(){
+         cm=1.6
+         insert Leak gl_Leak = $1 el_Leak = -80
+         insert NaF  
+         insert Khh
+}
+
+soma {
+     somacurrents(Input_Leak_gl)
+}
+global_ra = 250
+forall Ra = global_ra
+
+

@@ -1,0 +1,11 @@
+// SimpleSpikeMorphology
+create soma
+access soma
+
+soma nseg = 1
+soma diam = 18.8
+soma L = 18.8
+soma Ra = 123.0
+
+
+	

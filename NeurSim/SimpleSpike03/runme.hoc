@@ -1,0 +1,5 @@
+load_file("parameters.hoc")
+load_file("morphology.hoc")
+load_file("biomechs.hoc")
+load_file("simulation.hoc")
+quit()

@@ -1,0 +1,18 @@
+SIMSETDEF SimpleSpike01 SIM_NEURON_SIMPLESPIKE01
+% In SimpleSpike01, we are not manipulating input variables; just using 
+% the single definition found in parameters.hoc; so all these runs will be
+% the same simulation.
+SIMDEF SingleRun01
+% SIMDEF SingleRun02
+% SIMDEF SingleRun03
+% SIMDEF SingleRun04
+% SIMDEF SingleRun05
+% SIMDEF SingleRun06
+% SIMDEF SingleRun07
+% SIMDEF SingleRun08
+% SIMDEF SingleRun09
+% SIMDEF SingleRun10
+% SIMDEF SingleRun11
+% SIMDEF SingleRun12
+% SIMDEF SingleRun13
+% SIMDEF SingleRun14

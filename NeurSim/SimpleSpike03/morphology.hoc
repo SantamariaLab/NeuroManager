@@ -1,0 +1,7 @@
+create soma[1]
+access soma[0]
+soma[0]{
+      pt3dadd(0,0,-12.814,25)
+      pt3dadd(0,0,12.814,25) 
+}
+forall nseg=1

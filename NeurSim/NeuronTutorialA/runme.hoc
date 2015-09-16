@@ -1,0 +1,4 @@
+load_file("nrngui.hoc")
+load_file("tutorialA.hoc")
+load_file("TutorialSimulation.hoc")
+quit()

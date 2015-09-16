@@ -1,0 +1,23 @@
+SIMSETDEF Miyasho2001Straight SIM_NEUR_PURKINJE_MIYASHO2001
+%cmd   id              curr  vinit delay  stimdur tstep tstop  rcdinterval
+% SIMDEF Straight-0800A -0.80 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight-0600A -0.60 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight-0400A -0.40 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight-0200A -0.20 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight+0000A -0.00 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight+0200A  0.20 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight+0400A  0.40 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight+0600A  0.60 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight+0800A  0.80 -65.0  100.0  400.0   0.025 1000.0 0.1       
+% SIMDEF Straight+1000A  1.00 -65.0  100.0  400.0   0.025 1000.0 0.1      
+% SIMDEF Straight+1200A  1.20 -65.0  100.0  400.0   0.025 1000.0 0.1      
+% SIMDEF Straight+1400A  1.40 -65.0  100.0  400.0   0.025 1000.0 0.1      
+% SIMDEF Straight+1600A  1.60 -65.0  100.0  400.0   0.025 1000.0 0.1      
+% SIMDEF Straight+1800A  1.80 -65.0  100.0  400.0   0.025 1000.0 0.1      
+SIMDEF Straight+2000A  2.00 -65.0  100.0  400.0   0.025 1000.0 0.01                  
+% SIMDEF Straight+2200A  2.20 -65.0  100.0  400.0   0.025 1000.0 0.1                  
+% SIMDEF Straight+2400A  2.40 -65.0  100.0  400.0   0.025 1000.0 0.1                  
+% SIMDEF Straight+2600A  2.60 -65.0  100.0  400.0   0.025 1000.0 0.1                  
+% SIMDEF Straight+2800A  2.80 -65.0  100.0  400.0   0.025 1000.0 0.1
+% SIMDEF Straight+3000A  3.00 -65.0  100.0  400.0   0.025 1000.0 0.1
+

@@ -1,0 +1,8 @@
+// prints end up in nrnivoutput.txt in the simulation's directory
+print "runme: loading files"
+
+load_file("parameters.hoc")
+load_file("morphology.hoc")
+load_file("biomechs.hoc")
+load_file("simulation.hoc")
+quit()
