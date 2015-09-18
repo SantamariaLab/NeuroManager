@@ -225,24 +225,24 @@ function [AuthStruct, DirStruct, UserDataStruct] = myNMStaticData()
 	DirStruct.localMachineDir = fullfile(installPath, myLocalMachineDir);
     if ispc
         if ~isempty(myWINDOWSKeyFile)
-            AuthStruct.AuthFile = fullfile(installPath, myKeyfileDir, myWINDOWSKeyFile);
+            AuthStruct.authFile = fullfile(installPath, myKeyfileDir, myWINDOWSKeyFile);
         else 
-            AuthStruct.AuthFile = '';
+            AuthStruct.authFile = '';
         end
         if ~isempty(myWINDOWSPuttyKeyFile)
-            AuthStruct.PuttyAuthFile = ...
+            AuthStruct.puttyAuthFile = ...
                 fullfile(installPath, myLocalMachineDir, myWINDOWSPuttyKeyFile);
         else
-            AuthStruct.PuttyAuthFile = '';
+            AuthStruct.puttyAuthFile = '';
         end
     else 
         if ~isempty(myUNIXKeyFile)
-            AuthStruct.AuthFile =...
+            AuthStruct.authFile =...
                         fullfile(installPath, myKeyfileDir, myUNIXKeyFile);
         else
-            AuthStruct.AuthFile = '';
+            AuthStruct.authFile = '';
         end
-        AuthStruct.PuttyAuthFile = '';
+        AuthStruct.puttyAuthFile = '';
     end 
     DirStruct.modelDir = ''; % default 
 
