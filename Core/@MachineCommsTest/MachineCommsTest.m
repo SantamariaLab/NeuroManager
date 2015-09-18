@@ -209,7 +209,7 @@ classdef MachineCommsTest < FileTransferMachine
             % Test to see that the host and remote are the same in the case of
             % singlemachine configuration
             if obj.simAuth.isSingleMachine()
-                if ~strcmp(obj.getID(), obj.getHostComputerName())
+                if ~strcmp(obj.getID(), obj.hostID)
                     error('TestCommunications Error: SingleMachine Configuration requires host and remote to be the same machine.');
                 end
             end
