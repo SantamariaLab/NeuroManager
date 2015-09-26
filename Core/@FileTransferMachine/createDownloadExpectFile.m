@@ -210,10 +210,15 @@ function createDownloadExpectFile(obj, hostdir, targetpath)
     %fprintf(f, '%s\n', 'exp_internal 1'); 
     fprintf(f, '%s\n', 'set timeout -1');
     fprintf(f, '%s\n', ['set pass "' obj.fsPassword '"']);
+    % Following lines may differ on other systems
+	% Handle the case where the user wants password but agent is running
+    fprintf(f, '%s\n', 'expect {');
+    fprintf(f, '%s\n', '   -nocase "^Enter passphrase for key*$" {send "\r"}');
+    fprintf(f, '%s\n', '   }');
+	% Handle the password request
     fprintf(f, '%s\n', 'expect {');
     fprintf(f, '%s\n', '   -nocase "password:*$" {send "$pass\r"}');
     fprintf(f, '%s\n', '   }');
-    % Following line may differ on other systems
     fprintf(f, '%s\n', 'expect -re "\r\n.*\r\n"');
     fprintf(f, '%s\n', 'send "echo \$?\r"');
     fprintf(f, '%s\n', 'expect eof');
