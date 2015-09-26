@@ -192,11 +192,11 @@ function md = createStampedeClusterData()
     md = RMD();
     md.addSetting('id',                  'StampedeCluster');
 
-    md.addSetting('fsuserName',          userName);
-    md.addSetting('fspassword',          password);
-    md.addSetting('fsipAddress',         ipAddress);
-    md.addSetting('jsuserName',          userName);
-    md.addSetting('jspassword',          password);
+    md.addSetting('fsUserName',          userName);
+    md.addSetting('fsPassword',          password);
+    md.addSetting('fsIPAddress',         ipAddress);
+    md.addSetting('jsUserName',          userName);
+    md.addSetting('jsPassword',          password);
     md.addSetting('jsIPAddress',         ipAddress);
     
     % All paths in UNIX format with beginning / and no trailing /.
