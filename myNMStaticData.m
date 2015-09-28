@@ -187,24 +187,28 @@ END OF LICENSE
 % Holds user-specific data that doesn't change from run to run
 function [AuthStruct, DirStruct, UserDataStruct] = myNMStaticData()
 	% --- User data needs to be filled out by user
-	myLocalMachineDir = 'LocalMachine';   		% Change if you create a new local machine directory
-	myKeyfileDir = myLocalMachineDir;     		% Change if you don't keep your keys in myLocalMachineDir
+    % These directories are relative to the installation directory
+	myLocalMachineDir = 'LocalMachine';  % Change if you create a new local machine directory
+	myKeyfileDir = myLocalMachineDir;    % Change if you don't keep your keys in myLocalMachineDir
     
     % UNIX hosts
     % Name the OpenSSH-format private key here; if none use empty string
+    % Should be no extension.
 	myUNIXKeyFile = '';   
 	
 	% Windows hosts
     % Name the OpenSSH-format private key here; if none use empty string
+    % Should be no extension.
 	myWINDOWSKeyFile = '';  
     % Name the Putty-format private key here; if none use empty string
+    % Should have the ".ppk" extension.
     myWINDOWSPuttyKeyFile = ''; 
     
     % Necessary only for notifications 
 	% Your phone number for text notifications; no 1; no hyphens or spaces
     myPhone = '12345678901';                
 	% Your carrier for text notifications. 	Example: 'Verizon'
-    % See Notifications object
+    % See Notifications object for possible carriers
     myCarrier = 'Verizon';           
     % Your email for email notifications
     myEmail = 'youremailaddresshere';   

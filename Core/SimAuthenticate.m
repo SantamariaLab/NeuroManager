@@ -185,8 +185,7 @@ END OF LICENSE
 
 % SimAuthenticate
 % Provides authentication type, plus dual key data if machines need it.
-% It is possible, but not necessary, to have separate sets for openssh and
-% Putty; however the best approach is to have one set with two different
+% The best approach is to have one set with two different
 % formats for the private key.
 % If singlemachine == true, then no authentication setup will be done
 % If usedualkey == true, then empty passwords are acceptable; non-empty
@@ -197,10 +196,11 @@ END OF LICENSE
 classdef SimAuthenticate < handle
     properties
         hostOS;
-        singleMachine; % t/f
-        useDualKey;  % t/f
+        singleMachine;      % t/f
+        useDualKey;         % t/f
         keyFile;
         puttyKeyFile;
+        keyHasPassphrase;   % t/f
         keyPassphrase;
         agentInfo;
         log;
@@ -213,7 +213,7 @@ classdef SimAuthenticate < handle
             obj.useDualKey = useDualKey;
             obj.log = log;
             obj.keyFile = keyFile;
-
+            
             % Putty passphrase is done via Pageant
             obj.puttyKeyFile = puttyKeyFile;
             obj.hostOS = hostOS;
@@ -232,38 +232,54 @@ classdef SimAuthenticate < handle
                                ' Empty passwords will use SSH agent authentication;'...
                                ' non-empty passwords will use password authentication.']);
 
-                [~, keyFilename, keyFileExt] = fileparts(keyFile);
-
-                prompt = ['Passphrase for Open SSH2 keyfile ' ...
-                          keyFilename keyFileExt];
-
-                % The best option so far: text input in the command window;
-                % replace this in future with custom function that asterixes
-                % the display.
-                % PROBLEM: THIS PUTS THE PASSWORD IN THE COMMAND HISTORY, AND
-                % THERE IS NO FUNCTION TO CLEAR COMMAND HISTORY
-                beep;
-                obj.keyPassphrase = input([prompt ': '],'s');
-                %clc;
-
                 if hostOS == OSType.WINDOWS
-                    % Start up Pageant in the background unless it's already
-                    % running.  Thanks to Nixda's answer at 
-                    % http://superuser.com/questions/654088/start-pro
-                    %grams-via-command-line-but-only-if-not-already-running
-                    [a,~] = system(['tasklist /fo LIST /fi "IMAGENAME eq pageant.exe" | find /i "pageant.exe" ']);
-                    if a~=0
-                        obj.log.write(['Authentication: Pageant not running. Starting Pageant with supplied key.']);
-                        system(['start pageant.exe ' puttyKeyFile]);
+                    % See if the keyfile has a passphrase
+                    [~, result] = system(['findstr /c:"Encryption: none" '  obj.puttyKeyFile ' | find /c /v ""']);
+                    obj.keyHasPassphrase = ~logical(str2num(result));                    %#ok<ST2NM>
+                    if ~obj.keyHasPassphrase
+                        obj.keyPassphrase = '';  % This does work with the SSH2 library
+                    else
+                        % The best option so far: text input in the command window;
+                        % replace this in future with custom function that asterisks
+                        % the display.
+                        % PROBLEM: THIS PUTS THE PASSWORD IN THE COMMAND HISTORY, AND
+                        % THERE IS NO FUNCTION TO CLEAR COMMAND HISTORY
+                        beep;
+                        prompt = ['Passphrase for PuTTy keyfile ' ...
+                                  obj.puttyKeyFile];
+                        obj.keyPassphrase = input([prompt ': '],'s');
+                    end
+
+                    % Start up Pageant in the background; double starts ok
+                    obj.log.write(['Authentication: Starting Pageant if necessary and supplying it with private key.']);
+                    system(['start pageant.exe ' puttyKeyFile]);
+                    if obj.keyHasPassphrase
                         disp(['Press <RETURN> when you have entered the PuTTY passphrase.']);
                         pause
-                        obj.log.write(['Authentication: Pageant started with supplied key.']);
-                    else
-                        obj.log.write(['Authentication: Pageant already running (Note: NeuroManager cannot tell if the proper key is loaded).']);
                     end
+                    obj.log.write(['Authentication: Pageant running with supplied key.']);
                 else
                     % LINUX
                     % See SSH, The Secure Shell 2nd Ed 11.1.2.3
+                    
+                    % See if the keyfile has a passphrase
+                    [keyFilePath, keyFilename, keyFileExt] = fileparts(obj.keyFile);
+                    fullfile(keyFilePath, keyFilename);
+                    [~, result] = system(['grep "ENCRYPTED" ' fullfile(keyFilePath, keyFilename) ' | wc -l']);
+                    obj.keyHasPassphrase = str2num(result);                   %#ok<ST2NM>
+                    if ~obj.keyHasPassphrase
+                        obj.keyPassphrase = '';  % See if this works with the SSH2 library
+                    else
+                        % The best option so far: text input in the command window;
+                        % replace this in future with custom function that asterixes
+                        % the display.
+                        % PROBLEM: THIS PUTS THE PASSWORD IN THE COMMAND HISTORY, AND
+                        % THERE IS NO FUNCTION TO CLEAR COMMAND HISTORY
+                        beep;
+                        prompt = ['Passphrase for Open SSH2 keyfile ' ...
+                                  keyFilename keyFileExt];
+                        obj.keyPassphrase = input([prompt ': '],'s');
+                    end
                     % Start the agent with the specified keyfile and save its
                     % info in agent-info (in the machine scratch directory)
                     system(['ssh-agent | head -2 > ' fullfile(agentDir, 'agent-info')]);
@@ -276,7 +292,6 @@ classdef SimAuthenticate < handle
                                 '  All passwords must be non-empty.']);
             end
         end
-        
         
         function tf = isSingleMachine(obj)
             tf = obj.singleMachine;
