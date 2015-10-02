@@ -250,7 +250,7 @@ function displayStatusWebPage(obj, stage)
                                     ' align="middle"'...
                                     ' width="50" height="50"/></p>']); 
             case {'SimSet', 'final'}
-                fprintf(f, '%s\n', ['<p><b>Calling script or function:</b> ' obj.callingFunctionData(2,1).file]);
+%                 fprintf(f, '%s\n', ['<p><b>Calling script or function:</b> ' obj.callingFunctionData(2,1).file]);
                 if ~isempty(obj.simSpecFullPath)
                     fprintf(f, '%s\n', ['<br><b>Input SimSpec file:</b> ' obj.simSpecFullPath]);
                 else
