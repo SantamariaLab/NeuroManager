@@ -1,0 +1,24 @@
+# All text files will check in with CRLF->LF conversion 
+# if necessary and checkout with LF eol
+* text eol=lf
+
+*.m 	text
+*.txt	text
+*.sh	text
+*.hoc	text
+*.html	text
+*.md	text
+*.mod	text
+*.py	text
+*.xml	text
+*.xsd	text
+*.xslt	text
+*.gitatrributes 	text
+*.tex	text
+
+*.gif	binary
+*.png	binary
+*.jar	binary
+*.jpg	binary
+*.pdf	binary
+
