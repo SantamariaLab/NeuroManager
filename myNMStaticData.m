@@ -185,64 +185,111 @@ END OF LICENSE
 
 % myNMStaticData
 % Holds user-specific data that doesn't change from run to run
-function [AuthStruct, DirStruct, UserDataStruct] = myNMStaticData()
-	% --- User data needs to be filled out by user
-    % These directories are relative to the installation directory
-	myLocalMachineDir = 'LocalMachine';  % Change if you create a new local machine directory
-	myKeyfileDir = myLocalMachineDir;    % Change if you don't keep your keys in myLocalMachineDir
-    
-    % UNIX hosts
-    % Name the OpenSSH-format private key here; if none use empty string
-    % Should be no extension.
-	myUNIXKeyFile = '';   
-	
-	% Windows hosts
-    % Name the OpenSSH-format private key here; if none use empty string
-    % Should be no extension.
-	myWINDOWSKeyFile = '';  
-    % Name the Putty-format private key here; if none use empty string
-    % Should have the ".ppk" extension.
-    myWINDOWSPuttyKeyFile = ''; 
-    
-    % Necessary only for notifications 
-	% Your phone number for text notifications; no 1; no hyphens or spaces
-    myPhone = '12345678901';                
-	% Your carrier for text notifications. 	Example: 'Verizon'
-    % See Notifications object for possible carriers
-    myCarrier = 'Verizon';           
-    % Your email for email notifications
-    myEmail = 'youremailaddresshere';   
-	% Your SMTP server for text message verification
-	% Example: 'smtp.mail.yahoo.com'
-    mySMTPServer = 'smtp.mail.yahoo.com';
-    
-    % ---------------------------------------------------------------------
-	% --- Automatic; not to be modified by user
-	AuthStruct = struct;
-    DirStruct = struct;
-    UserDataStruct = struct;
+function [AuthStruct, DirStruct, UserDataStruct] = myNMStaticData(dataFile)
 	% Grabs the path where this file is located
 	[installPath, ~, ~] = fileparts(mfilename('fullpath'));
+
+    % --
+    % Pull in the user data from dataFile
+    % no datafile means grab the default
+    if isempty(dataFile)
+        dataFile = fullfile(installPath, 'userStaticData.ini');
+    end
+    
+    if ~exist(dataFile, 'file')==2
+        error(['NeuroManager error: user data file ' dataFile ' not found.']);
+    end
+    
+    % Turn the ini file into a struct
+    userData = ini2struct(dataFile);
+
+    % Ensure all the required sections are there and catch misspellings
+    validsectionnames = {'localmachine', 'authentication', 'notifications'};
+    for sname = validsectionnames
+        if ~isfield(userData, sname{1})
+            error('iniFile:missingSection', ...
+                  ['NeuroManager error: [' sname{1} '] section is missing from:\n' ...
+                  strrep(dataFile, '\', '\\') ...
+                  '\n Sections found are: %s'],...
+                  strjoin(fieldnames(userData), ', '));
+        end
+    end
+    
+    userLocalMachineDir = userData.localmachine.directory;
+    if ~(exist(userLocalMachineDir, 'file')==7)
+        error(['NeuroManager error: local machine directory <' userLocalMachineDir '> not found.']);
+    end
+    
+    % Location of the user's possibly NeuroManager-specific private keys
+	userKeyfileDir = userData.authentication.keyDirectory;
+    if ~(exist(userKeyfileDir, 'file')==7)
+        error(['NeuroManager error: key directory <' userKeyfileDir '> not found.']);
+    end
+    
+    % UNIX hosts
+    % The OpenSSH-format private key here; if none use empty string
+    % Should be no extension.
+	userUNIXKeyFile = userData.authentication.UNIXOpenSSHPrivateKeyFilenameNoExtension;   
+	
+	% Windows hosts
+    % The OpenSSH-format private key here; if none use empty string
+    % Should be no extension.
+	userWINDOWSKeyFile = userData.authentication.WINDOWSOpenSSHPrivateKeyFilenameNoExtension;  
+    
+    % The Putty-format private key here; if none use empty string
+    % Should have the ".ppk" extension.
+    userWINDOWSPuttyKeyFile = userData.authentication.PUTTYPrivateKeyFilenameWITHppkExtension; 
+    
+    % Necessary only for notifications 
+	% User's phone number for text notifications; no 1; no hyphens or spaces
+    userPhone = userData.notifications.phoneNumber;                
+    
+	% User's carrier for text notifications. 	Example: 'Verizon'
+    % See Notifications class for possible carriers
+    userCarrier = userData.notifications.carrier;           
+    
+    % User's email for email notifications
+    userEmail = userData.notifications.emailAddress;   
+    
+	% User's SMTP server for text message verification
+	% Example: 'smtp.mail.yahoo.com'
+    userSMTPServer = userData.notifications.SMTPserver;
+    
+    % --
+    % Now construct the output structs used by NeuroManager constructor
+    AuthStruct = struct;
+    DirStruct = struct;
+    UserDataStruct = struct;
 	DirStruct.nmMainDir = installPath;
 	DirStruct.coreDir = fullfile(installPath, 'Core');
 	DirStruct.sshLibDir = fullfile(installPath, 'SSHLib');
-	DirStruct.localMachineDir = fullfile(installPath, myLocalMachineDir);
+	DirStruct.localMachineDir = userLocalMachineDir;
     if ispc
-        if ~isempty(myWINDOWSKeyFile)
-            AuthStruct.authFile = fullfile(installPath, myKeyfileDir, myWINDOWSKeyFile);
+        if ~isempty(userWINDOWSKeyFile)
+            AuthStruct.authFile = fullfile(userKeyfileDir, userWINDOWSKeyFile);
+            if ~(exist(AuthStruct.authFile, 'file')==2)
+                error(['NeuroManager error: key file <' AuthStruct.authFile '> not found.']);
+            end 
         else 
             AuthStruct.authFile = '';
         end
-        if ~isempty(myWINDOWSPuttyKeyFile)
+        if ~isempty(userWINDOWSPuttyKeyFile)
             AuthStruct.puttyAuthFile = ...
-                fullfile(installPath, myLocalMachineDir, myWINDOWSPuttyKeyFile);
+                fullfile(userKeyfileDir, userWINDOWSPuttyKeyFile);
+            if ~(exist(AuthStruct.puttyAuthFile, 'file')==2)
+                error(['NeuroManager error: key file <' AuthStruct.puttyAuthFile '> not found.']);
+            end
         else
             AuthStruct.puttyAuthFile = '';
         end
     else 
-        if ~isempty(myUNIXKeyFile)
+        if ~isempty(userUNIXKeyFile)
             AuthStruct.authFile =...
-                        fullfile(installPath, myKeyfileDir, myUNIXKeyFile);
+                        fullfile(userKeyfileDir, userUNIXKeyFile);
+            if ~(exist(AuthStruct.authFile, 'file')==2)
+                error(['NeuroManager error: key file <' AuthStruct.authFile '> not found.']);
+            end
+
         else
             AuthStruct.authFile = '';
         end
@@ -250,12 +297,13 @@ function [AuthStruct, DirStruct, UserDataStruct] = myNMStaticData()
     end 
     DirStruct.modelDir = ''; % default 
 
-    UserDataStruct.phone = myPhone;
-    UserDataStruct.carrier = myCarrier;
-    UserDataStruct.email = myEmail;
-    UserDataStruct.smtpServer = mySMTPServer; 
+    UserDataStruct.phone = userPhone;
+    UserDataStruct.carrier = userCarrier;
+    UserDataStruct.email = userEmail;
+    UserDataStruct.smtpServer = userSMTPServer; 
 
-	% Now add the paths
+    % --
+    % Now add the appropriate paths to the MATLAB search path
 	% The user has already added the install path (MainDir)
 	addpath(DirStruct.coreDir, ...
 			DirStruct.localMachineDir, ...
