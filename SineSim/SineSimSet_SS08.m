@@ -196,10 +196,12 @@ clear; clear variables; clear classes; clear java %#ok<*CLSCR>
 % See the User Guide for discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data such as text number and email address.
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % Part III: Create the NeuroManager object and show its version
@@ -226,7 +228,7 @@ nm.testCommunications(config);
 nm.constructMachineSet(SimType.SIM_SINESIM, config);
 
 % Part VII: Run the simulations defined in the specifications file,
-% located in the Custom Directory. Note that SIMDEF lines must have the
+% located in the simSpec Directory. Note that SIMDEF lines must have the
 % additional "N" to make "SIMDEFN" for the simulation to be notified
 % specifically.
 result = nm.runFromFile('SineSimSpec.txt');

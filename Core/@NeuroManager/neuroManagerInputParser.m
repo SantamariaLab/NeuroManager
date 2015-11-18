@@ -200,6 +200,7 @@ function p = neuroManagerInputParser(obj) %#ok<INUSD>
     defaultCustomDir = '.';
     defaultModelDir = '.';
     defaultLocalMachineDir = '.';
+    defaultSimSpecFileDir = '.';
     defaultResultsDir = '.';
     addParamValue(p, 'nmMainDir',       defaultNMMainDir,       @dirCheck); %#ok<*NVREPL>
     addParamValue(p, 'coreDir',         defaultCoreDir,         @dirCheck);
@@ -207,6 +208,7 @@ function p = neuroManagerInputParser(obj) %#ok<INUSD>
     addParamValue(p, 'customDir',       defaultCustomDir,       @dirCheck);
     addParamValue(p, 'modelDir',        defaultModelDir,        @dirCheckEmptyOK);
     addParamValue(p, 'localMachineDir', defaultLocalMachineDir, @dirCheck);
+    addParamValue(p, 'simSpecFileDir',  defaultSimSpecFileDir,  @dirCheck);
     addParamValue(p, 'resultsDir',      defaultResultsDir,      @dirCheck);
     
     defaultAuthFile = '';

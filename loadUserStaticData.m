@@ -183,9 +183,9 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% myNMStaticData
+% loadUserStaticData
 % Holds user-specific data that doesn't change from run to run
-function [AuthStruct, DirStruct, UserDataStruct] = myNMStaticData(dataFile)
+function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
 	% Grabs the path where this file is located
 	[installPath, ~, ~] = fileparts(mfilename('fullpath'));
 
