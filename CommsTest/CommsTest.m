@@ -6,11 +6,13 @@ disp('Clearing variables, classes, and java. Please wait...');
 clear; clear variables; clear classes; clear java %#ok<*CLSCR>
 
 % Part I: Set up static data
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'CommsTest');
-nmDirectorySet.resultsDir = fullfile(nmDirectorySet.nmMainDir, 'CommsTest');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
+nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % Part III: Create the NeuroManager object
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
