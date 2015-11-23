@@ -189,7 +189,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
 	% Grabs the path where this file is located
 	[installPath, ~, ~] = fileparts(mfilename('fullpath'));
 
-    % --
+    % User data import ---
     % Pull in the user data from dataFile
     % no datafile means grab the default
     if isempty(dataFile)
@@ -215,11 +215,19 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
         end
     end
     
-    userLocalMachineDir = userData.localmachine.directory;
+    % Static localizing directories ---
+    % Installation value is the empty string
+    if isempty(userData.localmachine.directory)
+        userLocalMachineDir = fullfile(installPath, 'LocalMachine');
+    else
+        userLocalMachineDir = userData.localmachine.directory;
+    end
+        
     if ~(exist(userLocalMachineDir, 'file')==7)
         error(['NeuroManager error: local machine directory <' userLocalMachineDir '> not found.']);
     end
     
+    % Authentication ---
     % Location of the user's possibly NeuroManager-specific private keys
 	userKeyfileDir = userData.authentication.keyDirectory;
     if ~(exist(userKeyfileDir, 'file')==7)
@@ -240,6 +248,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
     % Should have the ".ppk" extension.
     userWINDOWSPuttyKeyFile = userData.authentication.PUTTYPrivateKeyFilenameWITHppkExtension; 
     
+    % Notifications ---
     % Necessary only for notifications 
 	% User's phone number for text notifications; no 1; no hyphens or spaces
     userPhone = userData.notifications.phoneNumber;                
@@ -255,7 +264,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
 	% Example: 'smtp.mail.yahoo.com'
     userSMTPServer = userData.notifications.SMTPserver;
     
-    % --
+    % Output structs ---
     % Now construct the output structs used by NeuroManager constructor
     AuthStruct = struct;
     DirStruct = struct;
@@ -302,7 +311,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
     UserDataStruct.email = userEmail;
     UserDataStruct.smtpServer = userSMTPServer; 
 
-    % --
+    % Search path ---
     % Now add the appropriate paths to the MATLAB search path
 	% The user has already added the install path (MainDir)
 	addpath(DirStruct.coreDir, ...
