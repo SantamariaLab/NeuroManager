@@ -190,10 +190,12 @@ clc
 disp('Clearing variables, classes, and java. Please wait...');
 clear; clear variables; clear classes; clear java %#ok<*CLSCR>
 
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir,...
                                     'NeurSim', 'NeuronTutorialA');
 nmDirectorySet.modelDir = nmDirectorySet.customDir;
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...

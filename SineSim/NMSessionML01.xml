@@ -78,14 +78,17 @@
 	
 	<sessionscript>
 		<locationinfo>
-			<userinfo>
-				myNMStaticData
-			</userinfo>
+			<userstaticdatafilepath>
+				FULL_INFOFILE_DIRECTORY_GOES_HERE/userStaticData.ini
+			</userstaticdatafilepath>
 			<customdir>
-				SineSim
+				FULL_CUSTOM_DIRECTORY_GOES_HERE
 			</customdir>
+			<simspecdir>
+				FULL_SIMSPEC_DIRECTORY_GOES_HERE
+			</simspecdir>
 			<resultsdir>
-				SineSim
+				FULL_RESULTS_DIRECTORY_GOES_HERE
 			</resultsdir>
 		</locationinfo>
 		

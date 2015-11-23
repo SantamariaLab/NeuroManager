@@ -197,10 +197,12 @@ clear; clear variables; clear classes; clear java %#ok<*CLSCR>
 % See the User Guide for discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data such as text number and email address.
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % Part III: Create the NeuroManager object and show its version
@@ -242,7 +244,7 @@ numSimulations = 18; % Simulations per simset
 rng(1); % Seed the random number generator for tutorial/testing replicability
 if fromFile % Create a text file like the other examples
     for j = 1:numSimSets
-        % Create the spec file in the custom directory.
+        % Create the spec file in the simSpec directory.
         path = nmDirectorySet.customDir;
         specFilename = ['SineSimSpec09-' num2str(j)  '.txt'];
         fullSpecfile = fullfile(path, specFilename);

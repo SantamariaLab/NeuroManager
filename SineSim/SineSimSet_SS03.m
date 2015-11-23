@@ -197,10 +197,12 @@ clear; clear variables; clear classes; clear java %#ok<*CLSCR>
 % Part I: Define authentication files, static directories, and user
 % notification data
 % This configuration makes use of the key files
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 nmDirectorySet.resultsDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 
 % Part III: Create the NeuroManager object 

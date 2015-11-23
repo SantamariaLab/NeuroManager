@@ -196,6 +196,7 @@ classdef NeuroManager < handle
         customSimDir;      % Where user custom files are located
         modelFileDir;      % Where model files are located
         localMachineDir;   % Where local machine files are located
+        simSpecFileDir;    % Where to look for the SimSpec
         simResultsBaseDir; % Where user wants the results tree to be attached
         simResultsDir;     % The pathname of the results tree (automatically generated)
 
@@ -293,7 +294,8 @@ classdef NeuroManager < handle
                                                    obj.hostMachineData.osType);
             obj.localMachineDir = pathConversion(p.Results.localMachineDir,...
                                                  obj.hostMachineData.osType);
-
+            obj.simSpecFileDir = pathConversion(p.Results.simSpecFileDir,...
+                                                 obj.hostMachineData.osType);
             % Add the custom directory to the
             % MATLAB search path; that is where the user's
             % UserSimulation function must be located as well as other
@@ -494,8 +496,8 @@ classdef NeuroManager < handle
             [~, obj.numSimulators] = size(obj.simulatorPool);
             
             % PREPARATION
-            % Make the SimSet. SimSpec file must be in custom sim dir
-            obj.simSpecFullPath = fullfile(obj.customSimDir,...
+            % Make the SimSet. SimSpec file must be in simspec dir
+            obj.simSpecFullPath = fullfile(obj.simSpecFileDir,...
                                            simspecFilename);
             obj.log.write(['Constructing SimSet from file '...
                            obj.simSpecFullPath    '.']);

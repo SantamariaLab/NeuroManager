@@ -189,10 +189,12 @@ clc
 disp('Clearing variables, classes, and java. Please wait...');
 clear; clear variables; clear classes; clear java %#ok<*CLSCR>
 
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir,...
                                     'NeurSim', 'SimpleSpike03');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % For this example, for each simulation we modify the NeuroML description of the 

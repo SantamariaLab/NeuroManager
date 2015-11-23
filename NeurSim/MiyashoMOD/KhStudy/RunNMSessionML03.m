@@ -186,13 +186,18 @@ END OF LICENSE
 % RunNMSessionML03
 % Runs the NMSessionML03 example.
 clc
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
-installDir = nmDirectorySet.nmMainDir;
 
-xmlFile = fullfile(installDir, 'NeurSim/MiyashoMOD/KhStudy/NMSessionML03.xml');
-schemaFile = fullfile(installDir, 'NMSessionML/NMSessMLMATLAB.xsd');
-styleFile = fullfile(installDir, 'NMSessionML/NMSess2MLScript.xslt');
+myData = fullfile(installDir, 'userStaticData.ini');
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
+installDir = nmDirectorySet.nmMainDir;
 addpath(fullfile(installDir, 'NMSessionML'));
 
-nmSessionMLParserFunc(installDir, xmlFile, schemaFile, styleFile);
+xmlDir = fullfile(installDir, 'NMSessionML');
+schemaFile = fullfile(xmlDir, 'NMSessMLMATLAB.xsd');
+styleFile = fullfile(xmlDir, 'NMSess2MLScript.xslt');
+
+scriptDir = fullfile(installDir, 'NeurSim', 'MiyashoMOD', 'KhStudy');
+xmlFile = fullfile(scriptDir, 'NMSessionML03.xml');
+
+nmSessionMLParserFunc(scriptDir, xmlFile, schemaFile, styleFile);
 NMSessionML03SimSet();
