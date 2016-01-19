@@ -205,7 +205,8 @@ function tfResult = testCommunications(obj, inConfig)
     configStr = inConfig.printToStr;
     obj.log.write(configStr);
     for i = 1:inConfig.getNumMachines()
-        [type, numSimulators, baseDir, ~] = inConfig.getMachine(i);
+        [type, numSimulators, name, dataFunc, baseDir, ~, ipAddr] =...
+                                                inConfig.getMachine(i);
         % Skip machine if no simulators 
         if ~numSimulators continue; end %#ok<SEPEX>
         % Construct the appropriate test machine and run its
@@ -213,30 +214,35 @@ function tfResult = testCommunications(obj, inConfig)
         testMachine = type.commsTestFunc(obj.hostMachineData.id,...
                                     obj.hostMachineData.osType,...
                                     obj.machineScratchDir,...
-                                    baseDir, obj.auth, obj.log);
+                                    baseDir, obj.auth, obj.log, ipAddr,...
+                                    dataFunc);
         if isempty(find(strcmp(testedMachines,...
                                testMachine.commsID))) %#ok<EFIND>
             obj.log.write(['Testing machine communications for '...
-                       char(type) '.']);
+                       char(name) '.']);
             tfResult = testMachine.commsTest();
             if tfResult == false
                 obj.log.write(['Machine communications for '...
-                               char(type) ' failed.']);
+                               char(name) ' failed.']);
                 if obj.simNotificationSet.isEnabled()
                     notificationSubject = ['NeuroManager Error'];
                     obj.simNotificationSet.send(notificationSubject,...
-                     ['Communications Test with ' char(type) ' failed.'], '');
+                     ['Communications Test with ' char(name) ' failed.'], '');
                 end
                 error('MachineCommsTest:Error',...
-                      ['Communications Test with ' char(type) ' failed.']);
+                      ['Communications Test with ' char(name) ' failed.']);
             end
-            testedMachines =...
-                [testedMachines testMachine.commsID]; %#ok<AGROW>
+            % ***** The inclusion of CHAMELEON is a TEMPORARY HACK *****
+            if (~isempty(testMachine.commsID) && ....
+                ~strcmp(testMachine.commsID, 'CHAMELEON'))
+                testedMachines =...
+                    [testedMachines testMachine.commsID]; %#ok<AGROW>
+            end
             obj.log.write(['Machine communications for '...
-                           char(type) ' passed.']);
+                           char(name) ' passed.']);
         else
             obj.log.write(['Machine communications for '...
-                       char(type) ' already tested.']);
+                       char(name) ' already tested.']);
         end
         testMachine.delete();
     end

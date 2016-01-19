@@ -183,18 +183,18 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% MachineGenericUNIX
-% Defines the machine class for a UNIX-based servers.  Job submissions are
+% StandaloneServer
+% Defines the machine class for standalone servers.  Job submissions are
 % basically launch-with-ampersand.  There may be more sophisticated things
 % that can be done, but this is most bang-for-buck.
-classdef MachineGenericUNIX <  SimMachine & NoSubMachine
+classdef StandaloneServer <  SimMachine & RunJobMachine
     properties
         % Machine data specific to the machine; will be passed up to target
         % via a data file called MachineData.dat.
         md;  
     end
     methods
-        function obj = MachineGenericUNIX(md, hostID, hostOS, baseDir,...
+        function obj = StandaloneServer(md, hostID, hostOS, baseDir,...
                             scratchDir, ...
                             simFileSourceDir, custFileSourceDir,... 
                             modelFileSourceDir,... 
@@ -202,7 +202,7 @@ classdef MachineGenericUNIX <  SimMachine & NoSubMachine
                             xCompilationMachine,...
                             xCompilationScratchDir,...
                             auth, log, notificationSet)
-            obj = obj@NoSubMachine(md, xCompilationMachine,...
+            obj = obj@RunJobMachine(md, xCompilationMachine,...
                              xCompilationScratchDir,...
                              hostID, hostOS, '', auth);
             obj = obj@SimMachine(md, '', hostID, baseDir, scratchDir,...
@@ -217,6 +217,74 @@ classdef MachineGenericUNIX <  SimMachine & NoSubMachine
         function preUploadFiles(obj)
             preUploadFiles@SimMachine(obj);
             % Nothing specific to do for this machine; see StagingSequence.xlsx
+        end
+        
+                % Concrete version for this machine type (see RunJobMachine for abstract)
+        function jobID = runNoWait(obj, jobRoot, jfn, remoteRundir)
+            command = ['cd ' path2UNIX(remoteRundir)...
+                       '; ./' jfn ...
+                       ' 1> stdout' jobRoot '.txt'...
+                       ' 2> stderr' jobRoot '.txt &'];
+            obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+            
+            % This machine type has no job id and the process id is buried
+            % in layer upon layer of scripting.  So instead of getting it
+            % here we get it later from the running target MATLAB. See
+            % Simulator.UpdateState().
+            jobID = obj.getJobID(remoteRundir, jobRoot); 
+        end
+        
+        % ---------------
+        % A no-op because this machine type gets process id from the
+        % RUNNING file. Abstract version is in RunJobMachine.
+        % Not made static to match other machine types
+        function jobid = getJobID(obj, remoteRundir, jobRoot) %#ok<INUSD>
+            jobid = 0;
+        end
+
+        % ----------
+        % NoSub doesn't have a job file but we still need to create the
+        % equivalent shellfile since PreRunModelProcPhaseD is buried in
+        % runcommand 
+        function jobFilename = ...
+                        preRunCreateJobFile(obj, scratchDir, jobRoot,...
+                                                 remoteRunDir, runCommand)
+            jobFilename = [jobRoot '.sh'];
+            jobFileFullLocalPath = fullfile(scratchDir, jobFilename);
+            job = fopen(jobFileFullLocalPath, 'w');
+            fprintf(job, '%s\n', ['#!/bin/bash']);
+            fprintf(job, '%s\n',...
+                         ['cd ' path2UNIX(remoteRunDir)]);
+            fprintf(job, '%s\n', runCommand);
+            fclose(job);
+            
+            % Upload the job file and make it executable
+            obj.fileToMachine(jobFileFullLocalPath,...
+                              fullfile(remoteRunDir, jobFilename));
+            command = ['chmod +x '...
+                path2UNIX(fullfile(remoteRunDir, jobFilename))];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+        end
+
+        % ----------
+        function postRunJobProc(obj, simulation)
+            % See NeuroManagerStaging.xlsx
+            simulatorBasedir = simulation.simulator.getTargetBaseDir();
+            simulationOutputdir = simulation.getTargetOutputDir();
+            command = ['mv ' path2UNIX(fullfile(simulatorBasedir, 'std*.txt '))...
+                       path2UNIX(simulationOutputdir)];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+        end
+        
+        % ----------
+        % Concrete version for this machine type (see RunJobMachine for abstract)
+        function runJobCleanup(obj, simBasedir)
+        % Clean up target-side files related to running jobs on qsub machine
+            command = ['cd '...
+                        path2UNIX(simBasedir)...
+                        '; rm ' path2UNIX(fullfile(simBasedir, 'std*.txt'))...
+                        ];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
     end
 end
