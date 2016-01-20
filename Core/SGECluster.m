@@ -183,206 +183,157 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% MachineSetConfig class
-% Works with configuration information for a NeuroManager MachineSet.
-% Part of the input to the ConstructMachineSet method of the NeuroManager
-% class. 
-classdef MachineSetConfig < handle
-    properties
-        singleMachine; % t/f
-        % Array of structs should be private?
-        MSConfig;
-        numMachines;
-        % Handle of TimeCheck method
-        timeCheckFunc;
+% SGECluster
+% Adds to RunJobMachine facilities which handle job submission through the
+% Sun Grid Engine (qsub command).
+classdef SGECluster < SimMachine & Cluster
+    properties 
+        parEnvStr;
+        
+        % String to use in the queue line to identify the queue to be
+        % used... if empty, the queue line is not put in the job file
+        % Set by subclassed methods after construction
+        queueStr; 
+        resourceStr;
     end
     
     methods
-        function obj = MachineSetConfig(singleMachine)
-            obj.singleMachine = singleMachine;
-            obj.MSConfig = struct('type', MachineType.UNASSIGNED,...
-                                  'numSimulators', 0,...
-                                  'name', '',...
-                                  'dataFunc', 0,...
-                                  'queueData', 0,...
-                                  'parEnvStr', '',...
-                                  'resourceStr', '',...
-                                  'baseDir', '',...
-                                  'wallClockTime', '',...
-                                  'ipAddress', '');
-            obj.numMachines = 0;
-            obj.timeCheckFunc = @obj.timeCheck;
+        function obj = SGECluster(md, qd, ...
+                            parEnvStr, resourceStr,...
+                            hostID, hostOS, baseDir, scratchDir, ...
+                            simFileSourceDir, custFileSourceDir,...
+                            modelFileSourceDir,...
+                            simType, numSims,...
+                            xCmpMach, xCmpDir,...
+                            auth, log, notificationSet)
+            qd.extension
+            obj = obj@Cluster(md, xCmpMach, xCmpDir,...
+                              hostID, hostOS, qd.extension, auth);
+            obj = obj@SimMachine(md,  qd.extension,...
+                           hostID, baseDir, scratchDir, ...
+                           simFileSourceDir, custFileSourceDir,...
+                           modelFileSourceDir,...
+                           simType, numSims,...
+                           auth, log, notificationSet);
+            obj.parEnvStr = parEnvStr;
+            obj.queueStr = qd.jobString;
+            obj.resourceStr = resourceStr;
         end
         
-        % --------------
-        % NOT IMPLEMENTED YET !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        function result = timeCheck(obj, str) %#ok<INUSD>
-        % Checks to see if the str is a valid time in the format hh:mm:ss
-            result = true;
+        % ----------------
+        % NEED ALSO A RETURN WITH SUCCESS/FAILURE
+        % This doesn't wait for a checkfile!  It just waits for the
+        % UNIX return of the command in question (which in the case of the
+        % qsub is default -nosync which is no waiting).
+        function jobid = runNoWait(obj, jobRoot, jobFilename, remoteRunDir)
+        % Concrete version for qsub submissions (RunJobMachine has abstract)
+            % Submit the job 
+            % The cd is necessary despite having the working directory set
+            % by the job file. qsub default is to return right away.
+            command = ['cd ' path2UNIX(remoteRunDir) ...
+                       '; qsub ' jobFilename ...
+                       ' 1> stdout' jobRoot '.txt 2> stderr' jobRoot '.txt;'];
+            obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+            
+            jobid = obj.getJobID(remoteRunDir, jobRoot);
         end
         
-        % -----------
-        function addMachine(obj, varargin)
-        % Adds a (non-cloud) machine to the machine set. Parameters are, in
-        % order: type, number of simulators, name, data function, basedir,
-        % and wallclocktime.   
-        % Basedir  must already exist on the target and preferably be
-        % empty. Assume that everything in the basedir will be deleted
-        % automatically. Wallclocktime is a string in hh:mm:ss format;
-        % 00:00:00 or empty string indicates there is to be no timelimit on
-        % the job. 
-            % If adding a second machine to a single machine config, is a
-            % fatal error, even if the number of simulators is zero.
-            if (obj.singleMachine && (obj.numMachines > 0))
-                error(['MachineSetConfig error: Attempt to '...
-                       'add a second machine to a single machine setup.']);
+        % ---------------
+        % Override this in a local machine subclass if the parsing is not
+        % the same (it probably won't be).  Abstract version is in
+        % RunJobMachine.
+        function jobID = getJobID(obj, remoteRunDir, jobRoot)
+            % Get the job id from the stdout-jobroot-ext file
+            command = ['cd ' path2UNIX(remoteRunDir) ...
+                       '; cat stdout' jobRoot '.txt'];
+            result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            jobID = sscanf(result{1}, 'Your job %u');
+        end
+        
+        % ---------------
+        function jobFilename = preRunCreateJobFile(obj, scratchDir, jobRoot,...
+                                                  remoteRunDir, runCommand)
+        % Construct qsub job file on host and upload to simulator
+            jobFilename = [jobRoot '.job'];
+            jobFileFullLocalPath = fullfile(scratchDir, jobFilename);
+            job = fopen(jobFileFullLocalPath, 'w');
+            fprintf(job, '%s\n', ['#!/bin/bash']);
+            fprintf(job, '%s\n', ['#! -N ' jobRoot]);
+            if (obj.parEnvStr)
+                fprintf(job, '%s\n', ['#$ -pe ' obj.parEnvStr]);
             end
-            
-            p = inputParser();
-            p.StructExpand = true;
-            p.CaseSensitive = true;
-            p.KeepUnmatched = false;
-            
-            [~, validIDs] = enumeration('MachineType');
-            typeCheck = @(x) ismember(char(x),validIDs);
-            
-            defaultWallClockTime = '00:00:00';
-            defaultParEnvStr = '';
-            defaultResourceStr = '';
-            
-            addRequired(p, 'type', typeCheck);
-            addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
-            % Check for basedir existence is elsewhere since it is remote
-            % and needs machine object for communications.
-            addRequired(p, 'name', @ischar);
-            addRequired(p, 'dataFunc',@(x) MachineSetConfig.isaFuncHandle(x)); 
-            addRequired(p, 'queueData'); % No validation function for now
-            addRequired(p, 'baseDir', @ischar); 
-            addParamValue(p, 'wallClockTime', defaultWallClockTime,...
-                                              obj.timeCheckFunc); %#ok<*NVREPL>
-            addParamValue(p, 'parEnvStr', defaultParEnvStr,...
-                                              @ischar); %#ok<*NVREPL>
-            addParamValue(p, 'resourceStr', defaultResourceStr,...
-                                              @ischar); %#ok<*NVREPL>
-            parse(p, varargin{:});                              
-            
-            i = obj.numMachines+1;
-            obj.MSConfig(i).type = p.Results.type;
-            obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-            obj.MSConfig(i).name = p.Results.name; 
-            obj.MSConfig(i).dataFunc = p.Results.dataFunc;
-            obj.MSConfig(i).queueData = p.Results.queueData;
-            obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
-            obj.MSConfig(i).resourceStr = p.Results.resourceStr;
-            obj.MSConfig(i).baseDir = p.Results.baseDir;
-            obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
-            obj.numMachines = i;
+            if (obj.queueStr)
+                fprintf(job, '%s\n', ['#$ -q ' obj.queueStr]);
+            end
+            if (obj.resourceStr)
+                fprintf(job, '%s\n', ['#$ -l ' obj.resourceStr]);
+            end
+            fprintf(job, '%s\n', ['#! -j y']);
+            fprintf(job, '%s\n', ['#! -o ' jobRoot '.log']);
+            fprintf(job, '%s\n', ['#$ -wd ' ...
+                                  path2UNIX(remoteRunDir)]);
+            fprintf(job, '%s\n', runCommand);
+            fprintf(job, '%s\n', 'exit 0');
+            fclose(job);
 
-            % SingleMachine configuration requires a positive number of
-            % simulators
-            if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
-                error(['MachineSetConfig error: Single machine '... 
-                       'setup requires at least one simulator.']);
-            end        
+            % Upload the job file
+            obj.fileToMachine(jobFileFullLocalPath,...
+                              fullfile(remoteRunDir, jobFilename));
         end
         
-        
-        % -----------
-        % getMachine
-        function [type, numSimulators, name, dataFunc,...
-                  queueData, parEnvStr, resourceStr, baseDir,...
-                  wallClockTime, ipAddr] = getMachine(obj, index)
-            if ((index > obj.numMachines) || (index < 1))
-                type = MachineType.UNASSIGNED;
-                numSimulators = 0;
-                name = '';
-                dataFunc = 0;
-                queueData = 0;
-                parEnvStr = '';
-                resourceStr = '';
-                baseDir = '';
-                wallClockTime = '';
-                ipAddr = '';
-                return;
-            end
-            type = obj.MSConfig(index).type;
-            numSimulators = obj.MSConfig(index).numSimulators;
-            name = obj.MSConfig(index).name;
-            dataFunc = obj.MSConfig(index).dataFunc;
-            queueData = obj.MSConfig(index).queueData;
-            parEnvStr = obj.MSConfig(index).parEnvStr;
-            resourceStr = obj.MSConfig(index).resourceStr;
-            baseDir = obj.MSConfig(index).baseDir;
-            wallClockTime = obj.MSConfig(index).wallClockTime;
-            ipAddr = obj.MSConfig(index).ipAddress;
+        % ------------
+        function postRunJobProc(obj, simulation)    
+            % Move the job files out of simulator and into the simulation's
+            % output directory.
+            simulatorBaseDir = simulation.simulator.getTargetBaseDir();
+            simulationOutputDir = simulation.getTargetOutputDir();
+            command = ['mv ' path2UNIX(fullfile(simulatorBaseDir, '*.job.* '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, '*.job '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, '*.log '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, 'std*.txt '))...
+                       path2UNIX(simulationOutputDir)...
+                       ];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
-        % -----------
-        function num = getNumMachines(obj)
-            num = obj.numMachines;
+        % -------------
+        function runJobCleanup(obj, simBaseDir)
+        % Clean up target-side files related to running jobs on qsub machine
+        % (they should be gone but just in case)
+            command = ['cd '...
+                        path2UNIX(simBaseDir)...
+                        '; rm ' path2UNIX(fullfile(simBaseDir, '*.job.*'))...
+                        '; rm ' path2UNIX(fullfile(simBaseDir, '*.job'))...
+                        '; rm ' path2UNIX(fullfile(simBaseDir, 'std*.txt'))...
+                        ];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
-        % -----------
-        % VERY TEMPORARY
-        function addCloudMachine(obj, type, N, name, baseDir, ipAddr)
-            i = obj.numMachines+1;
-            obj.MSConfig(i).type = type;
-            obj.MSConfig(i).name = name;
-            obj.MSConfig(i).numSimulators = N;
-            obj.MSConfig(i).baseDir = baseDir;
-            obj.MSConfig(i).wallClockTime = '00:00:00';
-            obj.MSConfig(i).ipAddress = ipAddr;
-            obj.numMachines = i;
+                % ----------------
+        function str = getParEnvStr(obj)
+        % Parallel environment - see qsub documentation
+            str = obj.parEnvStr;
+        end        
+
+        % ----------------
+        function str = getQueueStr(obj)
+            str = obj.queueStr;
         end
         
-        % -----------
-        function addCloudBank(obj, type, numSims, bank)
-        % Adds N machines to the machine set. Parameters are, in order:
-        % simulator type, number of simulators per machine, basedir, [cloud], and
-        % a set array of instance names ("instanceSet"). Uses addMachine to 
-        % construct a SimMachine for each instance and distributes the N
-        % simulators evenly across the set of instances. Some things
-        % hardcoded for now. Instance verification checks skipped for a
-        % short time to enable development. For now relies mostly on
-        % addMachine() to do input parsing. Doesn't work with wallclocktime
-        % at present. Cloud is hardwired at present and not included in
-        % the varargin handling.
-            ids = bank.getInstanceIDs();
-            for i = 1:length(ids)
-                [name, ipAddr, wkDir] = bank.getInfo(ids{i});
-            	obj.addCloudMachine(type, numSims, name, wkDir, ipAddr);
-            end
-        end
-        % -----------
-        function print(obj)
-            fprintf('%s\n', 'MachineSetConfig:');
-            for i = 1:obj.numMachines
-                fprintf('%u: %s %s \t\t %u %s %s\n', i,...
-                    char(obj.MSConfig(i).type),...
-                    char(obj.MSConfig(i).name),...
-                    obj.MSConfig(i).numSimulators,...
-                    obj.MSConfig(i).baseDir,...
-                    obj.MSConfig(i).wallClockTime);
-            end
-            fprintf('%s\n', '--------------------');
+        % ----------------
+        function str = getResourceStr(obj)
+            str = obj.resourceStr;
+        end    
+        
+        % ----------
+        function preUploadFiles(obj)
+            preUploadFiles@SimMachine(obj);
+            % Nothing specific to do for this machine; see StagingSequence.xlsx
         end
 
-        % -----------
-        function str = printToStr(obj)
-            str = '';
-            str = [str sprintf('%s\n', 'MachineSetConfig:')];
-            for i = 1:obj.numMachines
-                str = [str ...
-                    sprintf('%u: %s %u %s %s\n', i, char(obj.MSConfig(i).type),...
-                    obj.MSConfig(i).numSimulators,...
-                    obj.MSConfig(i).baseDir,...
-                    obj.MSConfig(i).wallClockTime)]; %#ok<AGROW>
-            end
-        end
-    end
-    methods(Static)
-        function tf = isaFuncHandle(fh)
-            tf = isa(fh,'function_handle');
-        end
     end
 end
+
