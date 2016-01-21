@@ -207,6 +207,7 @@ classdef MachineSetConfig < handle
                                   'queueData', 0,...
                                   'parEnvStr', '',...
                                   'resourceStr', '',...
+                                  'numNodes', 1,...
                                   'baseDir', '',...
                                   'wallClockTime', '',...
                                   'ipAddress', '');
@@ -249,6 +250,7 @@ classdef MachineSetConfig < handle
             defaultWallClockTime = '00:00:00';
             defaultParEnvStr = '';
             defaultResourceStr = '';
+            defaultNumNodes = 1;
             
             addRequired(p, 'type', typeCheck);
             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
@@ -264,6 +266,8 @@ classdef MachineSetConfig < handle
                                               @ischar); %#ok<*NVREPL>
             addParamValue(p, 'resourceStr', defaultResourceStr,...
                                               @ischar); %#ok<*NVREPL>
+            addParamValue(p, 'numNodes', defaultNumNodes,...
+                                              @isnumeric);
             parse(p, varargin{:});                              
             
             i = obj.numMachines+1;
@@ -274,6 +278,7 @@ classdef MachineSetConfig < handle
             obj.MSConfig(i).queueData = p.Results.queueData;
             obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
             obj.MSConfig(i).resourceStr = p.Results.resourceStr;
+            obj.MSConfig(i).numNodes = p.Results.numNodes;
             obj.MSConfig(i).baseDir = p.Results.baseDir;
             obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
             obj.numMachines = i;
@@ -290,7 +295,7 @@ classdef MachineSetConfig < handle
         % -----------
         % getMachine
         function [type, numSimulators, name, dataFunc,...
-                  queueData, parEnvStr, resourceStr, baseDir,...
+                  queueData, parEnvStr, resourceStr, numNodes, baseDir,...
                   wallClockTime, ipAddr] = getMachine(obj, index)
             if ((index > obj.numMachines) || (index < 1))
                 type = MachineType.UNASSIGNED;
@@ -300,6 +305,7 @@ classdef MachineSetConfig < handle
                 queueData = 0;
                 parEnvStr = '';
                 resourceStr = '';
+                numNodes = 1;
                 baseDir = '';
                 wallClockTime = '';
                 ipAddr = '';
@@ -312,6 +318,7 @@ classdef MachineSetConfig < handle
             queueData = obj.MSConfig(index).queueData;
             parEnvStr = obj.MSConfig(index).parEnvStr;
             resourceStr = obj.MSConfig(index).resourceStr;
+            numNodes = obj.MSConfig(index).numNodes;
             baseDir = obj.MSConfig(index).baseDir;
             wallClockTime = obj.MSConfig(index).wallClockTime;
             ipAddr = obj.MSConfig(index).ipAddress;
@@ -324,11 +331,17 @@ classdef MachineSetConfig < handle
         
         % -----------
         % VERY TEMPORARY
-        function addCloudMachine(obj, type, N, name, baseDir, ipAddr)
+%         config.addCloudMachine(MachineType.CLOUDSERVER, 2, 'dbs-Test',...
+%                    @createChameleonData, ...
+%                    '/home/cc/NMDev', '129.114.111.118')
+        
+        function addCloudMachine(obj, type, N, name, dataFunc, ...
+                                      baseDir, ipAddr)
             i = obj.numMachines+1;
             obj.MSConfig(i).type = type;
-            obj.MSConfig(i).name = name;
             obj.MSConfig(i).numSimulators = N;
+            obj.MSConfig(i).name = name;
+            obj.MSConfig(i).dataFunc = dataFunc;
             obj.MSConfig(i).baseDir = baseDir;
             obj.MSConfig(i).wallClockTime = '00:00:00';
             obj.MSConfig(i).ipAddress = ipAddr;
@@ -336,6 +349,7 @@ classdef MachineSetConfig < handle
         end
         
         % -----------
+        % NOT FINISHED
         function addCloudBank(obj, type, numSims, bank)
         % Adds N machines to the machine set. Parameters are, in order:
         % simulator type, number of simulators per machine, basedir, [cloud], and
@@ -353,6 +367,7 @@ classdef MachineSetConfig < handle
             	obj.addCloudMachine(type, numSims, name, wkDir, ipAddr);
             end
         end
+        
         % -----------
         function print(obj)
             fprintf('%s\n', 'MachineSetConfig:');

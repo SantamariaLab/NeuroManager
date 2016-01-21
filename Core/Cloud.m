@@ -183,12 +183,12 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% Cluster
+% Cloud
 % Adds to RunJobMachine facilities that handle job submission with job
 % files.
-classdef Cluster < RunJobMachine
+classdef Cloud < RunJobMachine
     methods
-        function obj = Cluster(machineData, xCmpMach, xCmpDir,...
+        function obj = Cloud(machineData, xCmpMach, xCmpDir,...
                                     hostID, hostOS, idExt, auth)
             obj = obj@RunJobMachine(machineData, xCmpMach, xCmpDir,...
                                      hostID, hostOS, idExt, auth);

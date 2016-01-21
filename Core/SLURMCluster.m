@@ -183,15 +183,166 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% Cluster
-% Adds to RunJobMachine facilities that handle job submission with job
-% files.
-classdef Cluster < RunJobMachine
+% SLURMCluster
+% Adds to RunJobMachine facilities which handle job submission through the
+% SLURM cluster manager.
+classdef SLURMCluster < SimMachine & Cluster
+    properties 
+        % For TACC is total core count requested
+        numNodes; 
+
+        % Identifies the queue to be used 
+        % If empty, the queue line is not put in the job file
+        % Set by subclassed methods via construction
+        queueStr;
+
+        % hh:mm:ss format
+        % Set by subclassed methods 
+        wallClockTime;
+    end
+    
     methods
-        function obj = Cluster(machineData, xCmpMach, xCmpDir,...
-                                    hostID, hostOS, idExt, auth)
-            obj = obj@RunJobMachine(machineData, xCmpMach, xCmpDir,...
-                                     hostID, hostOS, idExt, auth);
+        function obj = SLURMCluster(wallClockTime,...
+                                   hostID, hostOS, ~, ~, baseDir, scratchDir,...
+                                   simFileSourceDir, custFileSourceDir,...
+                                   modelFileSourceDir,...
+                                   simType, numSims,...
+                                   xCompilationMachine,...
+                                   xCompilationScratchDir,...
+                                   auth, log, notificationSet, dataFunc,...
+                                   queueData, ~, ~, numNodes) %#ok<INUSL>
+            md = dataFunc();
+            
+            % Use cross-compilation on Dendrite (just to test the
+            % cross-compilation code)
+            useCrossCompilation = true;
+            if useCrossCompilation
+                xCompilationMachine =...
+                            xCompileDendrite(hostID, hostOS,...
+                                              'XCOMPILE', auth); %#ok<*UNRCH>
+                mdx = createDendriteData();
+                xCompilationScratchDir =...
+                            mdx.getSetting('xCompDir');
+            else
+                xCompilationMachine = 0;
+                xCompilationScratchDir = '';
+            end
+            
+            obj = obj@Cluster(md, xCompilationMachine,...
+                              xCompilationScratchDir,...
+                              hostID, hostOS, queueData.extension, auth);
+            obj = obj@SimMachine(md,  queueData.extension,...
+                           hostID, baseDir, scratchDir, ...
+                           simFileSourceDir, custFileSourceDir,...
+                           modelFileSourceDir,...
+                           simType, numSims,...
+                           auth, log, notificationSet);
+            obj.numNodes = numNodes;
+            obj.queueStr = queueData.jobString;
+            obj.wallClockTime = wallClockTime;
         end
+        
+        % ----------------
+        % NEED ALSO A RETURN WITH SUCCESS/FAILURE
+        % This doesn't wait for a checkfile!  It just waits for the
+        % UNIX return of the command in question (which in the case of the
+        % qsub is default -nosync which is no waiting).
+        function jobid = runNoWait(obj, jobRoot, jobFilename, remoteRunDir)
+        % Concrete version for SLURM submissions (RunJobMachine has abstract)
+            % Submit the job 
+            % sbatch default is to return right away -- IS THIS TRUE??
+            command = ['cd ' path2UNIX(remoteRunDir) ...
+                       '; sbatch ' jobFilename ...
+                       ' 1> stdout' jobRoot '.txt 2> stderr' jobRoot '.txt;'];
+            obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+            
+            jobid = obj.getJobID(remoteRunDir, jobRoot);
+        end
+        
+        % ---------------
+        % Override this in a local machine subclass if the parsing is not
+        % the same (it probably won't be).  Abstract version is in
+        % RunJobMachine.
+        function jobID = getJobID(obj, remoteRunDir, jobRoot)
+            % Get the job id from the stdout-jobroot-ext file
+            % This may need to be local-machine--specific because of the
+            % parsing involved.
+            command = ['cd ' path2UNIX(remoteRunDir) ...
+                       '; cat stdout' jobRoot '.txt'];
+            result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            for i=1:length(result)
+                if isempty(regexp(result{i}, 'Submitted batch job ', 'ONCE'))
+                    continue;
+                else
+                    jobID = sscanf(result{i}, 'Submitted batch job %u');
+                    break;
+                end
+            end
+        end
+        
+        % ---------------
+        function jobFilename = preRunCreateJobFile(obj, scratchDir, jobRoot,...
+                                                  remoteRunDir, runCommand) 
+            % We use the machine scratch directory to construct it
+            jobFilename = [jobRoot '.job'];
+            jobFileFullLocalPath = fullfile(scratchDir, jobFilename);
+            job = fopen(jobFileFullLocalPath, 'w');
+            fprintf(job, '%s\n', ['#!/bin/bash']);
+            fprintf(job, '%s\n', ['#SBATCH -J ' jobRoot]);
+            fprintf(job, '%s\n', ['#SBATCH -n ' num2str(obj.numNodes)]);
+            fprintf(job, '%s\n', ['#SBATCH -p ' obj.queueStr]);
+            fprintf(job, '%s\n', ['#SBATCH -o ' jobRoot '_output.log%%j']);
+            fprintf(job, '%s\n', ['#SBATCH -e ' jobRoot '_error.log%%j']);
+            fprintf(job, '%s\n', ['#SBATCH -t ' obj.wallClockTime]);  
+            fprintf(job, '%s\n', ['module load matlab']); 
+            fprintf(job, '%s\n', [runCommand]);  
+            fprintf(job, '%s\n', ['exit 0']);
+            fclose(job);
+
+            % Upload the job file
+            obj.fileToMachine(jobFileFullLocalPath,...
+                              fullfile(remoteRunDir, jobFilename));
+        end
+        
+        % ------------
+        function postRunJobProc(obj, simulation)  
+        % Move the job files out of simulator and into the simulation's
+        % output directory. 
+            simulatorBaseDir = simulation.simulator.getTargetBaseDir();
+            simulationOutputDir = simulation.getTargetOutputDir();
+            command = ['mv ' path2UNIX(fullfile(simulatorBaseDir, '*.job '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, '*.log* '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, 'std*.txt '))...
+                       path2UNIX(simulationOutputDir)];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+        end
+        
+        % -------------
+        function runJobCleanup(obj, simBaseDir)
+        % Clean up target-side files related to running jobs on SLURM machine
+            command = ['cd ' path2UNIX(simBaseDir)...
+                        '; rm -f ' path2UNIX(fullfile(simBaseDir, '*.job.*'))...
+                        '; rm -f ' path2UNIX(fullfile(simBaseDir, '*.job'))...
+                        '; rm -f ' path2UNIX(fullfile(simBaseDir, 'std*.txt'))...
+                        '; rm -f ' path2UNIX(fullfile(simBaseDir, '*.log*'))...
+                        ];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+        end
+        
+        % ----------------
+        function str = getQueueStr(obj)
+            str = obj.queueStr;
+        end
+        
+       
+        % ----------
+        function preUploadFiles(obj)
+            preUploadFiles@SimMachine(obj);
+            % Nothing specific to do for this machine; see StagingSequence.xlsx
+        end
+
     end
 end
+
