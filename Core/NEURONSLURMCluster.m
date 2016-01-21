@@ -28,21 +28,21 @@ classdef NEURONSLURMCluster < SLURMCluster & NeuronMachine
          end
         
         % ----------
-        % Neuron model processing is machine-dependent. On CBI we compile
-        % the model files as part of the job submission, not here.
+        % Neuron model processing is machine-dependent. On TACC we compile
+        % the model files before the job submission. Subclass and override
+        % this if you need to!
         % This is called from SimNeuron.
         % Refer to NeuroManagerStaging.xlsx
-        function str = getCompileNeuronModelFilesStrPhaseP(obj, simulation) %#ok<INUSD>
-            str = '';  
+        function str = getCompileNeuronModelFilesStrPhaseP(obj, simulation)
+            str = obj.getModelFileCompileStr(simulation);
         end
         
         % ----------
-        % Neuron model processing is machine-dependent. On CBI we compile
-        % the model files as part of the job submission, which is here.
+        % Neuron model processing is machine-dependent. 
         % This is called from SimNeuron.
         % Refer to NeuroManagerStaging.xlsx
-        function str = getCompileNeuronModelFilesStrPhaseD(obj, simulation) 
-            str = obj.getModelFileCompileStr(simulation);
+        function str = getCompileNeuronModelFilesStrPhaseD(obj, simulation)  %#ok<INUSD>
+            str = '';  
         end
         
         % ----------

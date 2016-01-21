@@ -195,7 +195,8 @@ classdef RealMachine < handle
         % A string identifying the machine from the communications point of
         % view - for example, all queues of a cluster will have the cluster
         % comms id.
-        commsID; 
+        commsID;
+%         configID;
 
         fsUserName;     % File system machine username
         fsPassword;     % File system machine password
