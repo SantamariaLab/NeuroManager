@@ -225,7 +225,7 @@ classdef RealMachine < handle
     methods
         % ----------
         % Constructor
-        function obj = RealMachine(md, hostID, idExt, auth)
+        function obj = RealMachine(md, hostID, auth)
             obj.id           = md.getSetting('id');
             obj.commsID      = md.getSetting('commsID');
             obj.fsUserName   = md.getSetting('fsUserName');

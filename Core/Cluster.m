@@ -190,9 +190,10 @@ classdef Cluster < RunJobMachine
     methods
         function obj = Cluster(md, xCmpMach, xCmpDir,...
                                     hostID, hostOS, idExt, auth)
+            % Move the extension inside machine data 
             md.addSetting('id', [md.getSetting('resourceName') idExt]);
             obj = obj@RunJobMachine(md, xCmpMach, xCmpDir,...
-                                     hostID, hostOS, idExt, auth);
+                                     hostID, hostOS, auth);
         end
     end
 end

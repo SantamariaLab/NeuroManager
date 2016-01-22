@@ -189,9 +189,9 @@ END OF LICENSE
 classdef Cloud < RunJobMachine
     methods
         function obj = Cloud(machineData, xCmpMach, xCmpDir,...
-                                    hostID, hostOS, idExt, auth)
+                                    hostID, hostOS, auth)
             obj = obj@RunJobMachine(machineData, xCmpMach, xCmpDir,...
-                                     hostID, hostOS, idExt, auth);
+                                     hostID, hostOS, auth);
         end
     end
 end

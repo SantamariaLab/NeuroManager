@@ -198,7 +198,7 @@ classdef MachineCommsTest < FileTransferMachine
                                          machineScratchDir,...
                                          targetBaseDir, auth, log)
             
-            obj = obj@FileTransferMachine(md, hostID, hostOs, '', auth);
+            obj = obj@FileTransferMachine(md, hostID, hostOs, auth);
             obj.machineData = md;
             obj.machineScratchDir = machineScratchDir;
             obj.targetBaseDir = targetBaseDir;
