@@ -206,7 +206,9 @@ classdef StandaloneServer <  SimMachine & RunJobMachine
                             auth, log, notificationSet, dataFunc,...
                             ~, ~, ~, ~)
             md = dataFunc();
-            % No id extension for standalone servers
+            md.addSetting('id', md.getSetting('resourceName'));
+            md.addSetting('commsID', md.getSetting('resourceName'));
+            
             obj = obj@RunJobMachine(md, xCompilationMachine,...
                              xCompilationScratchDir,...
                              hostID, hostOS, '', auth);

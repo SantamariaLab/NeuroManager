@@ -226,8 +226,8 @@ classdef RealMachine < handle
         % ----------
         % Constructor
         function obj = RealMachine(md, hostID, idExt, auth)
-            obj.id           = [md.getSetting('id') idExt];
-            obj.commsID      = [md.getSetting('id')];
+            obj.id           = md.getSetting('id');
+            obj.commsID      = md.getSetting('commsID');
             obj.fsUserName   = md.getSetting('fsUserName');
             obj.fsPassword   = md.getSetting('fsPassword');
             obj.fsIPAddress  = md.getSetting('fsIPAddress');

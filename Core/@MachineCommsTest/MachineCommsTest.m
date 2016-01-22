@@ -197,6 +197,7 @@ classdef MachineCommsTest < FileTransferMachine
         function obj = MachineCommsTest(md, hostID, hostOs,...
                                          machineScratchDir,...
                                          targetBaseDir, auth, log)
+            
             obj = obj@FileTransferMachine(md, hostID, hostOs, '', auth);
             obj.machineData = md;
             obj.machineScratchDir = machineScratchDir;
@@ -218,6 +219,14 @@ classdef MachineCommsTest < FileTransferMachine
             else 
                 tfResult = false;
             end
+        end
+        
+        function id = getID(obj)
+            id = obj.machineData.getSetting('id');
+        end
+        
+        function commsID = getCommsID(obj)
+            commsID = obj.machineData.getSetting('commsID');
         end
        
     end

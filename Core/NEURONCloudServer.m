@@ -11,7 +11,7 @@ classdef NEURONCloudServer < CloudServer & NeuronMachine
                             xCompilationScratchDir,...
                             auth, log, notificationSet, dataFunc,...
                             ~, ~, ~, ~)
-            md = dataFunc(ipaddr);
+            md = dataFunc(name, ipaddr);
             % Cloud create... data files don't set a name
             % so we add it here
             md.addSetting('id', name);

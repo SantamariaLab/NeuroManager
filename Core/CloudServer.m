@@ -202,12 +202,13 @@ classdef CloudServer < SimMachine & Cloud
                             xCompilationMachine,...
                             xCompilationScratchDir,...
                             auth, log, notificationSet, dataFunc,...
-                            ~, ~, ~, ~)
-            md = dataFunc(ipaddr);
+                            ~, ~, ~, ~) %#ok<INUSL>
+            md = dataFunc(name, ipaddr);
             % Cloud create... data files don't set a name
             % so we add it here
             md.addSetting('id', name);
-%             md.addSetting('ipAddress', ipaddr);
+            md.addSetting('id', md.getSetting('instanceName'));
+            md.addSetting('commsID', md.getSetting('instanceName'));
             
             % Use cross-compilation on Dendrite (just to test the
             % cross-compilation code)
