@@ -183,20 +183,50 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% NoSubMachine
-% Adds handling of job running for machines that don't require a job file
-classdef NoSubMachine < RunJobMachine
+% StandaloneServer
+% Defines the machine class for standalone servers.  Job submissions are
+% basically launch-with-ampersand.  There may be more sophisticated things
+% that can be done, but this is most bang-for-buck.
+classdef StandaloneServer <  SimMachine & RunJobMachine
+    properties
+        % Machine data specific to the machine; will be passed up to target
+        % via a data file called MachineData.dat.
+        md;  
+    end
     methods
-        function obj = NoSubMachine(md, xcmpMach, xcmpDir,...
-                                    hostID, hostOS, auth)
+        % name not used; assumed to be in the create....m file for the
+        % chosen server and passed into the md class
+        function obj = StandaloneServer(~,...
+                            hostID, hostOS, ~, ~, baseDir, scratchDir, ...
+                            simFileSourceDir, custFileSourceDir,... 
+                            modelFileSourceDir,... 
+                            simType, numSims,...
+                            xCompilationMachine,...
+                            xCompilationScratchDir,...
+                            auth, log, notificationSet, dataFunc,...
+                            ~, ~, ~, ~)
+            md = dataFunc();
             md.addSetting('id', md.getSetting('resourceName'));
             md.addSetting('commsID', md.getSetting('resourceName'));
-            obj = obj@RunJobMachine(md, xcmpMach, xcmpDir,...
-                              hostID, hostOS, auth);
-        end 
+            
+            obj = obj@RunJobMachine(md, xCompilationMachine,...
+                             xCompilationScratchDir,...
+                             hostID, hostOS, auth);
+            obj = obj@SimMachine(md, hostID, baseDir, scratchDir,...
+                           simFileSourceDir, custFileSourceDir,...
+                           modelFileSourceDir,...
+                           simType, numSims,...
+                           auth, log, notificationSet);
+            obj.md = md;
+        end
         
-        % ------
-        % Concrete version for this machine type (see RunJobMachine for abstract)
+        % ----------
+        function preUploadFiles(obj)
+            preUploadFiles@SimMachine(obj);
+            % Nothing specific to do for this machine; see StagingSequence.xlsx
+        end
+        
+                % Concrete version for this machine type (see RunJobMachine for abstract)
         function jobID = runNoWait(obj, jobRoot, jfn, remoteRundir)
             command = ['cd ' path2UNIX(remoteRundir)...
                        '; ./' jfn ...

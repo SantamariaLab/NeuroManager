@@ -192,6 +192,8 @@ classdef NeuroManager < handle
     properties
         nmMainDir;         % The installation path of NeuroManager
         simCoreDir;        % Where the NeuroManager and standard simulator files are located
+                           % (the NeuroManager host installation; not the
+                           % SimCore on the remote)
         sshLibDir;         % Where the SSH library files are located
         customSimDir;      % Where user custom files are located
         modelFileDir;      % Where model files are located

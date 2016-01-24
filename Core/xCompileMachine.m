@@ -187,8 +187,8 @@ END OF LICENSE
 % A class which supports MATLAB cross-compilation.
 classdef xCompileMachine < NoSubMachine
     methods
-        function obj = xCompileMachine(md, hostID, hostOS, idExt, auth)
-            obj = obj@NoSubMachine(md, 0, '', hostID, hostOS, idExt, auth);
+        function obj = xCompileMachine(md, hostID, hostOS, auth)
+            obj = obj@NoSubMachine(md, 0, '', hostID, hostOS, auth);
             
             % Check for existence of x-compile dir
             result = obj.checkForDirectory(md.getSetting('xCompDir'));

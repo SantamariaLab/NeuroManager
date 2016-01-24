@@ -183,85 +183,176 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% NoSubMachine
-% Adds handling of job running for machines that don't require a job file
-classdef NoSubMachine < RunJobMachine
-    methods
-        function obj = NoSubMachine(md, xcmpMach, xcmpDir,...
-                                    hostID, hostOS, auth)
-            md.addSetting('id', md.getSetting('resourceName'));
-            md.addSetting('commsID', md.getSetting('resourceName'));
-            obj = obj@RunJobMachine(md, xcmpMach, xcmpDir,...
-                              hostID, hostOS, auth);
-        end 
+% SGECluster
+% Adds to RunJobMachine facilities which handle job submission through the
+% Sun Grid Engine (qsub command).
+classdef SGECluster < SimMachine & Cluster
+    properties 
+        parEnvStr;
         
-        % ------
-        % Concrete version for this machine type (see RunJobMachine for abstract)
-        function jobID = runNoWait(obj, jobRoot, jfn, remoteRundir)
-            command = ['cd ' path2UNIX(remoteRundir)...
-                       '; ./' jfn ...
-                       ' 1> stdout' jobRoot '.txt'...
-                       ' 2> stderr' jobRoot '.txt &'];
+        % String to use in the queue line to identify the queue to be
+        % used... if empty, the queue line is not put in the job file
+        % Set by subclassed methods after construction
+        queueStr; 
+        resourceStr;
+    end
+    
+    methods
+        function obj = SGECluster(~,...
+                            hostID, hostOS, ~, ~, baseDir, scratchDir, ...
+                            simFileSourceDir, custFileSourceDir,...
+                            modelFileSourceDir,...
+                            simType, numSims,...
+                            xCompilationMachine,...
+                            xCompilationScratchDir,...
+                            auth, log, notificationSet, dataFunc,...
+                            queueData, parEnvStr, resourceStr, ~) %#ok<INUSL>
+            md = dataFunc();
+
+            % Use cross-compilation on Dendrite (just to test the
+            % cross-compilation code)
+            useCrossCompilation = false;
+            if useCrossCompilation
+                xCompilationMachine =...
+                            xCompileDendrite(hostID, hostOS,...
+                                              'XCOMPILE', auth); %#ok<*UNRCH>
+                mdx = createDendriteData();
+                xCompilationScratchDir =...
+                            mdx.getSetting('xCompDir');
+            else
+                xCompilationMachine = 0; 
+                xCompilationScratchDir = ''; 
+            end
+            
+            obj = obj@Cluster(md, xCompilationMachine,...
+                              xCompilationScratchDir,...
+                              hostID, hostOS,...
+                              queueData.extension, auth);
+            obj = obj@SimMachine(md, ...
+                           hostID, baseDir, scratchDir, ...
+                           simFileSourceDir, custFileSourceDir,...
+                           modelFileSourceDir,...
+                           simType, numSims,...
+                           auth, log, notificationSet);
+            obj.parEnvStr = parEnvStr;
+            obj.queueStr = queueData.jobString;
+            obj.resourceStr = resourceStr;
+        end
+        
+        % ----------------
+        % NEED ALSO A RETURN WITH SUCCESS/FAILURE
+        % This doesn't wait for a checkfile!  It just waits for the
+        % UNIX return of the command in question (which in the case of the
+        % qsub is default -nosync which is no waiting).
+        function jobid = runNoWait(obj, jobRoot, jobFilename, remoteRunDir)
+        % Concrete version for qsub submissions (RunJobMachine has abstract)
+            % Submit the job 
+            % The cd is necessary despite having the working directory set
+            % by the job file. qsub default is to return right away.
+            command = ['cd ' path2UNIX(remoteRunDir) ...
+                       '; qsub ' jobFilename ...
+                       ' 1> stdout' jobRoot '.txt 2> stderr' jobRoot '.txt;'];
             obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
             
-            % This machine type has no job id and the process id is buried
-            % in layer upon layer of scripting.  So instead of getting it
-            % here we get it later from the running target MATLAB. See
-            % Simulator.UpdateState().
-            jobID = obj.getJobID(remoteRundir, jobRoot); 
+            jobid = obj.getJobID(remoteRunDir, jobRoot);
         end
         
         % ---------------
-        % A no-op because this machine type gets process id from the
-        % RUNNING file. Abstract version is in RunJobMachine.
-        % Not made static to match other machine types
-        function jobid = getJobID(obj, remoteRundir, jobRoot) %#ok<INUSD>
-            jobid = 0;
+        % Override this in a local machine subclass if the parsing is not
+        % the same (it probably won't be).  Abstract version is in
+        % RunJobMachine.
+        function jobID = getJobID(obj, remoteRunDir, jobRoot)
+            % Get the job id from the stdout-jobroot-ext file
+            command = ['cd ' path2UNIX(remoteRunDir) ...
+                       '; cat stdout' jobRoot '.txt'];
+            result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            jobID = sscanf(result{1}, 'Your job %u');
         end
-
-        % ----------
-        % NoSub doesn't have a job file but we still need to create the
-        % equivalent shellfile since PreRunModelProcPhaseD is buried in
-        % runcommand 
-        function jobFilename = ...
-                        preRunCreateJobFile(obj, scratchDir, jobRoot,...
-                                                 remoteRunDir, runCommand)
-            jobFilename = [jobRoot '.sh'];
+        
+        % ---------------
+        function jobFilename = preRunCreateJobFile(obj, scratchDir, jobRoot,...
+                                                  remoteRunDir, runCommand)
+        % Construct qsub job file on host and upload to simulator
+            jobFilename = [jobRoot '.job'];
             jobFileFullLocalPath = fullfile(scratchDir, jobFilename);
             job = fopen(jobFileFullLocalPath, 'w');
             fprintf(job, '%s\n', ['#!/bin/bash']);
-            fprintf(job, '%s\n',...
-                         ['cd ' path2UNIX(remoteRunDir)]);
+            fprintf(job, '%s\n', ['#! -N ' jobRoot]);
+            if (obj.parEnvStr)
+                fprintf(job, '%s\n', ['#$ -pe ' obj.parEnvStr]);
+            end
+            if (obj.queueStr)
+                fprintf(job, '%s\n', ['#$ -q ' obj.queueStr]);
+            end
+            if (obj.resourceStr)
+                fprintf(job, '%s\n', ['#$ -l ' obj.resourceStr]);
+            end
+            fprintf(job, '%s\n', ['#! -j y']);
+            fprintf(job, '%s\n', ['#! -o ' jobRoot '.log']);
+            fprintf(job, '%s\n', ['#$ -wd ' ...
+                                  path2UNIX(remoteRunDir)]);
             fprintf(job, '%s\n', runCommand);
+            fprintf(job, '%s\n', 'exit 0');
             fclose(job);
-            
-            % Upload the job file and make it executable
+
+            % Upload the job file
             obj.fileToMachine(jobFileFullLocalPath,...
                               fullfile(remoteRunDir, jobFilename));
-            command = ['chmod +x '...
-                path2UNIX(fullfile(remoteRunDir, jobFilename))];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
-
-        % ----------
-        function postRunJobProc(obj, simulation)
-            % See NeuroManagerStaging.xlsx
-            simulatorBasedir = simulation.simulator.getTargetBaseDir();
-            simulationOutputdir = simulation.getTargetOutputDir();
-            command = ['mv ' path2UNIX(fullfile(simulatorBasedir, 'std*.txt '))...
-                       path2UNIX(simulationOutputdir)];
+        
+        % ------------
+        function postRunJobProc(obj, simulation)    
+            % Move the job files out of simulator and into the simulation's
+            % output directory.
+            simulatorBaseDir = simulation.simulator.getTargetBaseDir();
+            simulationOutputDir = simulation.getTargetOutputDir();
+            command = ['mv ' path2UNIX(fullfile(simulatorBaseDir, '*.job.* '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, '*.job '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, '*.log '))...
+                       path2UNIX(simulationOutputDir)...
+                       '; mv ' path2UNIX(fullfile(simulatorBaseDir, 'std*.txt '))...
+                       path2UNIX(simulationOutputDir)...
+                       ];
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
-        % ----------
-        % Concrete version for this machine type (see RunJobMachine for abstract)
-        function runJobCleanup(obj, simBasedir)
+        % -------------
+        function runJobCleanup(obj, simBaseDir)
         % Clean up target-side files related to running jobs on qsub machine
+        % (they should be gone but just in case)
             command = ['cd '...
-                        path2UNIX(simBasedir)...
-                        '; rm ' path2UNIX(fullfile(simBasedir, 'std*.txt'))...
+                        path2UNIX(simBaseDir)...
+                        '; rm ' path2UNIX(fullfile(simBaseDir, '*.job.*'))...
+                        '; rm ' path2UNIX(fullfile(simBaseDir, '*.job'))...
+                        '; rm ' path2UNIX(fullfile(simBaseDir, 'std*.txt'))...
                         ];
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
+        
+                % ----------------
+        function str = getParEnvStr(obj)
+        % Parallel environment - see qsub documentation
+            str = obj.parEnvStr;
+        end        
+
+        % ----------------
+        function str = getQueueStr(obj)
+            str = obj.queueStr;
+        end
+        
+        % ----------------
+        function str = getResourceStr(obj)
+            str = obj.resourceStr;
+        end    
+        
+        % ----------
+        function preUploadFiles(obj)
+            preUploadFiles@SimMachine(obj);
+            % Nothing specific to do for this machine; see StagingSequence.xlsx
+        end
+
     end
 end
+

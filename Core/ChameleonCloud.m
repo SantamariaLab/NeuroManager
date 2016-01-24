@@ -183,20 +183,38 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% NoSubMachine
-% Adds handling of job running for machines that don't require a job file
-classdef NoSubMachine < RunJobMachine
+% StandaloneServer
+% Defines the machine class for standalone servers.  Job submissions are
+% basically launch-with-ampersand.  There may be more sophisticated things
+% that can be done, but this is most bang-for-buck.
+classdef ChameleonCloud <  OpenStackCloud
+    properties
+        % Machine data specific to the machine; will be passed up to target
+        % via a data file called MachineData.dat.
+        md;  
+    end
     methods
-        function obj = NoSubMachine(md, xcmpMach, xcmpDir,...
-                                    hostID, hostOS, auth)
-            md.addSetting('id', md.getSetting('resourceName'));
-            md.addSetting('commsID', md.getSetting('resourceName'));
-            obj = obj@RunJobMachine(md, xcmpMach, xcmpDir,...
-                              hostID, hostOS, auth);
-        end 
+        function obj = ChameleonCloud(md, hostID, hostOS, baseDir,...
+                            scratchDir, ...
+                            simFileSourceDir, custFileSourceDir,... 
+                            modelFileSourceDir,... 
+                            simType, numSims,...
+                            xCompilationMachine,...
+                            xCompilationScratchDir,...
+                            auth, log, notificationSet)
+            obj = obj@OpenStackCloud(md, xCompilationMachine,...
+                             xCompilationScratchDir,...
+                             hostID, hostOS, '', auth);
+            obj.md = md;
+        end
         
-        % ------
-        % Concrete version for this machine type (see RunJobMachine for abstract)
+        % ----------
+        function preUploadFiles(obj)
+            preUploadFiles@SimMachine(obj);
+            % Nothing specific to do for this machine; see StagingSequence.xlsx
+        end
+        
+                % Concrete version for this machine type (see RunJobMachine for abstract)
         function jobID = runNoWait(obj, jobRoot, jfn, remoteRundir)
             command = ['cd ' path2UNIX(remoteRundir)...
                        '; ./' jfn ...

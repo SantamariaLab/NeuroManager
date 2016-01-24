@@ -195,7 +195,8 @@ classdef RealMachine < handle
         % A string identifying the machine from the communications point of
         % view - for example, all queues of a cluster will have the cluster
         % comms id.
-        commsID; 
+        commsID;
+%         configID;
 
         fsUserName;     % File system machine username
         fsPassword;     % File system machine password
@@ -224,9 +225,9 @@ classdef RealMachine < handle
     methods
         % ----------
         % Constructor
-        function obj = RealMachine(md, hostID, idExt, auth)
-            obj.id           = [md.getSetting('id') idExt];
-            obj.commsID      = [md.getSetting('id')];
+        function obj = RealMachine(md, hostID, auth)
+            obj.id           = md.getSetting('id');
+            obj.commsID      = md.getSetting('commsID');
             obj.fsUserName   = md.getSetting('fsUserName');
             obj.fsPassword   = md.getSetting('fsPassword');
             obj.fsIPAddress  = md.getSetting('fsIPAddress');

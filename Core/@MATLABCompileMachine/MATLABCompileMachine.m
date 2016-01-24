@@ -218,8 +218,8 @@ classdef MATLABCompileMachine < FileTransferMachine
     methods
         function obj = MATLABCompileMachine(md,...
                                             xcmpMach, xcmpDir,...
-                                            hostID, hostOs, idExt, auth)
-            obj = obj@FileTransferMachine(md, hostID, hostOs, idExt, auth);
+                                            hostID, hostOs, auth)
+            obj = obj@FileTransferMachine(md, hostID, hostOs, auth);
             % These are for this machine
             obj.matlabCompilerDir = md.getSetting('matlabCompilerDir'); 
             obj.matlabCompiler = md.getSetting('matlabCompiler'); 

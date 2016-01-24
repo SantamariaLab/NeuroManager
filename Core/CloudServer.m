@@ -183,20 +183,68 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% NoSubMachine
-% Adds handling of job running for machines that don't require a job file
-classdef NoSubMachine < RunJobMachine
+% CloudServer
+% Defines the machine class for standalone cloud servers.  Job submissions are
+% basically launch-with-ampersand.  There may be more sophisticated things
+% that can be done, but this is most bang-for-buck.
+classdef CloudServer < SimMachine & Cloud
+    properties
+        % Machine data specific to the machine; will be passed up to target
+        % via a data file called MachineData.dat.
+        md;  
+    end
     methods
-        function obj = NoSubMachine(md, xcmpMach, xcmpDir,...
-                                    hostID, hostOS, auth)
-            md.addSetting('id', md.getSetting('resourceName'));
-            md.addSetting('commsID', md.getSetting('resourceName'));
-            obj = obj@RunJobMachine(md, xcmpMach, xcmpDir,...
-                              hostID, hostOS, auth);
-        end 
+        function obj = CloudServer(~,...
+                            hostID, hostOS, name, ipaddr, baseDir, scratchDir, ...
+                            simFileSourceDir, custFileSourceDir,... 
+                            modelFileSourceDir,... 
+                            simType, numSims,...
+                            xCompilationMachine,...
+                            xCompilationScratchDir,...
+                            auth, log, notificationSet, dataFunc,...
+                            ~, ~, ~, ~) %#ok<INUSL>
+            md = dataFunc(name, ipaddr);
+            % Cloud create... data files don't set a name
+            % so we add it here
+            md.addSetting('id', name);
+            md.addSetting('id', md.getSetting('instanceName'));
+            md.addSetting('commsID', md.getSetting('instanceName'));
+            
+            % Use cross-compilation on Dendrite (just to test the
+            % cross-compilation code)
+            useCrossCompilation = true;
+            if useCrossCompilation
+                xCompilationMachine =...
+                            xCompileDendrite(hostID, hostOS,...
+                                              'XCOMPILE', auth); %#ok<*UNRCH>
+                mdx = createDendriteData();
+                xCompilationScratchDir =...
+                            mdx.getSetting('xCompDir');
+            else
+                xCompilationMachine = 0; 
+                xCompilationScratchDir = ''; 
+            end
+            
+            obj = obj@Cloud(md, xCompilationMachine,...
+                             xCompilationScratchDir,...
+                             hostID, hostOS, auth);
+            obj = obj@SimMachine(md, ...
+                           hostID, baseDir, scratchDir,...
+                           simFileSourceDir, custFileSourceDir,...
+                           modelFileSourceDir,...
+                           simType, numSims,...
+                           auth, log, notificationSet);
+            obj.md = md;
+        end
         
-        % ------
-        % Concrete version for this machine type (see RunJobMachine for abstract)
+        % ----------
+        function preUploadFiles(obj)
+            preUploadFiles@SimMachine(obj);
+            % Nothing specific to do for this machine; see StagingSequence.xlsx
+        end
+        
+        % Concrete version for this machine type 
+        %  (see RunJobMachine for abstract)
         function jobID = runNoWait(obj, jobRoot, jfn, remoteRundir)
             command = ['cd ' path2UNIX(remoteRundir)...
                        '; ./' jfn ...
@@ -254,7 +302,8 @@ classdef NoSubMachine < RunJobMachine
         end
         
         % ----------
-        % Concrete version for this machine type (see RunJobMachine for abstract)
+        % Concrete version for this machine type
+        %  (see RunJobMachine for abstract)
         function runJobCleanup(obj, simBasedir)
         % Clean up target-side files related to running jobs on qsub machine
             command = ['cd '...
