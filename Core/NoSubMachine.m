@@ -188,7 +188,7 @@ END OF LICENSE
 classdef NoSubMachine < RunJobMachine
     methods
         function obj = NoSubMachine(md, xcmpMach, xcmpDir,...
-                                    hostID, hostOS, idExt, auth)
+                                    hostID, hostOS, auth)
             md.addSetting('id', md.getSetting('resourceName'));
             md.addSetting('commsID', md.getSetting('resourceName'));
             obj = obj@RunJobMachine(md, xcmpMach, xcmpDir,...
