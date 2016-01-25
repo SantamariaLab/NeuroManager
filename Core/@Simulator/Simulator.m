@@ -411,7 +411,7 @@ classdef Simulator < handle
             obj.state = SimulatorState.BUSY;
             obj.processedSimulationRUNNINGTransition = false;
             obj.currentSimulation = simulation;
-            obj.currentSimulation.setHandoffTimeStr(datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF'));
+            obj.currentSimulation.setHandoffTime(datetime('now'));
             
             % Notify log+ 
             notificationSubject = ['Re: NeuroManager Notice'];
@@ -501,11 +501,11 @@ classdef Simulator < handle
             obj.currentSimulation.setJobID(jobID);
             % Setting this time here rather than in the simulation's
             % UpdateState() gives better time precision
-            obj.currentSimulation.setSubmissionTimeStr(datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF'));
+            obj.currentSimulation.setSubmissionTime(datetime('now'));
         end
 
         % --------
-        function [state,  = updateState(obj)
+        function state = updateState(obj)
         % Update the state of the simulator
             % The simulator state reacts to its having a simulation or not
             % and the state of that simulation. In the process it prompts 

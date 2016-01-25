@@ -227,11 +227,11 @@ classdef Simulation < handle
         signalFileFAILED;   % Full path of FAILED   signal file in target output dir
         
         % Profiling data
-        handoffTimeStr;
-        submissionTimeStr;
-        runStartTimeStr;
-        runCompleteTimeStr;
-        simFullProcTimeStr;
+        handoffTime;
+        submissionTime;
+        runStartTime;
+        runCompleteTime;
+        simFullProcTime;
         
         % The complete pathname of the results reporting file;
         % does not include major files such as tables, figures, or the like. 
@@ -274,11 +274,11 @@ classdef Simulation < handle
                 obj.signalFileRUNNING   = '';
                 obj.signalFileCOMPLETE  = '';
                 obj.signalFileFAILED    = '';
-                obj.handoffTimeStr      = '';
-                obj.submissionTimeStr   = '';
-                obj.runStartTimeStr     = '';
-                obj.runCompleteTimeStr  = '';
-                obj.simFullProcTimeStr  = '';
+                obj.handoffTime      = 0;
+                obj.submissionTime   = 0;
+                obj.runStartTime     = 0;
+                obj.runCompleteTime  = 0;
+                obj.simFullProcTime  = 0;
                 obj.resultsFile         = '';
                 obj.result = '';
                 obj.executionTime = NaN;
@@ -311,8 +311,8 @@ classdef Simulation < handle
                 obj.signalFileRUNNING = '';     % Target side; set by SetTargetDirs()
                 obj.signalFileCOMPLETE = '';    % Target side; set by SetTargetDirs()
                 obj.signalFileFAILED = '';      % Target side; set by SetTargetDirs()
-                obj.submissionTimeStr = '------------------';
-                obj.runStartTimeStr   = '------------------';
+                obj.submissionTime = 0;
+                obj.runStartTime   = 0;
                 obj.resultsFile = '';
                 obj.result = ''; 
                 obj.executionTime = NaN;
@@ -393,7 +393,7 @@ classdef Simulation < handle
                     % its transition to running
                     if obj.machine.checkForCheckfile(obj.getSignalFileRUNNING())
                         obj.setState(SimulationState.RUNNING);
-                        obj.setRunStartTimeStr(datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF'));
+                        obj.setRunStartTime(datetime('now'));
 
                         % Grab the data from the RUNNING file
                         command = ['cat '...
@@ -401,11 +401,14 @@ classdef Simulation < handle
                         result = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
                         jobid = sscanf(result{1}, '%u');
                         if length(result) >= 2
-                            time = sscanf(result{2}, '%s%c%s');
+                            timestr = sscanf(result{2}, '%s%c%s');
+                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss.SSS');
                         else
-                            time = '--------------------';
+%                             time = '--------------------';
+                            time = 0;
                         end
-                        obj.setRunStartTimeStr(time);
+                        
+                        obj.setRunStartTime(time);
                         
                         % If the simulation JobID hasn't been set yet, we
                         % grab the target-MATLAB-determined process ID from
@@ -427,11 +430,13 @@ classdef Simulation < handle
                         result = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
                         %jobid = sscanf(result{1}, '%u');
                         if length(result) >= 1
-                            time = sscanf(result{1}, '%s%c%s');
+                            timestr = sscanf(result{1}, '%s%c%s');
+                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss.SSS');
                         else
-                            time = '--------------------';
+%                             time = '--------------------';
+                            time = 0;
                         end
-                        obj.setRunCompleteTimeStr(time);
+                        obj.setRunCompleteTime(time);
                         
                     elseif obj.machine.checkForCheckfile(obj.getSignalFileFAILED())
                         obj.setState(SimulationState.RUNCOMPLETE);
@@ -442,11 +447,13 @@ classdef Simulation < handle
                         result = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
                         %jobid = sscanf(result{1}, '%u');
                         if length(result) >= 1
-                            time = sscanf(result{1}, '%s%c%s');
+                            timestr = sscanf(result{1}, '%s%c%s');
+                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss.SSS');
                         else
-                            time = '--------------------';
+%                             time = '--------------------';
+                            time = 0;
                         end
-                        obj.setRunCompleteTimeStr(time);
+                        obj.setRunCompleteTime(time);
                     end
                 case SimulationState.RUNCOMPLETE
                     obj.machine.postRunJobProc(obj); % See NeuroManagerStaging.xlsx
@@ -463,7 +470,7 @@ classdef Simulation < handle
                         % Post-download simulation-specific processing
                         obj.postDownloadProcessing();
                         obj.setState(SimulationState.FULLYPROCESSED);
-                        obj.setSimFullProcTimeStr(datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF'));
+                        obj.setSimFullProcTime(datetime('now'));
                     end
                 case SimulationState.FULLYPROCESSED
                     % Nothing to do
@@ -652,53 +659,53 @@ classdef Simulation < handle
         end
         
         % ----------------
-        function setHandoffTimeStr(obj, str)
-            obj.handoffTimeStr = str;
+        function setHandoffTime(obj, time)
+            obj.handoffTime = time;
         end
 
         % ----------------
-        function str = getHandoffTimeStr(obj)
-            str = obj.handoffTimeStr;
+        function time = getHandoffTime(obj)
+            time = obj.handoffTime;
         end
         
         % ----------------
-        function setSubmissionTimeStr(obj, str)
-            obj.submissionTimeStr = str;
+        function setSubmissionTime(obj, time)
+            obj.submissionTime = time;
         end
 
         % ----------------
-        function str = getSubmissionTimeStr(obj)
-            str = obj.submissionTimeStr;
+        function time = getSubmissionTime(obj)
+            time = obj.submissionTime;
         end
 
         % ----------------
-        function setRunStartTimeStr(obj, str)
-            obj.runStartTimeStr = str;
+        function setRunStartTime(obj, time)
+            obj.runStartTime = time;
         end
 
         % ----------------
-        function str = getRunStartTimeStr(obj)
-            str = obj.runStartTimeStr;
+        function time = getRunStartTime(obj)
+            time = obj.runStartTime;
         end
         
         % ----------------
-        function setRunCompleteTimeStr(obj, str)
-            obj.runCompleteTimeStr = str;
+        function setRunCompleteTime(obj, time)
+            obj.runCompleteTime = time;
         end
 
         % ----------------
-        function str = getRunCompleteTimeStr(obj)
-            str = obj.runCompleteTimeStr;
+        function time = getRunCompleteTime(obj)
+            time = obj.runCompleteTime;
         end
         
         % ----------------
-        function setSimFullProcTimeStr(obj, str)
-            obj.simFullProcTimeStr = str;
+        function setSimFullProcTime(obj, time)
+            obj.simFullProcTime = time;
         end
 
         % ----------------
-        function str = getSimFullProcTimeStr(obj)
-            str = obj.simFullProcTimeStr;
+        function time = getSimFullProcTime(obj)
+            time = obj.simFullProcTime;
         end
         
         % ----------------

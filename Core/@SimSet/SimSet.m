@@ -459,15 +459,15 @@ classdef SimSet < handle
                 % Simulation outcome: COMPLETE or FAILED
                 results.simulations(i).result = obj.sims(i).getResult();
                 % The time the Simulator was given the Simulation
-                results.simulations(i).handofftime = obj.sims(i).getHandoffTimeStr();
+                results.simulations(i).handofftime = obj.sims(i).getHandoffTime();
                 % The time the job was submitted on the remote
-                results.simulations(i).submissiontime = obj.sims(i).getSubmissionTimeStr();
+                results.simulations(i).submissiontime = obj.sims(i).getSubmissionTime();
                 % The time on the remote the job actually started running
-                results.simulations(i).runstarttime = obj.sims(i).getRunStartTimeStr();
+                results.simulations(i).runstarttime = obj.sims(i).getRunStartTime();
                 % The time on the remote the job finished
-                results.simulations(i).runcompletetime = obj.sims(i).getRunCompleteTimeStr();
+                results.simulations(i).runcompletetime = obj.sims(i).getRunCompleteTime();
                 % The time on the host that the Simulation was finished up
-                results.simulations(i).simfullproctime = obj.sims(i).getSimFullProcTimeStr();
+                results.simulations(i).simfullproctime = obj.sims(i).getSimFullProcTime();
                 % The tic-toc time obtained by RunSimulation() on the
                 % remote
                 results.simulations(i).executiontime = ...
