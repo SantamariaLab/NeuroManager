@@ -218,19 +218,35 @@ function result = nmRun(obj, simset)
     % SIMULATION SCHEDULING LOOP
     % This is where each simdef is parsed out to be run on the
     % simulator pool 
+    % In process of transforming this into the Scheduler 2.0 approach.
     pollDelay = obj.pollDelay;
     while(true)
+        
+        % Update all simulators and stats
+        for i = 1:obj.numSimulators
+            switch(obj.simulatorPool{i}.updateState())
+                case SimulatorState.AVAILABLE
+                    % update statistics (none yet)
+                case SimulatorState.BUSY
+                    % update statistics (none yet)
+                otherwise
+            end
+        end
+       
         % Update the status webpage
         obj.setSnapshotTimeStr(datestr(now));
         obj.displayStatusWebPage('SimSet');
         
-        if (obj.nmSimSet.isFullyProcessed())
-            break;
-        end
-        
         % Submission
         if (obj.nmSimSet.hasUNRUN())
+            % Create new min-min schedule
+            % (not implemented yet)
+            
+            % Are Open Simulators available?
             if obj.isSimulatorAvailable()
+                % Place Scheduled Simulations on Assigned Simulators if
+                % Open
+                % (not updated yet)
                 % Fill next available simulator in numerical order
                 for i = 1:obj.numSimulators
                     % Possibly replace this with a grab simulator method in
@@ -256,33 +272,35 @@ function result = nmRun(obj, simset)
                         break; 
                     end
                 end
+                
             else
                 % No simulators available so so ensure we are at steady-state
                 % polling rate and wait for a simulator to become available
-                pollDelay = obj.pollDelay;
+                pollDelay = obj.pollDelay; %#ok<*NASGU>
             end
         else
-            % No more simulations to add so ensure we are at steady-state
-            % polling rate
+            % All Simulators Complete?
+            if (obj.nmSimSet.isFullyProcessed())
+                break; % Yes
+            end
+            
+            
+            % List all simulations that are in the waiting state
+            % (not implemented yet)
+            
+            % If list is not empty, then see if there are simulators available
+            % if obj.isSimulatorAvailable()
+            %       Find the simulation that has been the longest
+            %           time in the waiting state and move it to the Unrun list
+            %           (check it back in?)
+            %       Then set that Simulator TW to infinity and clear its
+            %           UpdateStats flag
+            % (not implemented yet)
+            
             pollDelay = obj.pollDelay;
         end
-
-        % Now prompt all simulators for a state change.
-        for i = 1:obj.numSimulators
-            switch(obj.simulatorPool{i}.updateState())
-                case SimulatorState.AVAILABLE
-                    % update statistics (none yet)
-                case SimulatorState.BUSY
-                    % update statistics (none yet)
-                otherwise
-            end
-        end
-       
-        obj.setSnapshotTimeStr(datestr(now));
-        obj.displayStatusWebPage('SimSet');
-        
-        % Delay the next cycle so as not to poll the machines to death.
-        pause(pollDelay);
+            % Delay the next cycle so as not to poll the machines to death.
+            pause(pollDelay);
     end
 
     obj.setSnapshotTimeStr(datestr(now));

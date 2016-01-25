@@ -223,6 +223,11 @@ classdef Simulator < handle
         % doing things as part of the simulation submission before the
         % simulation itself is run.
         preRunModelProcDStr;
+        
+        % Statistics object
+        % The timings obtained by Simulations that have run previously;
+        % used by the Scheduler (2.0). See SimStats.m.
+        stats;
 
         % The SimMachine on which the simulator is running
         machine;
@@ -274,6 +279,7 @@ classdef Simulator < handle
             obj.state = SimulatorState.INPREPARATION;
             obj.currentSimulation = Simulation(); % I.e. no simulation to begin with
             obj.preRunModelProcDStr = '';
+            obj.stats = SimulatorStats();
             obj.machine = machine; 
             obj.log = log;
             obj.notificationSet = notificationSet;
@@ -499,7 +505,7 @@ classdef Simulator < handle
         end
 
         % --------
-        function state = updateState(obj)
+        function [state,  = updateState(obj)
         % Update the state of the simulator
             % The simulator state reacts to its having a simulation or not
             % and the state of that simulation. In the process it prompts 
