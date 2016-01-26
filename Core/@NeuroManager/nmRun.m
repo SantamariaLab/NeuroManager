@@ -239,11 +239,12 @@ function result = nmRun(obj, simset)
         
         % Submission
         if (obj.nmSimSet.hasUNRUN())
-            % Create new min-min schedule
-            % (not implemented yet)
             
             % Are Open Simulators available?
             if obj.isSimulatorAvailable()
+                % Create new min-min schedule
+                % (not implemented yet)
+
                 % Place Scheduled Simulations on Assigned Simulators if
                 % Open
                 % (not updated yet)
