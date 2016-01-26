@@ -201,7 +201,7 @@ function result = runSimulation(machineID, simID, runDir, inDir, outDir,...
     % Throw the MATLAB process id in too for possible help in debugging;
     % only useful on NoSubMachines
     fprintf(f, '%10.0f\n', feature('getpid')); % NOTE: UNDOCUMENTED COMMAND USED HERE
-    fprintf(f, '%s\n', datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF'));  % RunStartTimeStr
+    fprintf(f, '%s\n', datestr(now,'dd-mmm-yyyy HH:MM:SS'));  % RunStartTimeStr
     fclose(f);
     
 	cd(runDir);
@@ -223,7 +223,7 @@ function result = runSimulation(machineID, simID, runDir, inDir, outDir,...
     
 	signalFile = fullfile(outDir, resultStr);
     f = fopen(signalFile, 'w');
-    fprintf(f, '%s\n', datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF')); % RunCompleteTimeStr
+    fprintf(f, '%s\n', datestr(now,'dd-mmm-yyyy HH:MM:SS')); % RunCompleteTimeStr
     fclose(f);
     
     % Get rid of MATLAB. Since this is a graceful exit, we exit with

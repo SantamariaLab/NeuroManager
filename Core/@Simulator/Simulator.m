@@ -411,7 +411,8 @@ classdef Simulator < handle
             obj.state = SimulatorState.BUSY;
             obj.processedSimulationRUNNINGTransition = false;
             obj.currentSimulation = simulation;
-            obj.currentSimulation.setHandoffTime(datetime('now'));
+            time = obj.machine.getMachineTime();
+            obj.currentSimulation.setHandoffTime(time);
             
             % Notify log+ 
             notificationSubject = ['Re: NeuroManager Notice'];
@@ -501,7 +502,8 @@ classdef Simulator < handle
             obj.currentSimulation.setJobID(jobID);
             % Setting this time here rather than in the simulation's
             % UpdateState() gives better time precision
-            obj.currentSimulation.setSubmissionTime(datetime('now'));
+            time = obj.machine.getMachineTime();
+            obj.currentSimulation.setSubmissionTime(time);
         end
 
         % --------
@@ -579,18 +581,17 @@ classdef Simulator < handle
                 end
             else   % Later add TIMEOUT and CHECKPOINT results here
                 % Only add stats if the simulation is successful
-                [handoffTime, submissionTime, runStartTime,...
-                 runCompleteTime, simFullProcTime] =...
+                [~, submissionTime, runStartTime, runCompleteTime, ~] =...
                                         obj.currentSimulation.getStats();
                 obj.stats.addData(seconds(runStartTime-submissionTime),...
                                   seconds(runCompleteTime-runStartTime));
-                [mWT, sWT, mRT, sRT] = obj.stats.getStats()
+%                 [mWT, sWT, mRT, sRT] = obj.stats.getStats()
                 notificationSubject = ['Re: NeuroManager Notice'];
                 message = ['Simulation ' obj.currentSimulation.getID()...
                            ' finished successfully on ' obj.machine.getID() ...
                            '; results downloaded to host. '...
                            'runtime: ' ...
-                           datestr(simtime/24/3600, 'HH:MM:SS.FFF')];
+                           datestr(simtime/24/3600, 'HH:MM:SS')];
             end
             obj.log.write(message);
             if obj.currentSimulation.notify()

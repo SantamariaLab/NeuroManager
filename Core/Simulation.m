@@ -402,7 +402,7 @@ classdef Simulation < handle
                         jobid = sscanf(result{1}, '%u');
                         if length(result) >= 2
                             timestr = sscanf(result{2}, '%s%c%s');
-                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss.SSS');
+                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss');
                         else
 %                             time = '--------------------';
                             time = 0;
@@ -431,7 +431,7 @@ classdef Simulation < handle
                         %jobid = sscanf(result{1}, '%u');
                         if length(result) >= 1
                             timestr = sscanf(result{1}, '%s%c%s');
-                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss.SSS');
+                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss');
                         else
 %                             time = '--------------------';
                             time = 0;
@@ -448,7 +448,7 @@ classdef Simulation < handle
                         %jobid = sscanf(result{1}, '%u');
                         if length(result) >= 1
                             timestr = sscanf(result{1}, '%s%c%s');
-                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss.SSS');
+                            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss');
                         else
 %                             time = '--------------------';
                             time = 0;
@@ -470,7 +470,8 @@ classdef Simulation < handle
                         % Post-download simulation-specific processing
                         obj.postDownloadProcessing();
                         obj.setState(SimulationState.FULLYPROCESSED);
-                        obj.setSimFullProcTime(datetime('now'));
+                        time = obj.machine.getMachineTime();
+                        obj.setSimFullProcTime(time);
                     end
                 case SimulationState.FULLYPROCESSED
                     % Nothing to do
