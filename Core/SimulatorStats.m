@@ -1,5 +1,6 @@
 % SimulatorStats.m
 % Deals with a Simulator's timing statistics for the Scheduler's use.
+% Times in seconds
 
 classdef SimulatorStats < handle
     properties

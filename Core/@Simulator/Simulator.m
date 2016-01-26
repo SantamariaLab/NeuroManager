@@ -564,6 +564,7 @@ classdef Simulator < handle
 
             % Tell log+
             [result, simtime, errMsg, ~] = obj.currentSimulation.getResults(); 
+
             if strcmp(result, 'FAILED')
                 notificationSubject = ['NeuroManager Error'];
                 if isempty(errMsg)
@@ -577,6 +578,13 @@ classdef Simulator < handle
                                ' on host.'];
                 end
             else   % Later add TIMEOUT and CHECKPOINT results here
+                % Only add stats if the simulation is successful
+                [handoffTime, submissionTime, runStartTime,...
+                 runCompleteTime, simFullProcTime] =...
+                                        obj.currentSimulation.getStats();
+                obj.stats.addData(seconds(runStartTime-submissionTime),...
+                                  seconds(runCompleteTime-runStartTime));
+                [mWT, sWT, mRT, sRT] = obj.stats.getStats()
                 notificationSubject = ['Re: NeuroManager Notice'];
                 message = ['Simulation ' obj.currentSimulation.getID()...
                            ' finished successfully on ' obj.machine.getID() ...
@@ -602,7 +610,7 @@ classdef Simulator < handle
                 obj.log.write(['Notifications not requested for simulation ' ...
                                obj.currentSimulation.getID() '.']);
             end
-        end
+        end 
 
         % -------------
         function postDownloadProcessingSimulatorSpecific(obj, simulation) %#ok<INUSD>

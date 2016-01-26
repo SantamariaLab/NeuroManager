@@ -735,6 +735,15 @@ classdef Simulation < handle
             mlVersion = obj.mlVersion;
         end
         
+        function [handoffTime, submissionTime, runStartTime,...
+                  runCompleteTime, simFullProcTime] = getStats(obj)
+            handoffTime = obj.handoffTime;
+            submissionTime = obj.submissionTime;
+            runStartTime = obj.runStartTime;
+            runCompleteTime = obj.runCompleteTime;
+            simFullProcTime = obj.simFullProcTime;
+        end
+        
         % ----------------
         function id = getID(obj)
         % Returns the ID of this simulation
