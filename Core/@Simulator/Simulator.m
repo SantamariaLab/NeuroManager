@@ -413,6 +413,10 @@ classdef Simulator < handle
             obj.currentSimulation = simulation;
             time = obj.machine.getMachineTime();
             obj.currentSimulation.setHandoffTime(time);
+            % Store the ETS in the Simulation for downstream scheduling
+            [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = obj.stats.getStats();
+            ets = mPT + mWT + mRT + mFT;
+            obj.currentSimulation.setETS(ets);
             
             % Notify log+ 
             notificationSubject = ['Re: NeuroManager Notice'];
@@ -581,11 +585,23 @@ classdef Simulator < handle
                 end
             else   % Later add TIMEOUT and CHECKPOINT results here
                 % Only add stats if the simulation is successful
-                [~, submissionTime, runStartTime, runCompleteTime, ~] =...
+                [handoffTime, submissionTime, runStartTime,...
+                 runCompleteTime, simFullProcTime] =...
                                         obj.currentSimulation.getStats();
-                obj.stats.addData(seconds(runStartTime-submissionTime),...
-                                  seconds(runCompleteTime-runStartTime));
-%                 [mWT, sWT, mRT, sRT] = obj.stats.getStats()
+                % Put the newly gathered simulation stats into the
+                % Simulator performance stats
+                obj.stats.addData(seconds(submissionTime-handoffTime),...
+                                  seconds(runStartTime-submissionTime),...
+                                  seconds(runCompleteTime-runStartTime),...
+                                  seconds(simFullProcTime-runCompleteTime));
+                if 1 % just for ease of debug
+                    [mPR, sPT, mWT, sWT, mRT, sRT, mFT, sFT] =...
+                                                    obj.stats.getStats();
+                    fprintf(['%s:  mPR %f, sPT %f | mWT %f, sWT %f '...
+                             '| mRT %f, sRT %f | mFT %f, sFT %f'],...
+                            obj.getID(), mPR, sPT, mWT, sWT,...
+                            mRT, sRT, mFT, sFT);
+                end
                 notificationSubject = ['Re: NeuroManager Notice'];
                 message = ['Simulation ' obj.currentSimulation.getID()...
                            ' finished successfully on ' obj.machine.getID() ...
@@ -657,6 +673,16 @@ classdef Simulator < handle
         % -------------
         function dir = getTargetCommonDir(obj)
             dir = obj.targetCommonDir;
+        end
+        
+        % -------------
+        function time = getCurrentTime(obj)
+            time = obj.machine.getMachineTime();
+        end
+        
+        % -------------
+        function [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = getStats(obj)
+            [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = obj.stats.getStats();
         end
         
         % -------------

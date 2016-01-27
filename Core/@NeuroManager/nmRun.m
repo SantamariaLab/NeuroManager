@@ -232,6 +232,9 @@ function result = nmRun(obj, simset)
                 otherwise
             end
         end
+        
+        % Record the time (host) of update for use in scheduling if necessary
+%         updateTime = datetime('now');
        
         % Update the status webpage
         obj.setSnapshotTimeStr(datestr(now));
@@ -242,64 +245,104 @@ function result = nmRun(obj, simset)
             
             % Are Open Simulators available?
             if obj.isSimulatorAvailable()
+                % Update the machine time deltas
+                % (Not implemented yet)
+                
                 % Create new min-min schedule
-                % (not implemented yet)
-
-                % Place Scheduled Simulations on Assigned Simulators if
-                % Open
-                % (not updated yet)
-                % Fill next available simulator in numerical order
+                % row 1: simulator index
+                % row 2: simulator ETA in datetime format
+                % row 3: simulator-specific ETS for a simulation started now
+                % row 4: Simulator time offset (delta)
+                % row 5: ETC = ETA + delta + ETS
+                % row 6: Simulator availability (available = 1, not
+                % available = 0 for ability to secondary sort)
+                schedule = zeros(6, obj.numSimulators);
+                schedule(1, :) = [1:obj.numSimulators];
                 for i = 1:obj.numSimulators
-                    % Possibly replace this with a grab simulator method in
-                    % the simulator class 
-                    if (obj.simulatorPool{i}.updateState() == SimulatorState.AVAILABLE)
-                        % Grab an simulation that is UNRUN
-                        proposedSimulation = obj.nmSimSet.checkOutSimulation();
-                        % Get the simulation (if there is one left) started on
-                        % the simulator, then get out 
-                        if(proposedSimulation ~= 0)
-                            obj.simulatorPool{i}.startSimulation(proposedSimulation);
-                            % Quick turnaround for quicker filling
-                            pollDelay = 0; 
-                        else
-                            % if there are no simulations left then switch
-                            % to normal polling
-                            pollDelay = obj.pollDelay;
+                    currentTime = obj.simulatorPool{i}.getCurrentTime();
+
+                    if obj.simulatorPool{i}.getState() == SimulatorState.AVAILABLE
+                        schedule(2, i) = 0.0;
+                        schedule(6, i) = 1;
+                    else
+                        [handoffTime, ~, ~, ~, ~] =...
+                            obj.simulatorPool{i}.currentSimulation.getStats();
+                        ets = obj.simulatorPool{i}.currentSimulation.getETS();
+%                         currentTime
+                        schedule(2, i) =...
+                             ets + ...
+                                        seconds(handoffTime - currentTime);
+                        % If it ended in the past for whatever reason (such
+                        % as an initial ETS=0), bring the ETA to now
+                        if schedule(2,i) < 0
+                            schedule(2,i) = 0;
                         end
-                        obj.setSnapshotTimeStr(datestr(now));
-                        obj.displayStatusWebPage('SimSet');
-                        % A break here tends to limit submission to a
-                        % smaller number of faster machines (YMMV)
-                        break; 
+                            
+                        schedule(6, i) = 0;
                     end
+                    [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
+                                        obj.simulatorPool{i}.getStats();
+                    schedule(3, i) = mPT + mWT + mRT + mFT;
+                    schedule(4, i) = 0.0; % TEMPORARY
+                    schedule(5, i) = sum(schedule(2:4, i));
+                    
+                    % Untried simulators have infinite stats to
+                    % ensure proper sorting but we don't want that to
+                    % keep them from being passed over in favor of a
+                    % simulator already in use, so we ensure they will 
+                    % be at the head of the line.
+                    if isinf(schedule(2,i))
+                        schedule(5,i) = -1;
+                    end
+
                 end
+                
+                % Sorting the columns by the ETC puts the simulator indices
+                % in order of likely-to-finish-first; within ties the
+                % available simulators come first.
+%                 sortedSchedule = sortrows(schedule', [5 -6])'
+                sortedSchedule = sortrows(schedule', [-6 5])'
+                
+                % Place Scheduled Simulations on Assigned Simulators if
+                % Open, until hit an unavailable simulator
+                for i = 1:obj.numSimulators
+                    if sortedSchedule(6, i) == 0
+                        break;
+                    end
+                    
+                    % Grab an simulation that is UNRUN
+                    proposedSimulation = obj.nmSimSet.checkOutSimulation();
+                    
+                    % Get the simulation (if there is one left) started on
+                    % the simulator
+                    if(proposedSimulation ~= 0)
+                        simIndex = sortedSchedule(1, i);
+                        obj.simulatorPool{simIndex}.startSimulation(proposedSimulation);
+                    else
+                        % if there are no simulations left then get out
+                        break;
+                    end
+                    % These possibly for debug only
+                    obj.setSnapshotTimeStr(datestr(now));
+                    obj.displayStatusWebPage('SimSet');
+                end
+                obj.setSnapshotTimeStr(datestr(now));
+                obj.displayStatusWebPage('SimSet');
                 
             else
                 % No simulators available so so ensure we are at steady-state
                 % polling rate and wait for a simulator to become available
-                pollDelay = obj.pollDelay; %#ok<*NASGU>
+                obj.setSnapshotTimeStr(datestr(now));
+                obj.displayStatusWebPage('SimSet');
             end
         else
             % All Simulators Complete?
             if (obj.nmSimSet.isFullyProcessed())
                 break; % Yes
             end
-            
-            
-            % List all simulations that are in the waiting state
-            % (not implemented yet)
-            
-            % If list is not empty, then see if there are simulators available
-            % if obj.isSimulatorAvailable()
-            %       Find the simulation that has been the longest
-            %           time in the waiting state and move it to the Unrun list
-            %           (check it back in?)
-            %       Then set that Simulator TW to infinity and clear its
-            %           UpdateStats flag
-            % (not implemented yet)
-            
-            pollDelay = obj.pollDelay;
         end
+            obj.setSnapshotTimeStr(datestr(now));
+            obj.displayStatusWebPage('SimSet');
             % Delay the next cycle so as not to poll the machines to death.
             pause(pollDelay);
     end

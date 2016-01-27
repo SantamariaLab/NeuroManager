@@ -227,11 +227,20 @@ classdef Simulation < handle
         signalFileFAILED;   % Full path of FAILED   signal file in target output dir
         
         % Profiling data
-        handoffTime;
-        submissionTime;
+        % Remote time this simulation was handed to the simulator
+        handoffTime;  
+        % Remote time this simulations was submitted to the host resource
+        submissionTime; 
+        % Remote time this simulation began running on the resource
         runStartTime;
+        % Remote time this simulation stopped running on the resource
         runCompleteTime;
+        % Remote time this simulation was completely downloaded, etc.
         simFullProcTime;
+        % The total time in seconds this simulation is expected to take
+        % based on simulator characteristics gathered prior to the time of
+        % handoff.   
+        ETS; 
         
         % The complete pathname of the results reporting file;
         % does not include major files such as tables, figures, or the like. 
@@ -279,6 +288,7 @@ classdef Simulation < handle
                 obj.runStartTime     = 0;
                 obj.runCompleteTime  = 0;
                 obj.simFullProcTime  = 0;
+                obj.ETS = 0.0;
                 obj.resultsFile         = '';
                 obj.result = '';
                 obj.executionTime = NaN;
@@ -707,6 +717,17 @@ classdef Simulation < handle
         % ----------------
         function time = getSimFullProcTime(obj)
             time = obj.simFullProcTime;
+        end
+        
+        % ----------------
+        % time is a datetime value
+        function setETS(obj, ets)
+            obj.ETS = ets;
+        end
+        
+        % ----------------
+        function time = getETS(obj)
+            time = obj.ETS;
         end
         
         % ----------------
