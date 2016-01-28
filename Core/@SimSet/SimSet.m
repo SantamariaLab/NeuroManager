@@ -511,12 +511,12 @@ classdef SimSet < handle
                         resultStr = 'Unknown';
                 end
                 if (simtime >= 0.0)
-                    id = obj.sims(i).getID();
+                    obj.id = obj.sims(i).getID();
                     simid = obj.sims(i).getSimulatorID();
                     machineid = obj.sims(i).getMachineID();
                     mlversion = obj.sims(i).getMLVersion();
                     entry = sprintf('\t%s%s%10.2f  %s%s%s%s%s%s%s',...
-                        id, repmat(sprintf(' '), 1, 20-length(id)),...
+                        obj.id, repmat(sprintf(' '), 1, 20-length(obj.id)),...
                         simtime, ...
                         resultStr,...
                         repmat(sprintf(' '), 1, 10-length(resultStr)),...
@@ -527,8 +527,8 @@ classdef SimSet < handle
                     obj.finalReportWrite(entry);
                     total = total + simtime;
                     validsims = validsims + 1;
-                    if (simtime > max) max = simtime; end %#ok<*SEPEX>
-                    if (simtime < min) min = simtime; end
+                    if (simtime > max) max = simtime; end %#ok<SEPEX,*SEPEX>
+                    if (simtime < min) min = simtime; end %#ok<SEPEX>
                 else
                     entry = sprintf('\t%s\t%s',...
                                     obj.sims(i).GetID(), '     -----');

@@ -291,7 +291,7 @@ function result = nmRun(obj, simset)
                     % keep them from being passed over in favor of a
                     % simulator already in use, so we ensure they will 
                     % be at the head of the line.
-                    if isinf(schedule(2,i))
+                    if (isinf(schedule(2,i)) && (schedule(6,i) == 1))
                         schedule(5,i) = -1;
                     end
 
@@ -300,8 +300,7 @@ function result = nmRun(obj, simset)
                 % Sorting the columns by the ETC puts the simulator indices
                 % in order of likely-to-finish-first; within ties the
                 % available simulators come first.
-%                 sortedSchedule = sortrows(schedule', [5 -6])'
-                sortedSchedule = sortrows(schedule', [-6 5])'
+                sortedSchedule = sortrows(schedule', [5 -6])';
                 
                 % Place Scheduled Simulations on Assigned Simulators if
                 % Open, until hit an unavailable simulator
