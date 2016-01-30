@@ -204,6 +204,11 @@ function result = nmRun(obj, simset)
         return;
     end
 
+    % Clear the Simulator Statistics before the SimSet starts
+    for i = 1:obj.numSimulators
+        obj.simulatorPool{i}.resetStats();
+    end
+    
     % Update the status webpage
     obj.setSnapshotTimeStr(datestr(now));
     obj.displayStatusWebPage('SimSet');
@@ -219,9 +224,22 @@ function result = nmRun(obj, simset)
     % This is where each simdef is parsed out to be run on the
     % simulator pool 
     % In process of transforming this into the Scheduler 2.0 approach.
+    % Loop time-keeping initialization
     pollDelay = obj.pollDelay;
+    numCycles = -1;
+    avgCyclePeriod = 0; 
+    totalTime = 0;
+    previousCycleStart = datetime('now'); 
     while(true)
-        
+        % Keep track of average scheduling loop time
+        numCycles = numCycles+1;
+        cycleStart = datetime('now'); 
+        totalTime = totalTime + seconds(cycleStart - previousCycleStart);
+        if numCycles
+            avgCyclePeriod = totalTime/numCycles; 
+        end
+        previousCycleStart = cycleStart;
+            
         % Update all simulators and stats
         for i = 1:obj.numSimulators
             switch(obj.simulatorPool{i}.updateState())
@@ -233,9 +251,6 @@ function result = nmRun(obj, simset)
             end
         end
         
-        % Record the time (host) of update for use in scheduling if necessary
-%         updateTime = datetime('now');
-       
         % Update the status webpage
         obj.setSnapshotTimeStr(datestr(now));
         obj.displayStatusWebPage('SimSet');
@@ -245,15 +260,12 @@ function result = nmRun(obj, simset)
             
             % Are Open Simulators available?
             if obj.isSimulatorAvailable()
-                % Update the machine time deltas
-                % (Not implemented yet)
-                
                 % Create new min-min schedule
                 % row 1: simulator index
                 % row 2: simulator ETA in datetime format
                 % row 3: simulator-specific ETS for a simulation started now
-                % row 4: Simulator time offset (delta)
-                % row 5: ETC = ETA + delta + ETS
+                % row 4: Additional loop correction time for busy simulators
+                % row 5: ETC = ETA + ETS + loop correction 
                 % row 6: Simulator availability (available = 1, not
                 % available = 0 for ability to secondary sort)
                 schedule = zeros(6, obj.numSimulators);
@@ -263,27 +275,25 @@ function result = nmRun(obj, simset)
 
                     if obj.simulatorPool{i}.getState() == SimulatorState.AVAILABLE
                         schedule(2, i) = 0.0;
+                        schedule(4, i) = 0.0;
                         schedule(6, i) = 1;
                     else
                         [handoffTime, ~, ~, ~, ~] =...
                             obj.simulatorPool{i}.currentSimulation.getStats();
                         ets = obj.simulatorPool{i}.currentSimulation.getETS();
-%                         currentTime
-                        schedule(2, i) =...
-                             ets + ...
-                                        seconds(handoffTime - currentTime);
+                        schedule(2, i) = ...
+                                ets + seconds(handoffTime - currentTime);
                         % If it ended in the past for whatever reason (such
                         % as an initial ETS=0), bring the ETA to now
                         if schedule(2,i) < 0
                             schedule(2,i) = 0;
                         end
-                            
+                        schedule(4, i) = avgCyclePeriod;
                         schedule(6, i) = 0;
                     end
                     [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
                                         obj.simulatorPool{i}.getStats();
                     schedule(3, i) = mPT + mWT + mRT + mFT;
-                    schedule(4, i) = 0.0; % TEMPORARY
                     schedule(5, i) = sum(schedule(2:4, i));
                     
                     % Untried simulators have infinite stats to
@@ -294,13 +304,31 @@ function result = nmRun(obj, simset)
                     if (isinf(schedule(2,i)) && (schedule(6,i) == 1))
                         schedule(5,i) = -1;
                     end
-
+                end
+                
+                % Running simulators can end up here with a 0
+                % ETS due to startup situations, blocking progress until
+                % they have finished running; in that case we just want to
+                % move them back in the queue temporarily. So for the sort
+                % we replace their ETC with the max ETC of all
+                % simulators; it will be replaced like this until the
+                % simulation finishes and real data comes into the ETS.
+                maxETC = max(schedule(5,:));
+                for i = 1:obj.numSimulators
+                    if (schedule(3,i)==0 && schedule(6,i) == 0)
+                        schedule(5,i) = maxETC;
+                    end
                 end
                 
                 % Sorting the columns by the ETC puts the simulator indices
                 % in order of likely-to-finish-first; within ties the
                 % available simulators come first.
                 sortedSchedule = sortrows(schedule', [5 -6])';
+                fprintf('\n -----\nAverage Cycle Period: %f\n', avgCyclePeriod);
+                for i = 1:6
+                    fprintf([repmat('% 5.0f ', 1, obj.numSimulators) '\n'],...
+                        sortedSchedule(i,:));
+                end
                 
                 % Place Scheduled Simulations on Assigned Simulators if
                 % Open, until hit an unavailable simulator
@@ -349,6 +377,11 @@ function result = nmRun(obj, simset)
     obj.setSnapshotTimeStr(datestr(now));
     obj.displayStatusWebPage('SimSet');
 
+    % Save Simulator statistics for this SimSet
+    for i = 1:obj.numSimulators
+        obj.simulatorPool{i}.saveStatsHistory(obj.nmSimSet.getBaseDir());
+    end
+    
     % Clean up the simset 
     result = obj.nmSimSet.wrapup();
 

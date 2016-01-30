@@ -409,6 +409,10 @@ classdef SimSet < handle
             type = obj.type;
         end
         
+        function dir = getBaseDir(obj)
+            dir = obj.baseDir;
+        end
+        
         % ----------------
         function setType(obj, type)
             % Sets the SimSet type.

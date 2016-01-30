@@ -18,6 +18,7 @@ classdef SimulatorStats < handle
         stdDevRunTime;
         meanFinishTime;
         stdDevFinishTime;
+        history;
     end
     
     methods
@@ -36,6 +37,7 @@ classdef SimulatorStats < handle
             obj.stdDevRunTime = 0.0;
             obj.meanFinishTime = inf;
             obj.stdDevFinishTime = 0.0;
+            obj.history = [0  0 0 0 0  0 0 0 0  0 0 0 0];
         end
         
         function addData(obj, TP, TW, TR, TF)
@@ -54,6 +56,11 @@ classdef SimulatorStats < handle
                 obj.meanFinishTime = mean(obj.finishTimes);
                 obj.stdDevFinishTime = std(obj.finishTimes);
             end
+            obj.appendToHistory(obj.numSims, TP, TW, TR, TF,...
+                obj.meanPrepTime,   obj.stdDevPrepTime, ...
+                obj.meanWaitTime,   obj.stdDevWaitTime, ...
+                obj.meanRunTime,    obj.stdDevRunTime, ...
+                obj.meanFinishTime, obj.stdDevFinishTime);
         end
         
         function setStats(obj, mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT)
@@ -65,6 +72,12 @@ classdef SimulatorStats < handle
                 obj.stdDevRunTime = sRT;
                 obj.meanFinishTime = mFT;
                 obj.stdDevFinishTime = sFT;
+        end
+        
+        function resetStats(obj)
+            obj.setStats(0,0,0,0,0,0,0,0);
+            obj.history = [];
+            obj.setUpdateStats();
         end
         
         function [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = getStats(obj)
@@ -85,5 +98,26 @@ classdef SimulatorStats < handle
         function clearUpdateStats(obj)
             obj.updateStats = false;
         end
+        
+        function saveStatsHistory(obj, id, directory)
+            filename = [id 'Stats.txt'];
+            fp = fopen(fullfile(directory, filename), 'wt');
+            for i = 1:size(obj.history, 1)
+                fprintf(fp,...
+                    ['%10f' repmat(' %10.1f ', 1, (size(obj.history, 2)-1)) '\n'],...
+                    obj.history(i,:));
+            end
+            fclose(fp);
+        end
     end
-end
+    
+    methods(Access=private)
+        function appendToHistory(obj, NS,  TP, TW, TR, TF, ...
+                                           mPT, sPT, mWT, sWT, ...
+                                           mRT, sRT, mFT, sFT)
+            obj.history = ...
+                vertcat(obj.history,...
+                    [NS  TP TW TR TF  mPT sPT mWT sWT  mRT sRT mFT sFT]);
+        end
+    end
+end 

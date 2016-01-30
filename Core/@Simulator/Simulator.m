@@ -594,9 +594,9 @@ classdef Simulator < handle
                                   seconds(runStartTime-submissionTime),...
                                   seconds(runCompleteTime-runStartTime),...
                                   seconds(simFullProcTime-runCompleteTime));
-                if 1 % just for ease of debug
+                if 0 % just for ease of debug
                     [mPR, sPT, mWT, sWT, mRT, sRT, mFT, sFT] =...
-                                                    obj.stats.getStats(); %#ok<ASGLU>
+                                                    obj.stats.getStats(); %#ok<UNRCH,ASGLU>
 %                     fprintf(['%s:  mPR %f, sPT %f | mWT %f, sWT %f '...
 %                              '| mRT %f, sRT %f | mFT %f, sFT %f'],...
 %                             obj.getID(), mPR, sPT, mWT, sWT,...
@@ -689,6 +689,16 @@ classdef Simulator < handle
         % -------------
         function [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = getStats(obj)
             [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = obj.stats.getStats();
+        end
+        
+        % -------------
+        function resetStats(obj)
+            obj.stats.resetStats();
+        end
+        
+        % -------------
+        function saveStatsHistory(obj, directory)
+            obj.stats.saveStatsHistory(obj.getID(), directory);
         end
         
         % -------------
