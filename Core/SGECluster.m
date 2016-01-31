@@ -338,8 +338,7 @@ classdef SGECluster < SimMachine & Cluster
         
         % ----------
         function cancelJob(obj, jobID)
-            disp(['CANCELLING JOB ' num2str(jobID)]); % TEMPORARY DEBUG
-            command = ['qdel ' num2str(jobID)];
+            command = ['qdel ' num2str(jobID, '% 10.0f')];
             obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
         end
         

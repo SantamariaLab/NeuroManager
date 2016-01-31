@@ -641,7 +641,6 @@ classdef Simulator < handle
         function tf = pullbackSimulation(obj)
             simulation = obj.currentSimulation;
             if simulation.getState == SimulationState.SUBMITTED
-                disp(['pullbackSIMULATION: Cancelling jobID=' num2str(simulation.getJobID()) '.'])
                 obj.machine.cancelJob(simulation.getJobID());
                 simulation.clearForResubmit();
                 tf = true;

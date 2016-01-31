@@ -394,34 +394,55 @@ function result = nmRun(obj, simset)
                     currentAvgTS(i)= mPT + mWT + mRT + mFT;  %#ok<AGROW>
                 end
                 averageSimulationDuration = mean(currentAvgTS(:));
-                for i  = 1:obj.numSimulators
-                    simulator = obj.simulatorPool{i};
-                    % Only for simulations in process
-                    if simulator.getState() == SimulatorState.BUSY
-                        % Only simulations on clusters
-                        if simulator.usesClusterManager()
-                            simulation = simulator.getSimulation();
-                            % Only simulations in the SUBMITTED state
-                            if simulation.getState == SimulationState.SUBMITTED
-                                timeSubmitted = simulation.getSubmissionTime();
-                                currentTime = simulator.getCurrentTime();
-                                timeInWaitQueue = seconds(currentTime - timeSubmitted);
-                                % Only simulations waiting so long
-                                if timeInWaitQueue > averageSimulationDuration
-                                    % Take the simulation away from the
-                                    %   Simulator and deactivate the Simulator
-                                    disp(['RESCHEDULING Simulation ' simulation.getID() ...
-                                          ' (jobID = ' num2str(simulation.getJobID()) ')']);
-                                    if simulator.pullbackSimulation()
-                                        obj.nmSimSet.returnSimulation(simulation, SimulationState.UNRUN);
-                                        disp(['RETIRING Simulator ' simulator.getID()]);
-                                        simulator.retire();                     % not written yet
+                
+                % Now search and reschedule if necessary
+                % Avoid any rescheduling in first cycle
+                if averageSimulationDuration > 0.0
+                    % Reschedule all simulations that qualify
+                    for i  = 1:obj.numSimulators
+                        simulator = obj.simulatorPool{i};
+                        % Only busy simulators
+                        if simulator.getState() == SimulatorState.BUSY
+                            % Only simulations on clusters
+                            if simulator.usesClusterManager()
+                                simulation = simulator.getSimulation();
+                                % Only simulations in the SUBMITTED state
+                                if simulation.getState == SimulationState.SUBMITTED
+                                    timeSubmitted = simulation.getSubmissionTime();
+                                    currentTime = simulator.getCurrentTime();
+                                    timeInWaitQueue = seconds(currentTime - timeSubmitted);
+                                    % Only simulations waiting longer than
+                                    % a full simulation on a different simulator
+                                    if timeInWaitQueue > averageSimulationDuration
+                                        % Take the simulation away from the
+                                        %   Simulator and deactivate the Simulator
+                                        obj.log.write(['RESCHEDULING Simulation ' simulation.getID() ...
+                                              ' (jobID = ' num2str(simulation.getJobID(), '% 10.0f') ')']); 
+                                        if obj.simNotificationSet.isEnabled()
+                                            notificationSubject = 'NeuroManager Adaptation';
+                                            obj.simNotificationSet.send(notificationSubject,...
+                                             ['RESCHEDULING Simulation ' simulation.getID() ...
+                                              ' (jobID = ' num2str(simulation.getJobID(), '% 10.0f') ')'], '');
+                                        end
+                                        if simulator.pullbackSimulation()
+                                            obj.nmSimSet.returnSimulation(simulation,...
+                                                                          SimulationState.UNRUN);
+                                            obj.log.write(['RETIRING Simulator ' simulator.getID() ...
+                                                           ' due to excessive wait time.']); 
+                                            if obj.simNotificationSet.isEnabled()
+                                                notificationSubject = 'NeuroManager Adaptation';
+                                                obj.simNotificationSet.send(notificationSubject,...
+                                                 ['RETIRING Simulator ' simulator.getID() ...
+                                                  ' due to excessive wait time.'], '');
+                                            end
+                                            simulator.retire();                     
+                                        end
                                     end
-                                end
-                            end 
-                        end
-                    end
-                end  % for i  = 1:obj.numSimulators
+                                end 
+                            end
+                        end % if simulator.getState() == SimulatorState.BUSY
+                    end  % for i  = 1:obj.numSimulators
+                end % if averageSimulationDuration > 0.0
             end
         end
         obj.setSnapshotTimeStr(datestr(now));
