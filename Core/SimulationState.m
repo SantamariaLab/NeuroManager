@@ -219,5 +219,9 @@ classdef SimulationState
         % some reason
         % (for dependency implementation; not in use yet)
         UNAVAILABLE   = 9;  % NOT IN USE YET 
+        
+        % For dealing with slow simulators
+        CANCELLING = 10;
+        CANCELLED = 11;
    end
 end

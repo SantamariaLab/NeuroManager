@@ -635,6 +635,34 @@ classdef Simulator < handle
             end
         end 
 
+        % --------------
+        % Used for cluster-hosted Simulations that are stuck in a long
+        % waiting queue and need to be moved to another Simulator
+        function tf = pullbackSimulation(obj)
+            simulation = obj.currentSimulation;
+            if simulation.getState == SimulationState.SUBMITTED
+                disp(['pullbackSIMULATION: Cancelling jobID=' simulation.getJobID() '.'])
+                obj.machine.cancelJob(simulation.getJobID());
+                simulation.clearForResubmit();
+                tf = true;
+            else
+                tf = false;
+            end
+        end
+        
+        % ------------
+        % User must ensure there is no current simulation on the simulator.
+        % The RETIRED state means that no simulations will be
+        % scheduled on the simulator.
+        function retire(obj)
+            obj.state = SimulatorState.RETIRED;
+        end
+        
+        % -------------
+        function tf = usesClusterManager(obj)
+            tf = obj.machine.usesClusterManager();
+        end
+        
         % -------------
         function postDownloadProcessingSimulatorSpecific(obj, simulation) %#ok<INUSD>
             % Override in subclasses if you need to

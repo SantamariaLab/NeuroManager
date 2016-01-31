@@ -263,5 +263,11 @@ classdef NoSubMachine < RunJobMachine
                         ];
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
+        
+        % ----------
+        function tf = usesClusterManager(obj) %#ok<MANU>
+            tf = false;
+        end
+
     end
 end

@@ -267,7 +267,7 @@ function result = nmRun(obj, simset)
                 % row 4: Additional loop correction time for busy simulators
                 % row 5: ETC = ETA + ETS + loop correction 
                 % row 6: Simulator availability (available = 1, not
-                % available = 0 for ability to secondary sort)
+                % available = 0 for ability to secondary sort; retired = -1)
                 schedule = zeros(6, obj.numSimulators);
                 schedule(1, :) = [1:obj.numSimulators];
                 for i = 1:obj.numSimulators
@@ -275,9 +275,12 @@ function result = nmRun(obj, simset)
 
                     if obj.simulatorPool{i}.getState() == SimulatorState.AVAILABLE
                         schedule(2, i) = 0.0;
+                        [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
+                                            obj.simulatorPool{i}.getStats();
+                        schedule(3, i) = mPT + mWT + mRT + mFT;
                         schedule(4, i) = 0.0;
                         schedule(6, i) = 1;
-                    else
+                    elseif obj.simulatorPool{i}.getState() == SimulatorState.BUSY
                         [handoffTime, ~, ~, ~, ~] =...
                             obj.simulatorPool{i}.currentSimulation.getStats();
                         ets = obj.simulatorPool{i}.currentSimulation.getETS();
@@ -288,12 +291,19 @@ function result = nmRun(obj, simset)
                         if schedule(2,i) < 0
                             schedule(2,i) = 0;
                         end
+                        [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
+                                            obj.simulatorPool{i}.getStats();
+                        schedule(3, i) = mPT + mWT + mRT + mFT;
                         schedule(4, i) = avgCyclePeriod;
                         schedule(6, i) = 0;
-                    end
-                    [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
-                                        obj.simulatorPool{i}.getStats();
-                    schedule(3, i) = mPT + mWT + mRT + mFT;
+                    else
+                        % Simulator is RETIRED and needs to stay out of the
+                        % way of the scheduler
+                            schedule(2, i) = 0.0;
+                            schedule(3, i) = inf;
+                            schedule(4, i) = 0.0;
+                            schedule(6, i) = -1;
+                    end 
                     schedule(5, i) = sum(schedule(2:4, i));
                     
                     % Untried simulators have infinite stats to
@@ -306,9 +316,9 @@ function result = nmRun(obj, simset)
                     end
                 end
                 
-                % Running simulators can end up here with a 0
-                % ETS due to startup situations, blocking progress until
-                % they have finished running; in that case we just want to
+                % Running simulators can end up here with a 0 ETS due to
+                % startup situations, which blocks further placements until 
+                % they have finished running; to avoid that we just want to
                 % move them back in the queue temporarily. So for the sort
                 % we replace their ETC with the max ETC of all
                 % simulators; it will be replaced like this until the
@@ -324,10 +334,12 @@ function result = nmRun(obj, simset)
                 % in order of likely-to-finish-first; within ties the
                 % available simulators come first.
                 sortedSchedule = sortrows(schedule', [5 -6])';
-                fprintf('\n -----\nAverage Cycle Period: %f\n', avgCyclePeriod);
-                for i = 1:6
-                    fprintf([repmat('% 5.0f ', 1, obj.numSimulators) '\n'],...
-                        sortedSchedule(i,:));
+                if 1  % just for monitor/debug
+                    fprintf('\n -----\nAverage Cycle Period: %f\n', avgCyclePeriod);
+                    for i = 1:6
+                        fprintf([repmat('% 5.0f ', 1, obj.numSimulators) '\n'],...
+                            sortedSchedule(i,:));
+                    end
                 end
                 
                 % Place Scheduled Simulations on Assigned Simulators if
@@ -355,7 +367,6 @@ function result = nmRun(obj, simset)
                 end
                 obj.setSnapshotTimeStr(datestr(now));
                 obj.displayStatusWebPage('SimSet');
-                
             else
                 % No simulators available so so ensure we are at steady-state
                 % polling rate and wait for a simulator to become available
@@ -366,12 +377,57 @@ function result = nmRun(obj, simset)
             % All Simulators Complete?
             if (obj.nmSimSet.isFullyProcessed())
                 break; % Yes
+            else
+                % Here all Simulations are in play, but we need to see if
+                % any Simulation in SUBMITTED state is stuck in a 
+                % waiting queue by seeing if its current TW is greater than
+                % the average time to do a complete simulation for all
+                % Simulators; if so, retire that Simulator 
+                % and put the Simulation back on the Unrun list to be
+                % rescheduled. THIS IS ONLY USED FOR SIMULATORS THAT ARE ON
+                % CLUSTERS THAT USE CLUSTER MANAGERS.
+                %
+                % Gather average time to do a complete simulation
+                for i  = 1:obj.numSimulators
+                    [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
+                                        obj.simulatorPool{i}.getStats();
+                    currentAvgTS(i)= mPT + mWT + mRT + mFT;  %#ok<AGROW>
+                end
+                averageSimulationDuration = mean(currentAvgTS(:));
+                for i  = 1:obj.numSimulators
+                    simulator = obj.simulatorPool{i};
+                    % Only for simulations in process
+                    if simulator.getState() == SimulatorState.BUSY
+                        % Only simulations on clusters
+                        if simulator.usesClusterManager()
+                            simulation = simulator.getSimulation();
+                            % Only simulations in the SUBMITTED state
+                            if simulation.getState == SimulationState.SUBMITTED
+                                timeSubmitted = simulation.getSubmissionTime();
+                                currentTime = simulator.getCurrentTime();
+                                timeInWaitQueue = seconds(currentTime - timeSubmitted);
+                                % Only simulations waiting so long
+                                if timeInWaitQueue > averageSimulationDuration
+                                    % Take the simulation away from the
+                                    %   Simulator and deactivate the Simulator
+                                    disp(['RESCHEDULING Simulation ' simulation.getID() ...
+                                          ' (jobID = ' simulation.getJobID() ')']);
+                                    if simulator.pullbackSimulation()
+                                        obj.nmSimSet.returnSimulation(simulation, SimulationState.UNRUN);
+                                        disp(['RETIRING Simulator ' simulator.getID()]);
+                                        simulator.retire();                     % not written yet
+                                    end
+                                end
+                            end 
+                        end
+                    end
+                end  % for i  = 1:obj.numSimulators
             end
         end
-            obj.setSnapshotTimeStr(datestr(now));
-            obj.displayStatusWebPage('SimSet');
-            % Delay the next cycle so as not to poll the machines to death.
-            pause(pollDelay);
+        obj.setSnapshotTimeStr(datestr(now));
+        obj.displayStatusWebPage('SimSet');
+        % Delay the next cycle so as not to poll the machines to death.
+        pause(pollDelay);
     end
 
     obj.setSnapshotTimeStr(datestr(now));

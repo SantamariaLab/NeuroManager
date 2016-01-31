@@ -257,7 +257,7 @@ classdef Simulation < handle
         result;         % Holds the end result of the run on target
         executionTime;  % Holds the execution time of the run on target
         errmsg;         % Holds any end error message from run on target
-        mlVersion;        % Holds the MATLAB version string 
+        mlVersion;      % Holds the MATLAB version string 
         
         machine;        % The machine on which this simulation is being run
         simulator;      % The simulator on which this simulation is being run
@@ -329,6 +329,22 @@ classdef Simulation < handle
                 obj.errmsg = '';
                 obj.mlVersion = '';
             end
+        end
+        
+        % --------------
+        function clearForResubmit(obj)
+                obj.jobID = 0;
+                obj.errmsg = '';
+                obj.handoffTime      = 0;
+                obj.submissionTime   = 0;
+                obj.runStartTime     = 0;
+                obj.runCompleteTime  = 0;
+                obj.simFullProcTime  = 0;
+                obj.ETS = 0.0;
+                obj.executionTime = NaN;
+                obj.resultsFile         = '';
+                obj.result = '';
+                obj.mlVersion = '';
         end
         
         % --------------

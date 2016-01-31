@@ -331,7 +331,19 @@ classdef SGECluster < SimMachine & Cluster
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
-                % ----------------
+        % ----------
+        function tf = usesClusterManager(obj) %#ok<MANU>
+            tf = true;
+        end
+        
+        % ----------
+        function cancelJob(obj, jobID)
+            disp(['CANCELLING JOB ' jobID]); % TEMPORARY DEBUG
+            command = ['qdel ' jobID];
+            obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+        end
+        
+        % ----------------
         function str = getParEnvStr(obj)
         % Parallel environment - see qsub documentation
             str = obj.parEnvStr;
