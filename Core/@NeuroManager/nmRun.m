@@ -411,7 +411,7 @@ function result = nmRun(obj, simset)
                                     % Take the simulation away from the
                                     %   Simulator and deactivate the Simulator
                                     disp(['RESCHEDULING Simulation ' simulation.getID() ...
-                                          ' (jobID = ' simulation.getJobID() ')']);
+                                          ' (jobID = ' num2str(simulation.getJobID()) ')']);
                                     if simulator.pullbackSimulation()
                                         obj.nmSimSet.returnSimulation(simulation, SimulationState.UNRUN);
                                         disp(['RETIRING Simulator ' simulator.getID()]);

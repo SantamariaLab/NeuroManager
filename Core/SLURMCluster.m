@@ -338,7 +338,7 @@ classdef SLURMCluster < SimMachine & Cluster
 
         % ----------
         function cancelJob(obj, jobID)
-            command = ['scancel ' jobID];
+            command = ['scancel ' num2str(jobID)];
             obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
         end
         
