@@ -773,6 +773,7 @@ classdef Simulation < handle
             mlVersion = obj.mlVersion;
         end
         
+        % --------------
         function [handoffTime, submissionTime, runStartTime,...
                   runCompleteTime, simFullProcTime] = getStats(obj)
             handoffTime = obj.handoffTime;
