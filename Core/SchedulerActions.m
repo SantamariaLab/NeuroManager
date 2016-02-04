@@ -187,8 +187,8 @@ END OF LICENSE
 % A class which defines the actions the Scheduler can enqueue. 
 classdef SchedulerActions 
     properties (Constant)
-        % Place Unrun simulation X on Open Simulator Y
-        PLACESIMULATION = 0;
+        % Nothing to do this scheduling
+        NTD             = 0;
         
         % Cancel the Simulation on Simulator X and return it to the Unrun
         % set
@@ -197,8 +197,8 @@ classdef SchedulerActions
         % Stop using Simulator X
         RETIRESIMULATOR = 2;
         
-        % Nothing to do this scheduling
-        NTD             = 3;
+        % Place Unrun simulation X on Open Simulator Y
+        PLACESIMULATION = 3;
         
         % Nothing left to schedule
         FINISHED        = 4;

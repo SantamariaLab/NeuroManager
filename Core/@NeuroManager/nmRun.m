@@ -250,19 +250,14 @@ function result = nmRun(obj, simset)
         % Update the status webpage
         obj.setSnapshotTimeStr(datestr(now));
         obj.displayStatusWebPage('SimSet');
-        
                
-%         % Submission
-%         if (obj.nmSimSet.hasUNRUN())
-            
+        % Submission
         % Assemble the data for the scheduler
         simData = SimulatorData();
         for i = 1:obj.numSimulators
             simData.addSimulatorData(obj.simulatorPool{i});
         end
 
-        simData
-        
         availableSimulations = 0;
         for i = 1:obj.nmSimSet.getTotNumSims
             if obj.nmSimSet.sims(i).getState() == SimulationState.UNRUN
@@ -272,7 +267,7 @@ function result = nmRun(obj, simset)
 
         % Call the Scheduler
         actionsList = Scheduler2p0(simData, availableSimulations,...
-                                   avgCyclePeriod)
+                                   avgCyclePeriod);
 
         % Act on the actions list
         for i = 1:size(actionsList, 1)
@@ -282,10 +277,9 @@ function result = nmRun(obj, simset)
                 % Simulator X, where X is the index into the Simulator Pool
                 case SchedulerActions.PLACESIMULATION
                     proposedSimulation = obj.nmSimSet.checkOutSimulation();
-                         if proposedSimulation == 0
-                             error('Attempt to check out simulation when none were available')
-                         end
-                    obj.simulatorPool{actionsList(i,2)}.startSimulation(proposedSimulation);
+                    if proposedSimulation ~= 0
+                        obj.simulatorPool{actionsList(i,2)}.startSimulation(proposedSimulation);
+                    end
 
                 % Syntax: CANCELRETURN X
                 % Cancel the Simulation on Simulator X and return it to the
@@ -336,191 +330,9 @@ function result = nmRun(obj, simset)
                     simSetFinished = true;
                     break;
                 otherwise
-                    % error of some sort TBD
+                    % Nothing to do
             end
         end
-% ---
-%             % Are Open Simulators available?
-%             if obj.isSimulatorAvailable()
-%                 % Create new min-min schedule
-%                 % row 1: simulator index
-%                 % row 2: simulator ETA in datetime format
-%                 % row 3: simulator-specific ETS for a simulation started now
-%                 % row 4: Additional loop correction time for busy simulators
-%                 % row 5: ETC = ETA + ETS + loop correction 
-%                 % row 6: Simulator availability (AVAILABLE = 1, BUSY = 0
-%                 % for ability to secondary sort; RETIRED = -1) 
-%                 schedule = zeros(6, obj.numSimulators);
-%                 schedule(1, :) = [1:obj.numSimulators];
-%                 for i = 1:obj.numSimulators
-%                     currentTime = obj.simulatorPool{i}.getCurrentTime();
-% 
-%                     if obj.simulatorPool{i}.getState() == SimulatorState.AVAILABLE
-%                         schedule(2, i) = 0.0;
-%                         [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
-%                                             obj.simulatorPool{i}.getStats();
-%                         schedule(3, i) = mPT + mWT + mRT + mFT;
-%                         schedule(4, i) = 0.0;
-%                         schedule(6, i) = 1;
-%                     elseif obj.simulatorPool{i}.getState() == SimulatorState.BUSY
-%                         [handoffTime, ~, ~, ~, ~] =...
-%                             obj.simulatorPool{i}.currentSimulation.getStats();
-%                         ets = obj.simulatorPool{i}.currentSimulation.getETS();
-%                         schedule(2, i) = ...
-%                                 ets + seconds(handoffTime - currentTime);
-%                         % If it ended in the past for whatever reason (such
-%                         % as an initial ETS=0), bring the ETA to now
-%                         if schedule(2,i) < 0
-%                             schedule(2,i) = 0;
-%                         end
-%                         [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
-%                                             obj.simulatorPool{i}.getStats();
-%                         schedule(3, i) = mPT + mWT + mRT + mFT;
-%                         schedule(4, i) = avgCyclePeriod;
-%                         schedule(6, i) = 0;
-%                     else
-%                         % Simulator is RETIRED and needs to stay out of the
-%                         % way of the scheduler
-%                             schedule(2, i) = 0.0;
-%                             schedule(3, i) = inf;
-%                             schedule(4, i) = 0.0;
-%                             schedule(6, i) = -1;
-%                     end 
-%                     schedule(5, i) = sum(schedule(2:4, i));
-%                     
-%                     % Untried simulators have infinite stats to
-%                     % ensure proper sorting but we don't want that to
-%                     % keep them from being passed over in favor of a
-%                     % simulator already in use, so we ensure they will 
-%                     % be at the head of the line.
-%                     if (isinf(schedule(2,i)) && (schedule(6,i) == 1))
-%                         schedule(5,i) = -1;
-%                     end
-%                 end
-%                 
-%                 % Running simulators can end up here with a 0 ETS due to
-%                 % startup situations, which blocks further placements until 
-%                 % they have finished running; to avoid that we just want to
-%                 % move them back in the queue temporarily. So for the sort
-%                 % we replace their ETC with the max ETC of all
-%                 % simulators; it will be replaced like this until the
-%                 % simulation finishes and real data comes into the ETS.
-%                 maxETC = max(schedule(5,:));
-%                 for i = 1:obj.numSimulators
-%                     if (schedule(3,i)==0 && schedule(6,i) == 0)
-%                         schedule(5,i) = maxETC;
-%                     end
-%                 end
-%                 
-%                 % Sorting the columns by the ETC puts the simulator indices
-%                 % in order of likely-to-finish-first; within ties the
-%                 % available simulators come first.
-%                 sortedSchedule = sortrows(schedule', [5 -6])';
-%                 if 1  % just for monitor/debug
-%                     fprintf('\n -----\nAverage Cycle Period: %f\n', avgCyclePeriod);
-%                     for i = 1:6
-%                         fprintf([repmat('% 5.0f ', 1, obj.numSimulators) '\n'],...
-%                             sortedSchedule(i,:));
-%                     end
-%                 end
-%                 
-%                 % Place Scheduled Simulations on Assigned Simulators if
-%                 % Open, until hit an unavailable simulator
-%                 for i = 1:obj.numSimulators
-%                     if sortedSchedule(6, i) == 0
-%                         break;
-%                     end
-%                     
-%                     % Grab an simulation that is UNRUN
-%                     proposedSimulation = obj.nmSimSet.checkOutSimulation();
-%                     
-%                     % Get the simulation (if there is one left) started on
-%                     % the simulator
-%                     if(proposedSimulation ~= 0)
-%                         simIndex = sortedSchedule(1, i);
-%                         obj.simulatorPool{simIndex}.startSimulation(proposedSimulation);
-%                     else
-%                         % if no Unrun simulations left then get out of this loop
-%                         break;
-%                     end
-%                     % Show user each Simulation as placed
-%                     obj.setSnapshotTimeStr(datestr(now));
-%                     obj.displayStatusWebPage('SimSet');
-%                 end
-%                 obj.setSnapshotTimeStr(datestr(now));
-%                 obj.displayStatusWebPage('SimSet');
-%             else
-%                 % No simulators available so wait for one
-%                 obj.setSnapshotTimeStr(datestr(now));
-%                 obj.displayStatusWebPage('SimSet');
-%             end
-%         else
-%             % All Simulations Finished?
-%             if (obj.nmSimSet.isFullyProcessed())
-%                 break; % Yes
-%             else
-%                 % Here all Simulations are in play, but we need to see if
-%                 % any Simulation in SUBMITTED state is stuck in a 
-%                 % waiting queue by seeing if its current TW is greater than
-%                 % the average time to do a complete simulation for all
-%                 % Simulators; if so, retire that Simulator 
-%                 % and put the Simulation back on the Unrun list to be
-%                 % rescheduled. 
-%                 %
-%                 % Gather average time to do a complete simulation
-%                 for i  = 1:obj.numSimulators
-%                     [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = ...
-%                                         obj.simulatorPool{i}.getStats();
-%                     currentAvgTS(i)= mPT + mWT + mRT + mFT;  %#ok<AGROW>
-%                 end
-%                 averageSimulationDuration = mean(currentAvgTS(:));
-%                 
-%                 % Now search and reschedule if necessary
-%                 % Avoid any rescheduling in first cycle
-%                 if averageSimulationDuration > 0.0
-%                     % Reschedule all simulations that qualify
-%                     for i  = 1:obj.numSimulators
-%                         simulator = obj.simulatorPool{i};
-%                         % Only busy simulators
-%                         if simulator.getState() == SimulatorState.BUSY
-%                             simulation = simulator.getSimulation();
-%                             % Only simulations in the SUBMITTED state
-%                             if simulation.getState == SimulationState.SUBMITTED
-%                                 timeSubmitted = simulation.getSubmissionTime();
-%                                 currentTime = simulator.getCurrentTime();
-%                                 timeInWaitQueue = seconds(currentTime - timeSubmitted);
-%                                 % Only simulations waiting longer than
-%                                 % a full simulation on a different simulator
-%                                 if timeInWaitQueue > averageSimulationDuration
-%                                     % Take the simulation away from the
-%                                     %   Simulator and deactivate the Simulator
-%                                     obj.log.write(['RESCHEDULING Simulation ' simulation.getID() ...
-%                                           ' (jobID = ' num2str(simulation.getJobID(), '% 10.0f') ')']); 
-%                                     if obj.simNotificationSet.isEnabled()
-%                                         notificationSubject = 'NeuroManager Adaptation';
-%                                         obj.simNotificationSet.send(notificationSubject,...
-%                                          ['RESCHEDULING Simulation ' simulation.getID() ...
-%                                           ' (jobID = ' num2str(simulation.getJobID(), '% 10.0f') ')'], '');
-%                                     end
-%                                     if simulator.pullbackSimulation()
-%                                         obj.nmSimSet.returnSimulation(simulation,...
-%                                                                       SimulationState.UNRUN);
-%                                         obj.log.write(['RETIRING Simulator ' simulator.getID() ...
-%                                                        ' due to excessive wait time.']); 
-%                                         if obj.simNotificationSet.isEnabled()
-%                                             notificationSubject = 'NeuroManager Adaptation';
-%                                             obj.simNotificationSet.send(notificationSubject,...
-%                                              ['RETIRING Simulator ' simulator.getID() ...
-%                                               ' due to excessive wait time.'], '');
-%                                         end
-%                                         simulator.retire();                     
-%                                     end
-%                                 end
-%                             end 
-%                         end % if simulator.getState() == SimulatorState.BUSY
-%                     end  % for i  = 1:obj.numSimulators
-%                 end % if averageSimulationDuration > 0.0
-%             end
         obj.setSnapshotTimeStr(datestr(now));
         obj.displayStatusWebPage('SimSet');
         if simSetFinished

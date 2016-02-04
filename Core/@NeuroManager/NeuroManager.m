@@ -652,16 +652,5 @@ classdef NeuroManager < handle
                 end
             end
         end
-        
-        % ---------------
-        function tf = isSimulatorAvailable(obj)
-            tf = false;
-            for i=1:obj.numSimulators
-                if obj.simulatorPool{i}.getState() == SimulatorState.AVAILABLE
-                    tf = true;
-                    break;
-                end
-            end
-        end
     end
 end
