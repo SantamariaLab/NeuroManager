@@ -183,90 +183,126 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% userSimulation.m
-% SineSim.m version --- pairs with Sim_SineSim class file.
-% A trivial simulation simulation for designing and testing NeuroManager.
-function [result, errMsg] =...
-        userSimulation(machineID, simID, ~, inDir, outDir, varargin)
-    % Convert the input parameter vector into familiar variable names
-    inFreq = varargin{1};
-    inDur = varargin{2};
-    frequency = str2double(inFreq);
-    duration = str2double(inDur);
+% SimulatorStats.m
+% Deals with a Simulator's timing statistics for the Scheduler's use.
+% Times assumed to be in seconds
 
-    % Verify the input parameters
-    if(isnan(frequency) || isnan(duration))
-        errMsg = 'Non-numerical input parameter from SimSpec';
-        result = 1;
-        return;
+classdef SimulatorStats < handle
+    properties
+        prepTimes;
+        waitTimes;
+        runTimes;
+        finishTimes;
+        updateStats;
+        numSims;
+        meanPrepTime;
+        stdDevPrepTime;
+        meanWaitTime;
+        stdDevWaitTime;
+        meanRunTime;
+        stdDevRunTime;
+        meanFinishTime;
+        stdDevFinishTime;
+        history;
     end
     
-    % Create the sine wave
-    [t, v] = createMySineWave(frequency, duration);
-    
-    % Plot the data resulting from this trivial simulation
-    h = figure;
-    plot(t, v);
-    title({['Sim\_SineSim Simulator'];...
-           [simID ' on ' strrep(machineID, '_', ' ')]});
-    
-    % Save in the output directory in various formats
-    % MATLAB figure format for manipulation
-    try
-        filename = ['sine_' num2str(frequency) '_' num2str(duration) '.fig'];
-        saveas(h, fullfile(outDir, filename), 'fig')
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not save figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
+    methods
+        function obj = SimulatorStats()
+            obj.prepTimes = [];
+            obj.waitTimes = [];
+            obj.runTimes = [];
+            obj.finishTimes = [];
+            obj.updateStats = true;
+            obj.numSims = 0;
+            obj.meanPrepTime = inf;
+            obj.stdDevPrepTime = 0.0;
+            obj.meanWaitTime = inf;
+            obj.stdDevWaitTime = 0.0;
+            obj.meanRunTime = inf;
+            obj.stdDevRunTime = 0.0;
+            obj.meanFinishTime = inf;
+            obj.stdDevFinishTime = 0.0;
+            obj.history = [0  0 0 0 0  0 0 0 0  0 0 0 0];
+        end
+        
+        function addData(obj, TP, TW, TR, TF)
+            obj.numSims = obj.numSims + 1;
+            obj.prepTimes(obj.numSims) = TP;
+            obj.waitTimes(obj.numSims) = TW;
+            obj.runTimes(obj.numSims) = TR;
+            obj.finishTimes(obj.numSims) = TF;
+            if obj.updateStats
+                obj.meanPrepTime = mean(obj.prepTimes);
+                obj.stdDevPrepTime = std(obj.prepTimes);
+                obj.meanWaitTime = mean(obj.waitTimes);
+                obj.stdDevWaitTime = std(obj.waitTimes);
+                obj.meanRunTime = mean(obj.runTimes);
+                obj.stdDevRunTime = std(obj.runTimes);
+                obj.meanFinishTime = mean(obj.finishTimes);
+                obj.stdDevFinishTime = std(obj.finishTimes);
+            end
+            obj.appendToHistory(obj.numSims, TP, TW, TR, TF,...
+                obj.meanPrepTime,   obj.stdDevPrepTime, ...
+                obj.meanWaitTime,   obj.stdDevWaitTime, ...
+                obj.meanRunTime,    obj.stdDevRunTime, ...
+                obj.meanFinishTime, obj.stdDevFinishTime);
+        end
+        
+        function setStats(obj, mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT)
+                obj.meanPrepTime = mPT;
+                obj.stdDevPrepTime = sPT;
+                obj.meanWaitTime = mWT;
+                obj.stdDevWaitTime = sWT;
+                obj.meanRunTime = mRT;
+                obj.stdDevRunTime = sRT;
+                obj.meanFinishTime = mFT;
+                obj.stdDevFinishTime = sFT;
+        end
+        
+        function resetStats(obj)
+            obj.setStats(0,0,0,0,0,0,0,0);
+            obj.history = [];
+            obj.setUpdateStats();
+        end
+        
+        function [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = getStats(obj)
+                mPT = obj.meanPrepTime;
+                sPT = obj.stdDevPrepTime;
+                mWT = obj.meanWaitTime;
+                sWT = obj.stdDevWaitTime;
+                mRT = obj.meanRunTime;
+                sRT = obj.stdDevRunTime;
+                mFT = obj.meanFinishTime;
+                sFT = obj.stdDevFinishTime;
+        end
+        
+        function setUpdateStats(obj)
+            obj.updateStats = true;
+        end
+        
+        function clearUpdateStats(obj)
+            obj.updateStats = false;
+        end
+        
+        function saveStatsHistory(obj, id, directory)
+            filename = [id 'Stats.txt'];
+            fp = fopen(fullfile(directory, filename), 'wt');
+            for i = 1:size(obj.history, 1)
+                fprintf(fp,...
+                    ['%10f' repmat(' %10.1f ', 1, (size(obj.history, 2)-1)) '\n'],...
+                    obj.history(i,:));
+            end
+            fclose(fp);
+        end
     end
     
-    % tiff format for easy seeing in file browser preview pane
-    try
-        filename = ['sine_' num2str(frequency) '_' num2str(duration) '.tiff'];
-        print('-dtiff','-r300', fullfile(outDir, filename));
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not print figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
+    methods(Access=private)
+        function appendToHistory(obj, NS,  TP, TW, TR, TF, ...
+                                           mPT, sPT, mWT, sWT, ...
+                                           mRT, sRT, mFT, sFT)
+            obj.history = ...
+                vertcat(obj.history,...
+                    [NS  TP TW TR TF  mPT sPT mWT sWT  mRT sRT mFT sFT]);
+        end
     end
-    
-    % pdf format for automatically attaching to emails and text messages
-    try
-        filename = ['QuickSee.pdf'];
-        print('-dpdf', fullfile(outDir, filename));
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not print figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
-    end
-    
-    % Also copy our sample input data file to output as an example of
-    % trivial processing on the target
-    [copyStatus, copyMsg] =...
-        copyfile(fullfile(inDir, 'RenamedSampleInputDataFile.txt'),...
-             fullfile(outDir, 'DoublyRenamedSampleInputDataFile.txt'));
-    % If copy failed for some reason then fail gracefully
-    if copyStatus==0 % MATLAB failure is 0; whereas UNIX success is 0
-        result = 1;
-        errMsg = copyMsg;
-        return;
-    end
-    
-    pause(100);
-    
-    % If we got this far it's a success
-    result = 0; % Needs to return a status of 0 for success, 1 for failure
-    errMsg = '';
-end
-
-function [t, v] = createMySineWave(f, d)
-    t = 0:(d/1000):d;
-    v = sin(f.*2.*pi.*t);
-end
+end 

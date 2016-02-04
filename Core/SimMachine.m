@@ -273,7 +273,8 @@ classdef SimMachine < RealMachine
             % We start the first simulator and get out of the machine
             % constructor in the COMPILING state 
             obj.mSimulators = {}; 
-            simulatorID = sprintf([char(obj.sType) '%02.0f'], 1); 
+%             simulatorID = sprintf([char(obj.sType) '%02.0f'], 1); 
+            simulatorID = sprintf([char(obj.getID()) '%02.0f'], 1); 
             obj.mSimulators{1} = ...
                 obj.makeSimulator(obj.sType, simulatorID,...
                                   obj.log, obj.notificationSet);
@@ -312,7 +313,7 @@ classdef SimMachine < RealMachine
         % complete, so that we know all the files to be copied are in place
         % on the remote.
             for i = 2:obj.numSimulators
-                simulatorID = sprintf([char(obj.sType) '%02.0f'], i); 
+                simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
                 obj.mSimulators{i} = ...
                     obj.makeSimulator(obj.sType, simulatorID,...
                                       obj.log, obj.notificationSet);

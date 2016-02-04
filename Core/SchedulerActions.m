@@ -183,90 +183,30 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% userSimulation.m
-% SineSim.m version --- pairs with Sim_SineSim class file.
-% A trivial simulation simulation for designing and testing NeuroManager.
-function [result, errMsg] =...
-        userSimulation(machineID, simID, ~, inDir, outDir, varargin)
-    % Convert the input parameter vector into familiar variable names
-    inFreq = varargin{1};
-    inDur = varargin{2};
-    frequency = str2double(inFreq);
-    duration = str2double(inDur);
+% SchedulerActions
+% A class which defines the actions the Scheduler can enqueue. 
+classdef SchedulerActions 
+    properties (Constant)
+        % Nothing to do this scheduling
+        NTD             = 0;
+        
+        % Cancel the Simulation on Simulator X and return it to the Unrun
+        % set
+        CANCELRETURN    = 1;
 
-    % Verify the input parameters
-    if(isnan(frequency) || isnan(duration))
-        errMsg = 'Non-numerical input parameter from SimSpec';
-        result = 1;
-        return;
-    end
-    
-    % Create the sine wave
-    [t, v] = createMySineWave(frequency, duration);
-    
-    % Plot the data resulting from this trivial simulation
-    h = figure;
-    plot(t, v);
-    title({['Sim\_SineSim Simulator'];...
-           [simID ' on ' strrep(machineID, '_', ' ')]});
-    
-    % Save in the output directory in various formats
-    % MATLAB figure format for manipulation
-    try
-        filename = ['sine_' num2str(frequency) '_' num2str(duration) '.fig'];
-        saveas(h, fullfile(outDir, filename), 'fig')
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not save figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
-    end
-    
-    % tiff format for easy seeing in file browser preview pane
-    try
-        filename = ['sine_' num2str(frequency) '_' num2str(duration) '.tiff'];
-        print('-dtiff','-r300', fullfile(outDir, filename));
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not print figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
-    end
-    
-    % pdf format for automatically attaching to emails and text messages
-    try
-        filename = ['QuickSee.pdf'];
-        print('-dpdf', fullfile(outDir, filename));
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not print figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
-    end
-    
-    % Also copy our sample input data file to output as an example of
-    % trivial processing on the target
-    [copyStatus, copyMsg] =...
-        copyfile(fullfile(inDir, 'RenamedSampleInputDataFile.txt'),...
-             fullfile(outDir, 'DoublyRenamedSampleInputDataFile.txt'));
-    % If copy failed for some reason then fail gracefully
-    if copyStatus==0 % MATLAB failure is 0; whereas UNIX success is 0
-        result = 1;
-        errMsg = copyMsg;
-        return;
-    end
-    
-    pause(100);
-    
-    % If we got this far it's a success
-    result = 0; % Needs to return a status of 0 for success, 1 for failure
-    errMsg = '';
-end
-
-function [t, v] = createMySineWave(f, d)
-    t = 0:(d/1000):d;
-    v = sin(f.*2.*pi.*t);
+        % Stop using Simulator X
+        RETIRESIMULATOR = 2;
+        
+        % Place Unrun simulation X on Open Simulator Y
+        PLACESIMULATION = 3;
+        
+        % Nothing left to schedule
+        FINISHED        = 4;
+        
+        % Add a Simulator for best scheduling (NOT USED YET)
+        ADDSIMULATOR    = 5;
+        
+        % Remove Simulator X for best scheduling (NOT USED YET)
+        REMOVESIMULATOR = 6;
+    end 
 end

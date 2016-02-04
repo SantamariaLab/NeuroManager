@@ -409,6 +409,10 @@ classdef SimSet < handle
             type = obj.type;
         end
         
+        function dir = getBaseDir(obj)
+            dir = obj.baseDir;
+        end
+        
         % ----------------
         function setType(obj, type)
             % Sets the SimSet type.
@@ -459,15 +463,15 @@ classdef SimSet < handle
                 % Simulation outcome: COMPLETE or FAILED
                 results.simulations(i).result = obj.sims(i).getResult();
                 % The time the Simulator was given the Simulation
-                results.simulations(i).handofftime = obj.sims(i).getHandoffTimeStr();
+                results.simulations(i).handofftime = obj.sims(i).getHandoffTime();
                 % The time the job was submitted on the remote
-                results.simulations(i).submissiontime = obj.sims(i).getSubmissionTimeStr();
+                results.simulations(i).submissiontime = obj.sims(i).getSubmissionTime();
                 % The time on the remote the job actually started running
-                results.simulations(i).runstarttime = obj.sims(i).getRunStartTimeStr();
+                results.simulations(i).runstarttime = obj.sims(i).getRunStartTime();
                 % The time on the remote the job finished
-                results.simulations(i).runcompletetime = obj.sims(i).getRunCompleteTimeStr();
+                results.simulations(i).runcompletetime = obj.sims(i).getRunCompleteTime();
                 % The time on the host that the Simulation was finished up
-                results.simulations(i).simfullproctime = obj.sims(i).getSimFullProcTimeStr();
+                results.simulations(i).simfullproctime = obj.sims(i).getSimFullProcTime();
                 % The tic-toc time obtained by RunSimulation() on the
                 % remote
                 results.simulations(i).executiontime = ...
@@ -511,12 +515,12 @@ classdef SimSet < handle
                         resultStr = 'Unknown';
                 end
                 if (simtime >= 0.0)
-                    id = obj.sims(i).getID();
+                    obj.id = obj.sims(i).getID();
                     simid = obj.sims(i).getSimulatorID();
                     machineid = obj.sims(i).getMachineID();
                     mlversion = obj.sims(i).getMLVersion();
                     entry = sprintf('\t%s%s%10.2f  %s%s%s%s%s%s%s',...
-                        id, repmat(sprintf(' '), 1, 20-length(id)),...
+                        obj.id, repmat(sprintf(' '), 1, 20-length(obj.id)),...
                         simtime, ...
                         resultStr,...
                         repmat(sprintf(' '), 1, 10-length(resultStr)),...
@@ -527,8 +531,8 @@ classdef SimSet < handle
                     obj.finalReportWrite(entry);
                     total = total + simtime;
                     validsims = validsims + 1;
-                    if (simtime > max) max = simtime; end %#ok<*SEPEX>
-                    if (simtime < min) min = simtime; end
+                    if (simtime > max) max = simtime; end %#ok<SEPEX,*SEPEX>
+                    if (simtime < min) min = simtime; end %#ok<SEPEX>
                 else
                     entry = sprintf('\t%s\t%s',...
                                     obj.sims(i).GetID(), '     -----');

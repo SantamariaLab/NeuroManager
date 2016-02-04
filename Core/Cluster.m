@@ -195,6 +195,9 @@ classdef Cluster < RunJobMachine
             obj = obj@RunJobMachine(md, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
         end
-       
+    end
+    
+    methods (Abstract)
+        cancelJob(obj)
     end
 end

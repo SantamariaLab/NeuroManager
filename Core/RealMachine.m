@@ -458,6 +458,15 @@ classdef RealMachine < handle
             vstr = result{1};
         end
         
+        % We assume that the remote cluster is well time-synced and just
+        % query the jobsubmission machine
+        function time = getMachineTime(obj)
+            command = 'date +"%d-%b-%Y %H:%M:%S"';
+            result = obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+            timestr = result{1};
+            time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss');
+        end
+       
         % ----------------
         function delete(obj)
             if ~strcmp(obj.id, obj.hostID)

@@ -331,6 +331,17 @@ classdef SLURMCluster < SimMachine & Cluster
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
+        % ----------
+        function tf = usesClusterManager(obj) %#ok<MANU>
+            tf = false;
+        end
+
+        % ----------
+        function cancelJob(obj, jobID)
+            command = ['scancel ' num2str(jobID, '% 10.0f')];
+            obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+        end
+        
         % ----------------
         function str = getQueueStr(obj)
             str = obj.queueStr;

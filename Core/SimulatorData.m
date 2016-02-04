@@ -183,90 +183,98 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% userSimulation.m
-% SineSim.m version --- pairs with Sim_SineSim class file.
-% A trivial simulation simulation for designing and testing NeuroManager.
-function [result, errMsg] =...
-        userSimulation(machineID, simID, ~, inDir, outDir, varargin)
-    % Convert the input parameter vector into familiar variable names
-    inFreq = varargin{1};
-    inDur = varargin{2};
-    frequency = str2double(inFreq);
-    duration = str2double(inDur);
+% SimulatorData.m
+% A class for mustering the available simulator data for use by a NeuroManager
+% Virtual Scheduler.
 
-    % Verify the input parameters
-    if(isnan(frequency) || isnan(duration))
-        errMsg = 'Non-numerical input parameter from SimSpec';
-        result = 1;
-        return;
+classdef SimulatorData < handle
+    properties
+        numSimulators = 0;
+        simulatorData = struct([]);
     end
     
-    % Create the sine wave
-    [t, v] = createMySineWave(frequency, duration);
-    
-    % Plot the data resulting from this trivial simulation
-    h = figure;
-    plot(t, v);
-    title({['Sim\_SineSim Simulator'];...
-           [simID ' on ' strrep(machineID, '_', ' ')]});
-    
-    % Save in the output directory in various formats
-    % MATLAB figure format for manipulation
-    try
-        filename = ['sine_' num2str(frequency) '_' num2str(duration) '.fig'];
-        saveas(h, fullfile(outDir, filename), 'fig')
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not save figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
-    end
-    
-    % tiff format for easy seeing in file browser preview pane
-    try
-        filename = ['sine_' num2str(frequency) '_' num2str(duration) '.tiff'];
-        print('-dtiff','-r300', fullfile(outDir, filename));
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not print figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
-    end
-    
-    % pdf format for automatically attaching to emails and text messages
-    try
-        filename = ['QuickSee.pdf'];
-        print('-dpdf', fullfile(outDir, filename));
-    catch
-        % Could return a specific error code here, but at the
-        % moment it is not important.
-        errMsg = ['Could not print figure' fullfile(outDir, filename)];
-        result = 1;
-        return;
-    end
-    
-    % Also copy our sample input data file to output as an example of
-    % trivial processing on the target
-    [copyStatus, copyMsg] =...
-        copyfile(fullfile(inDir, 'RenamedSampleInputDataFile.txt'),...
-             fullfile(outDir, 'DoublyRenamedSampleInputDataFile.txt'));
-    % If copy failed for some reason then fail gracefully
-    if copyStatus==0 % MATLAB failure is 0; whereas UNIX success is 0
-        result = 1;
-        errMsg = copyMsg;
-        return;
-    end
-    
-    pause(100);
-    
-    % If we got this far it's a success
-    result = 0; % Needs to return a status of 0 for success, 1 for failure
-    errMsg = '';
-end
+    methods
+%         function obj = SimulatorData()
+%         end
+        
+        % -----
+        function addSimulatorData(obj, simulator)
+            obj.numSimulators = obj.numSimulators + 1;
+            obj.simulatorData(obj.numSimulators).state = simulator.getState();
+            if obj.simulatorData(obj.numSimulators).state == SimulatorState.BUSY
+                [handoffTime, submissionTime, runStartTime,...
+                 runCompleteTime, simFullProcTime] =...
+                                        simulator.currentSimulation.getStats();
+                obj.simulatorData(obj.numSimulators).handoffTime =...
+                                                            handoffTime;
+                obj.simulatorData(obj.numSimulators).submissionTime =...
+                                                            submissionTime;
+                obj.simulatorData(obj.numSimulators).runStartTime =...
+                                                            runStartTime;
+                obj.simulatorData(obj.numSimulators).runCompleteTime =...
+                                                            runCompleteTime;
+                obj.simulatorData(obj.numSimulators).simFullProcTime =...
+                                                            simFullProcTime;
+                obj.simulatorData(obj.numSimulators).simulationState = ...
+                                        simulator.currentSimulation.getState();
+                obj.simulatorData(obj.numSimulators).ETS = ...
+                                        simulator.currentSimulation.getETS();
+            else
+                obj.simulatorData(obj.numSimulators).handoffTime     = datetime('');
+                obj.simulatorData(obj.numSimulators).submissionTime  = datetime('');
+                obj.simulatorData(obj.numSimulators).runStartTime    = datetime('');
+                obj.simulatorData(obj.numSimulators).runCompleteTime = datetime('');
+                obj.simulatorData(obj.numSimulators).simFullProcTime = datetime('');
+                obj.simulatorData(obj.numSimulators).simulationState = ...
+                                        simulator.currentSimulation.getState();
+                obj.simulatorData(obj.numSimulators).ETS = 0.0;
+            end
+            % This is probably very politically incorrect:
+            obj.simulatorData(obj.numSimulators).stats = simulator.stats;
+            obj.simulatorData(obj.numSimulators).currentTime =...
+                                                simulator.getCurrentTime();
+        end
+        
+        % -----
+        function simData = getSimulatorData(obj, index)
+            simData = struct();
+            simData.state = obj.simulatorData(index).state;
+            simData.handoffTime     = obj.simulatorData(index).handoffTime;
+            simData.submissionTime  = obj.simulatorData(index).submissionTime;
+            simData.runStartTime    = obj.simulatorData(index).runStartTime;
+            simData.runCompleteTime = obj.simulatorData(index).runCompleteTime;
+            simData.simFullProcTime = obj.simulatorData(index).simFullProcTime;
+            simData.simulationState = obj.simulatorData(index).simulationState;
+            simData.ETS = obj.simulatorData(index).ETS;
+            simData.stats = obj.simulatorData(index).stats;
+            simData.currentTime = obj.simulatorData(index).currentTime;
+        end
+        
+        % -----
+        function tf = isSimulatorAvailable(obj)
+            tf = false;
+            for i=1:obj.numSimulators
+                if obj.simulatorData(i).state == SimulatorState.AVAILABLE
+                    tf = true;
+                    break;
+                end
+            end
+        end
+        
+        % -----
+        function tf = isSimulatorBusy(obj)
+            tf = false;
+            for i=1:obj.numSimulators
+                if obj.simulatorData(i).state == SimulatorState.BUSY
+                    tf = true;
+                    break;
+                end
+            end
+        end
 
-function [t, v] = createMySineWave(f, d)
-    t = 0:(d/1000):d;
-    v = sin(f.*2.*pi.*t);
+        % -----
+        function num = getNumSimulators(obj)
+            num = obj.numSimulators;
+        end
+    end
 end

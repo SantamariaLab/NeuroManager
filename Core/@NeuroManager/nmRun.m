@@ -190,6 +190,7 @@ END OF LICENSE
 % -------------------
 function result = nmRun(obj, simset)
     obj.nmSimSet = simset;
+    simSetFinished = false;
 
     % Ensure simset type matches that used in the machine set
     if obj.nmSimSet.getType() ~= obj.machineSetType;
@@ -204,6 +205,11 @@ function result = nmRun(obj, simset)
         return;
     end
 
+    % Clear the Simulator Statistics before the SimSet starts
+    for i = 1:obj.numSimulators
+        obj.simulatorPool{i}.resetStats();
+    end
+    
     % Update the status webpage
     obj.setSnapshotTimeStr(datestr(now));
     obj.displayStatusWebPage('SimSet');
@@ -218,76 +224,129 @@ function result = nmRun(obj, simset)
     % SIMULATION SCHEDULING LOOP
     % This is where each simdef is parsed out to be run on the
     % simulator pool 
+    % This is Scheduler 2.0.
+    %
+    % Loop time-keeping initialization
     pollDelay = obj.pollDelay;
+    numCycles = -1;
+    avgCyclePeriod = 0; 
+    totalTime = 0;
+    previousCycleStart = datetime('now'); 
     while(true)
+        % Keep track of average scheduling loop time
+        numCycles = numCycles+1;
+        cycleStart = datetime('now'); 
+        totalTime = totalTime + seconds(cycleStart - previousCycleStart);
+        if numCycles
+            avgCyclePeriod = totalTime/numCycles; 
+        end
+        previousCycleStart = cycleStart;
+            
+        % Update all simulators and stats
+        for i = 1:obj.numSimulators
+            obj.simulatorPool{i}.updateState();
+        end
+        
         % Update the status webpage
         obj.setSnapshotTimeStr(datestr(now));
         obj.displayStatusWebPage('SimSet');
-        
-        if (obj.nmSimSet.isFullyProcessed())
-            break;
-        end
-        
+               
         % Submission
-        if (obj.nmSimSet.hasUNRUN())
-            if obj.isSimulatorAvailable()
-                % Fill next available simulator in numerical order
-                for i = 1:obj.numSimulators
-                    % Possibly replace this with a grab simulator method in
-                    % the simulator class 
-                    if (obj.simulatorPool{i}.updateState() == SimulatorState.AVAILABLE)
-                        % Grab an simulation that is UNRUN
-                        proposedSimulation = obj.nmSimSet.checkOutSimulation();
-                        % Get the simulation (if there is one left) started on
-                        % the simulator, then get out 
-                        if(proposedSimulation ~= 0)
-                            obj.simulatorPool{i}.startSimulation(proposedSimulation);
-                            % Quick turnaround for quicker filling
-                            pollDelay = 0; 
-                        else
-                            % if there are no simulations left then switch
-                            % to normal polling
-                            pollDelay = obj.pollDelay;
-                        end
-                        obj.setSnapshotTimeStr(datestr(now));
-                        obj.displayStatusWebPage('SimSet');
-                        % A break here tends to limit submission to a
-                        % smaller number of faster machines (YMMV)
-                        break; 
-                    end
-                end
-            else
-                % No simulators available so so ensure we are at steady-state
-                % polling rate and wait for a simulator to become available
-                pollDelay = obj.pollDelay;
-            end
-        else
-            % No more simulations to add so ensure we are at steady-state
-            % polling rate
-            pollDelay = obj.pollDelay;
+        % Assemble the data for the scheduler
+        simData = SimulatorData();
+        for i = 1:obj.numSimulators
+            simData.addSimulatorData(obj.simulatorPool{i});
         end
 
-        % Now prompt all simulators for a state change.
-        for i = 1:obj.numSimulators
-            switch(obj.simulatorPool{i}.updateState())
-                case SimulatorState.AVAILABLE
-                    % update statistics (none yet)
-                case SimulatorState.BUSY
-                    % update statistics (none yet)
-                otherwise
+        availableSimulations = 0;
+        for i = 1:obj.nmSimSet.getTotNumSims
+            if obj.nmSimSet.sims(i).getState() == SimulationState.UNRUN
+                availableSimulations = availableSimulations + 1; 
             end
         end
-       
+
+        % Call the Scheduler
+        actionsList = Scheduler2p0(simData, availableSimulations,...
+                                   avgCyclePeriod);
+
+        % Act on the actions list
+        for i = 1:size(actionsList, 1)
+            switch actionsList(i,1)
+                % Syntax: PLACESIMULATION X
+                % Place an UNRUN Simulation from the SimSet onto
+                % Simulator X, where X is the index into the Simulator Pool
+                case SchedulerActions.PLACESIMULATION
+                    proposedSimulation = obj.nmSimSet.checkOutSimulation();
+                    if proposedSimulation ~= 0
+                        obj.simulatorPool{actionsList(i,2)}.startSimulation(proposedSimulation);
+                    end
+
+                % Syntax: CANCELRETURN X
+                % Cancel the Simulation on Simulator X and return it to the
+                % SimSet as UNRUN, where X is the index into the Simulator Pool
+                case SchedulerActions.CANCELRETURN
+                    simulator = obj.simulatorPool{actionsList(i,2)};
+                    simulation = simulator.getSimulation();
+                    % Take the simulation away from the
+                    %   Simulator and deactivate the Simulator
+                    obj.log.write(['RESCHEDULING Simulation ' simulation.getID() ...
+                          ' (jobID = ' num2str(simulation.getJobID(), '% 10.0f') ')']); 
+                    if obj.simNotificationSet.isEnabled()
+                        notificationSubject = 'NeuroManager Adaptation';
+                        obj.simNotificationSet.send(notificationSubject,...
+                         ['RESCHEDULING Simulation ' simulation.getID() ...
+                          ' (jobID = ' num2str(simulation.getJobID(), '% 10.0f') ')'], '');
+                    end
+                    if simulator.pullbackSimulation()
+                        obj.nmSimSet.returnSimulation(simulation,...
+                                                      SimulationState.UNRUN);
+                    end
+
+                % Syntax: RETIRESIMULATOR X
+                % Set the status of Simulator X to RETIRED, which means
+                % that it will no longer be given Simulations by the
+                % Scheduler, where X is the index into the Simulator Pool
+                case SchedulerActions.RETIRESIMULATOR
+                    simulator = obj.simulatorPool{actionsList(i,2)};
+                    obj.log.write(['RETIRING Simulator ' simulator.getID() ...
+                                   '.']); 
+                    if obj.simNotificationSet.isEnabled()
+                        notificationSubject = 'NeuroManager Adaptation';
+                        obj.simNotificationSet.send(notificationSubject,...
+                         ['RETIRING Simulator ' simulator.getID() ...
+                          '.'], '');
+                    end
+                    simulator.retire();
+                    
+                % Syntax: NTD
+                % The scheduler has no actions to be done this cycle
+                case SchedulerActions.NTD
+                    % (do nothing)
+                    
+                % Syntax: FINISHED
+                % The scheduler says all Simulations on all Simulators are
+                % finished and there is nothing left to do.
+                case SchedulerActions.FINISHED
+                    simSetFinished = true;
+                    break;
+                otherwise
+                    % Nothing to do
+            end
+        end
         obj.setSnapshotTimeStr(datestr(now));
         obj.displayStatusWebPage('SimSet');
-        
+        if simSetFinished
+            break;
+        end
         % Delay the next cycle so as not to poll the machines to death.
         pause(pollDelay);
     end
 
-    obj.setSnapshotTimeStr(datestr(now));
-    obj.displayStatusWebPage('SimSet');
-
+    % Save Simulator statistics for this SimSet
+    for i = 1:obj.numSimulators
+        obj.simulatorPool{i}.saveStatsHistory(obj.nmSimSet.getBaseDir());
+    end
+    
     % Clean up the simset 
     result = obj.nmSimSet.wrapup();
 
