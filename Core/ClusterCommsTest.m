@@ -10,6 +10,7 @@ classdef ClusterCommsTest < MachineCommsTest
 
             obj = obj@MachineCommsTest(md, hostID, hostOS,...
                               hostScratchDir, targetBaseDir, auth, log);
+            obj.configureDualKey();
         end
     end
 end

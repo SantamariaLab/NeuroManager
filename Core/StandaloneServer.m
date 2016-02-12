@@ -187,7 +187,7 @@ END OF LICENSE
 % Defines the machine class for standalone servers.  Job submissions are
 % basically launch-with-ampersand.  There may be more sophisticated things
 % that can be done, but this is most bang-for-buck.
-classdef StandaloneServer <  SimMachine & RunJobMachine
+classdef StandaloneServer <  SimMachine & Server
     properties
         % Machine data specific to the machine; will be passed up to target
         % via a data file called MachineData.dat.
@@ -209,9 +209,9 @@ classdef StandaloneServer <  SimMachine & RunJobMachine
             md.addSetting('id', md.getSetting('resourceName'));
             md.addSetting('commsID', md.getSetting('resourceName'));
             
-            obj = obj@RunJobMachine(md, xCompilationMachine,...
+            obj = obj@Server(md, xCompilationMachine,...
                              xCompilationScratchDir,...
-                             hostID, hostOS, auth);
+                             hostID, hostOS, '', auth);
             obj = obj@SimMachine(md, hostID, baseDir, scratchDir,...
                            simFileSourceDir, custFileSourceDir,...
                            modelFileSourceDir,...

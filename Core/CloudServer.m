@@ -187,7 +187,7 @@ END OF LICENSE
 % Defines the machine class for standalone cloud servers.  Job submissions are
 % basically launch-with-ampersand.  There may be more sophisticated things
 % that can be done, but this is most bang-for-buck.
-classdef CloudServer < SimMachine & Cloud
+classdef CloudServer < SimMachine & OSCloud
     properties
         % Machine data specific to the machine; will be passed up to target
         % via a data file called MachineData.dat.
@@ -203,6 +203,18 @@ classdef CloudServer < SimMachine & Cloud
                             xCompilationScratchDir,...
                             auth, log, notificationSet, dataFunc,...
                             ~, ~, ~, ~) %#ok<INUSL>
+            %===================================            
+                        
+            
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+            %===================================            
             md = dataFunc(name, ipaddr);
             % Cloud create... data files don't set a name
             % so we add it here
@@ -225,9 +237,9 @@ classdef CloudServer < SimMachine & Cloud
                 xCompilationScratchDir = ''; 
             end
             
-            obj = obj@Cloud(md, xCompilationMachine,...
-                             xCompilationScratchDir,...
-                             hostID, hostOS, auth);
+            obj = obj@OSCloud(md, xCompilationMachine,...
+                                  xCompilationScratchDir,...
+                                  hostID, hostOS, auth);
             obj = obj@SimMachine(md, ...
                            hostID, baseDir, scratchDir,...
                            simFileSourceDir, custFileSourceDir,...

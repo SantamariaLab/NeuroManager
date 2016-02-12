@@ -25,7 +25,7 @@
 % Done
 
 
-classdef OSCloud < handle
+classdef OSCloud < Cloud
     properties (Access=private)
         OS_IdentityEndpoint;
         OS_ComputeEndpoint;
@@ -44,7 +44,10 @@ classdef OSCloud < handle
     end
     
     methods
-        function obj = OSCloud()
+        function obj = OSCloud(machineData, xCmpMach, xCmpDir,...
+                                    hostID, hostOS, auth)
+            obj = obj@Cloud(machineData, xCmpMach, xCmpDir,...
+                                    hostID, hostOS, auth);
             obj.OS_IdentityEndpoint = ...
                 'https://openstack.tacc.chameleoncloud.org:5000/v2.0/tokens';
             obj.OS_ComputeEndpoint = ...

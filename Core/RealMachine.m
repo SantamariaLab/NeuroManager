@@ -240,7 +240,12 @@ classdef RealMachine < handle
             obj.simAuth = auth;
             obj.hostID  = hostID;
             obj.machineDataFilename = [md.getSetting('id') 'Data.dat'];
-            
+%             obj.configureDualKey();
+
+        end
+        
+        % -----
+        function configureDualKey(obj)
             % Unless is a single machine setup, we check validity of
             % password/dual key settings and set up connections to the fs
             % and js machines
@@ -306,6 +311,7 @@ classdef RealMachine < handle
                 obj.jsConnection.autoreconnect = 1;  % TRIAL ONLY
             end
         end
+        
         
         % ----------------
         % We store the connection in the class properties; there seems to

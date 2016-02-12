@@ -1,4 +1,4 @@
-% NEURONStandaloneServer
+% NEURONNMServer
 % Assume server has no constraints on wallclocktime.
 classdef NEURONStandaloneServer < StandaloneServer & NeuronMachine
     methods
