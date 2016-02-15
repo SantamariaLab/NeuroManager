@@ -209,6 +209,7 @@ classdef RealMachine < handle
         jsUseDualKey;   % Use dual key authentication instead of password
 
         simAuth;        % Dual key data
+        hostKeyFingerprint; % For cloud hosts
         
         machineDataFilename;
 
@@ -241,11 +242,17 @@ classdef RealMachine < handle
             obj.hostID  = hostID;
             obj.machineDataFilename = [md.getSetting('id') 'Data.dat'];
 %             obj.configureDualKey();
-
         end
         
         % -----
-        function configureDualKey(obj)
+        function configureDualKey(obj, md)
+            if md.isSetting('hostKeyFingerprint')
+                obj.hostKeyFingerprint = md.getSetting('hostKeyFingerprint');
+            else
+                obj.hostKeyFingerprint   = '';
+            end
+      LOOK = obj.hostKeyFingerprint
+
             % Unless is a single machine setup, we check validity of
             % password/dual key settings and set up connections to the fs
             % and js machines
@@ -309,6 +316,7 @@ classdef RealMachine < handle
                 % Don't ignore responses is the NeuroManager default
                 obj.jsConnection.command_ignore_response = 0;
                 obj.jsConnection.autoreconnect = 1;  % TRIAL ONLY
+
             end
         end
         

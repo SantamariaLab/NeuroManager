@@ -192,6 +192,7 @@ classdef Cloud < RunJobMachine
                                     hostID, hostOS, auth)
             obj = obj@RunJobMachine(machineData, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
+            obj.configureDualKey(machineData);
         end
     end
 end

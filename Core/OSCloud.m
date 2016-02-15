@@ -25,7 +25,7 @@
 % Done
 
 
-classdef OSCloud < Cloud
+classdef OSCloud < handle
     properties (Access=private)
         OS_IdentityEndpoint;
         OS_ComputeEndpoint;
@@ -36,6 +36,7 @@ classdef OSCloud < Cloud
         localKeyFile;   % on the NM host
         curldir;
         network;
+        powerStatePhrase;   % better terminology and handling necessary
         extAddressRoot; 
         currentComputeToken;
         waitingDelay; % seconds
@@ -44,10 +45,9 @@ classdef OSCloud < Cloud
     end
     
     methods
-        function obj = OSCloud(machineData, xCmpMach, xCmpDir,...
-                                    hostID, hostOS, auth)
-            obj = obj@Cloud(machineData, xCmpMach, xCmpDir,...
-                                    hostID, hostOS, auth);
+        function obj = OSCloud()
+%             obj = obj@Cloud(machineData, xCmpMach, xCmpDir,...
+%                                     hostID, hostOS, auth);
             obj.OS_IdentityEndpoint = ...
                 'https://openstack.tacc.chameleoncloud.org:5000/v2.0/tokens';
             obj.OS_ComputeEndpoint = ...
@@ -61,6 +61,7 @@ classdef OSCloud < Cloud
                 'C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/ProjNeuroMan/CloudStuff/curl-7.46.0-win64-mingw/bin/';
             obj.network = ...
                 'CH_0x2D_817259_0x2D_net';  
+            obj.powerStatePhrase = 'OS_0x2D_EXT_0x2D_STS_0x3A_power_state';
             % Not sure where this comes from
             obj.extAddressRoot = 'OS_0x2D_EXT_0x2D_IPS'; 
             obj.waitingDelay = 0.25;
@@ -94,11 +95,16 @@ classdef OSCloud < Cloud
             serverID = server.server.id;
             
             % need to wait until get full creation
-            [status, progress] = obj.getCreateServerProgress(serverID);
+            [status, powerState, progress] = obj.getCreateServerProgress(serverID);
             while (strcmp(status, 'BUILD') && ~strcmp(progress, '100'))
                 pause(obj.waitingDelay);
-                [status, progress] = obj.getCreateServerProgress(serverID);
+                [status, powerState, progress] = obj.getCreateServerProgress(serverID);
             end            
+            
+            while powerState ~= 1
+                pause(obj.waitingDelay);
+                [~, powerState, ~] = obj.getCreateServerProgress(serverID);
+            end
             
             % Now give it an external IP
             ipAddr = obj.allocateFloatingIP();
@@ -112,13 +118,14 @@ classdef OSCloud < Cloud
         
         
         % -----
-        function [status, progress] = getCreateServerProgress(obj, serverID)
+        function [status, powerState, progress] = getCreateServerProgress(obj, serverID)
             addressExt = ['/servers/' serverID];
             [~, answer, ~] =...
                 obj.issueComputeEndpointCommand('', {'-X GET '}, addressExt);
             info = loadjson(answer);
-            progress = info.server.progress;
             status = info.server.status;
+            powerState = info.server.(obj.powerStatePhrase);
+            progress = info.server.progress;
         end
 
         
@@ -262,9 +269,11 @@ classdef OSCloud < Cloud
             [~, ~, ~] =...
                 obj.issueComputeEndpointCommand(responseBody, {}, addressExt);
             
-            % Need to set a time or loop limit 
-            while ~strcmp(obj.getServerStatusID(serverID), 'SUSPENDED')
+            % Need to set a time or loop limit
+            [status, ~] = obj.getServerStatusID(serverID);
+            while ~strcmp(status, 'SUSPENDED')
                 pause(obj.waitingDelay);
+                [status, ~] = obj.getServerStatusID(serverID);
             end
             success = true;
         end
@@ -277,8 +286,10 @@ classdef OSCloud < Cloud
 
             % Need to set a time or loop limit 
             [~, ~, ~] = obj.issueComputeEndpointCommand(responseBody, {}, addressExt);
-            while ~strcmp(obj.getServerStatusID(serverID), 'ACTIVE')
+            [status, ~] = obj.getServerStatusID(serverID);
+            while ~strcmp(status, 'ACTIVE')
                 pause(obj.waitingDelay);
+                [status, ~] = obj.getServerStatusID(serverID);
             end
             success = true;
         end
@@ -356,17 +367,20 @@ classdef OSCloud < Cloud
         
         
         % -----
-        function status = getServerStatusID(obj, id)
+        function [status, powerState] = getServerStatusID(obj, id)
             details = obj.getServerDetailsID(id);
             status = details.server.status;
+            powerState = details.server.(obj.powerStatePhrase);
+
         end
 
         
         % -----
-        function status = getServerStatusName(obj, name)
+        function [status, powerState] = getServerStatusName(obj, name)
             id = obj.serverIdFromName(name);
             details = obj.getServerDetailsID(id);
             status = details.server.status;
+            powerState = details.server.(obj.powerStatePhrase);
         end
         
         

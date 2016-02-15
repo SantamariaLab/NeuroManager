@@ -187,15 +187,17 @@ END OF LICENSE
 % Defines the machine class for standalone cloud servers.  Job submissions are
 % basically launch-with-ampersand.  There may be more sophisticated things
 % that can be done, but this is most bang-for-buck.
-classdef CloudServer < SimMachine & OSCloud
+classdef CloudServer < SimMachine & Cloud
     properties
         % Machine data specific to the machine; will be passed up to target
         % via a data file called MachineData.dat.
-        md;  
+        md;
+        % Handles the instance, whether it currently exists or not
+        cloudMachine;
     end
     methods
         function obj = CloudServer(~,...
-                            hostID, hostOS, name, ipaddr, baseDir, scratchDir, ...
+                            hostID, hostOS, name, ipAddr, baseDir, scratchDir, ...
                             simFileSourceDir, custFileSourceDir,... 
                             modelFileSourceDir,... 
                             simType, numSims,...
@@ -204,8 +206,8 @@ classdef CloudServer < SimMachine & OSCloud
                             auth, log, notificationSet, dataFunc,...
                             ~, ~, ~, ~) %#ok<INUSL>
             %===================================            
-                        
-            
+%             cloudMachine = OSCloudMachine(name);
+%             [id, name, status, ipAddr] = cloudMachine.getData()
                         
                         
                         
@@ -215,7 +217,7 @@ classdef CloudServer < SimMachine & OSCloud
                         
                         
             %===================================            
-            md = dataFunc(name, ipaddr);
+            md = dataFunc(name, ipAddr);
             % Cloud create... data files don't set a name
             % so we add it here
             md.addSetting('id', name);
@@ -237,7 +239,7 @@ classdef CloudServer < SimMachine & OSCloud
                 xCompilationScratchDir = ''; 
             end
             
-            obj = obj@OSCloud(md, xCompilationMachine,...
+            obj = obj@Cloud(md, xCompilationMachine,...
                                   xCompilationScratchDir,...
                                   hostID, hostOS, auth);
             obj = obj@SimMachine(md, ...
@@ -247,6 +249,7 @@ classdef CloudServer < SimMachine & OSCloud
                            simType, numSims,...
                            auth, log, notificationSet);
             obj.md = md;
+            obj.cloudMachine = cloudMachine;
         end
         
         % ----------

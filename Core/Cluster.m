@@ -194,7 +194,7 @@ classdef Cluster < RunJobMachine
             md.addSetting('id', [md.getSetting('resourceName') idExt]);
             obj = obj@RunJobMachine(md, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
-            obj.configureDualKey();
+            obj.configureDualKey(md);
         end
     end
     

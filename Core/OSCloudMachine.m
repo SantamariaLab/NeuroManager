@@ -40,7 +40,7 @@ classdef OSCloudMachine < OSCloud
                     obj.serverIpAddr = ipAddr;
                     % We do not yet handle other states
                     if strcmp(status, 'SUSPENDED')
-                        obj.resume;
+                        obj.resume();
                     end
                 else
                     [name, serverID, ipAddr] = obj.createServer(name);
@@ -68,8 +68,8 @@ classdef OSCloudMachine < OSCloud
         end
         
         % -----
-        function status = getStatus(obj)
-            status = obj.getServerStatusID(obj.serverID);
+        function [status, powerState] = getStatus(obj)
+            [status, powerState] = obj.getServerStatusID(obj.serverID);
         end
         
         % -----

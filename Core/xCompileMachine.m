@@ -189,7 +189,8 @@ classdef xCompileMachine < NoSubMachine
     methods
         function obj = xCompileMachine(md, hostID, hostOS, auth)
             obj = obj@NoSubMachine(md, 0, '', hostID, hostOS, auth);
-            
+            obj.configureDualKey(md);
+
             % Check for existence of x-compile dir
             result = obj.checkForDirectory(md.getSetting('xCompDir'));
             if ~result

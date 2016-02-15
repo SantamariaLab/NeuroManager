@@ -6,7 +6,7 @@ classdef Server < RunJobMachine
                                     hostID, hostOS, ~, auth)
             obj = obj@RunJobMachine(md, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
-            obj.configureDualKey();
+            obj.configureDualKey(md);
         end
     end
 end
