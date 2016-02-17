@@ -49,7 +49,7 @@ classdef OSCloud < handle
 %             obj = obj@Cloud(machineData, xCmpMach, xCmpDir,...
 %                                     hostID, hostOS, auth);
             obj.OS_IdentityEndpoint = ...
-                'https://openstack.tacc.chameleoncloud.org:5000/v2.0/tokens';
+                'https://openstack.tacc.chameleoncloud.org:5000/v2.0';
             obj.OS_ComputeEndpoint = ...
                 'https://openstack.tacc.chameleoncloud.org:8774/v2/CH-817259';
             obj.OS_TENANT_NAME = 'CH-817259';
@@ -412,16 +412,24 @@ classdef OSCloud < handle
         
         % ------
         function details = getServerDetailsID(obj, id)
-            addressExt = ['/servers/' id];
-            [~, answer, ~] = obj.issueComputeEndpointCommand('', {}, addressExt);
-            details = loadjson(answer);
+            if obj.existsServerID(id)
+                addressExt = ['/servers/' id];
+                [~, answer, ~] = obj.issueComputeEndpointCommand('', {}, addressExt);
+                details = loadjson(answer);
+            else
+                details = '';
+            end
         end
     
         
         % -----
         function details = getServerDetailsName(obj, name)
-            id = obj.serverIdFromName(name);
-            details = obj.getServerDetailsID(id);
+            if obj.existsServerName(name)
+                id = obj.serverIdFromName(name);
+                details = obj.getServerDetailsID(id);
+            else
+                details = '';
+            end
         end
         
         
@@ -438,14 +446,11 @@ classdef OSCloud < handle
         
         
         % -----
-%         function getQuotas(obj)
-%              cmd = [fullfile(obj.curldir, 'curl -sS') ...
-%                     ' -H "X-Auth-Token: ' obj.currentComputeToken '" ' ...
-%                     ' -H "Content-Type: application/json" '...
-%                     ' -X GET ' [obj.OS_ComputeEndpoint '/os-quota-class-sets/' obj.OS_TENANT_NAME]]
-% %                     ' -X GET ' [obj.OS_ComputeEndpoint '/os-quota-class-sets/' 'cores']];
-%             [Qresult, Qanswer] = system(cmd)
-%         end
+        function quota = getQuotas(obj)
+                addressExt = ['/os-quota-sets/' obj.OS_TENANT_NAME];
+                [~, answer, ~] = obj.issueComputeEndpointCommand('', {'-X GET '}, addressExt);
+                quota = loadjson(answer);
+        end
 
         
         % ----- NOT COMPLETE SAVE TILL LATER
@@ -481,7 +486,7 @@ classdef OSCloud < handle
         function token = getToken(obj)
             if ~isunix
                 cmd = [fullfile(obj.curldir, 'curl -sS ') ...
-                       '-X POST ' obj.OS_IdentityEndpoint ' '...
+                       '-X POST ' obj.OS_IdentityEndpoint '/tokens '...
                        '-H "Content-Type: application/json" '...
                        '--key-type PEM '...
                        ['--key ' obj.localKeyFile ' ']...

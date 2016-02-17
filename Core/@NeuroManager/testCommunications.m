@@ -206,7 +206,7 @@ function tfResult = testCommunications(obj, inConfig)
     obj.log.write(configStr);
     for i = 1:inConfig.getNumMachines()
         [type, numSimulators, name, dataFunc, queueData, ~, ~, ~,...
-            baseDir, ~, ipAddr] = inConfig.getMachine(i);
+            baseDir, ~, ipAddr, ~] = inConfig.getMachine(i);
         
         % Skip machine if no simulators 
         if ~numSimulators continue; end %#ok<SEPEX>

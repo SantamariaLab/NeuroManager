@@ -624,6 +624,10 @@ classdef NeuroManager < handle
         function dir = getSimResultsDir(obj)
             dir = obj.simResultsDir;
         end 
+        
+        function log = getLog(obj)
+            log = obj.log;
+        end
     end 
     
     
