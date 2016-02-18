@@ -193,7 +193,7 @@ classdef CloudServer < SimMachine & Cloud
         % via a data file called MachineData.dat.
         md;
         % Handles the instance, whether it currently exists or not
-        cloudMachine;
+        cloudInstance;
     end
     methods
         function obj = CloudServer(~,...
@@ -205,22 +205,7 @@ classdef CloudServer < SimMachine & Cloud
                             xCompilationScratchDir,...
                             auth, log, notificationSet, dataFunc,...
                             ~, ~, ~, ~) %#ok<INUSL>
-            %===================================            
-%             cloudMachine = OSCloudMachine(name);
-%             [id, name, status, ipAddr] = cloudMachine.getData()
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-            %===================================            
             md = dataFunc(name, ipAddr);
-            % Cloud create... data files don't set a name
-            % so we add it here
-            md.addSetting('id', name);
             md.addSetting('id', md.getSetting('instanceName'));
             md.addSetting('commsID', md.getSetting('instanceName'));
             
@@ -249,7 +234,6 @@ classdef CloudServer < SimMachine & Cloud
                            simType, numSims,...
                            auth, log, notificationSet);
             obj.md = md;
-            obj.cloudMachine = cloudMachine;
         end
         
         % ----------
@@ -320,7 +304,6 @@ classdef CloudServer < SimMachine & Cloud
         % Concrete version for this machine type
         %  (see RunJobMachine for abstract)
         function runJobCleanup(obj, simBasedir)
-        % Clean up target-side files related to running jobs on qsub machine
             command = ['cd '...
                         path2UNIX(simBasedir)...
                         '; rm ' path2UNIX(fullfile(simBasedir, 'std*.txt'))...
