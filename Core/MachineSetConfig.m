@@ -526,6 +526,17 @@ classdef MachineSetConfig < handle
                 % instance. (etc)
                 obj.log.write(['Instance ' obj.MSConfig(i).instanceName ' ready.']);
 %                 assignin('base', 'details', instance.getDetails())  % debug only
+
+                % Now we create a temporary FileTransferMachine in order to
+                % get the host key fingerprint.  Currently the SSH library
+                % doesn't care about the host key but PuTTY does, and will
+                % cause a comms test failure. In order 
+                % to assure PuTTY we have to run commands on the host and
+                % download a file to get the host key fingerprint - using
+                % the SSH library (this appears to be a bit of a loophole
+                % but I don't yet know how to do this all automatically any
+                % other way).
+%                 tempMachine = FileTransferMachine(md, 
             end
         end
         
@@ -533,7 +544,8 @@ classdef MachineSetConfig < handle
             for i = 1:obj.numMachines
                 if (strcmp(obj.MSConfig(i).resourceCategory, 'CLOUD') && ...
                     strcmp(obj.MSConfig(i).resourceName, resourceName) && ...
-                    strcmp(obj.MSConfig(i).instanceName, instanceName))
+                    strcmp(obj.MSConfig(i).instanceName, instanceName) && ...
+                    ~isempty(obj.MSConfig(i).instance))
                     obj.log.write(['Terminating instance '...
                                    obj.MSConfig(i).instanceName]);
                     obj.MSConfig(i).instance.terminate();

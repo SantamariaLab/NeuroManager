@@ -220,6 +220,9 @@ classdef NeuroManager < handle
         % The SimSet to be processed
         nmSimSet;
         
+        % The configuration of the machine set to set up
+        machineSetConfig;
+        
         % The data of the machine running NeuroManager
         hostMachineData; 
         
@@ -448,6 +451,10 @@ classdef NeuroManager < handle
 
             % Initialize the Machine Set type
             obj.machineSetType = SimType.UNASSIGNED;
+            
+            % Initialize the machineSetConfiguration; the user configures
+            % this overtly in the script
+            obj.machineSetConfig = MachineSetConfig(obj.isSingleMachine(), obj.log);
 
             % Send a "starting" message to verify notifications setup
             if obj.simNotificationSet.isEnabled()
@@ -511,7 +518,7 @@ classdef NeuroManager < handle
         end
 
         % ----------------
-        function constructMachineSet(obj, simType, inConfig)
+        function constructMachineSet(obj, simType)
         % Construct the set of machines and their simulators from a
         % machinesetconfig.
             % Update the webpage
@@ -526,10 +533,10 @@ classdef NeuroManager < handle
                  ['Constructing machine set.'], '');
             end
 
-            configStr = inConfig.printToStr;
+            configStr = obj.machineSetConfig.printToStr;
             obj.log.write(configStr);
             obj.machineSet = obj.makeMyMachines(obj.machineScratchDir,...
-                                                simType, inConfig,...
+                                                simType, ...
                                                 obj.auth);
             obj.machineSetType = simType;
             obj.numMachines = length(obj.machineSet);
@@ -627,6 +634,27 @@ classdef NeuroManager < handle
         
         function log = getLog(obj)
             log = obj.log;
+        end
+        
+        % --- Interface for the config class
+        function addStandaloneServer(obj, varargin)
+            obj.machineSetConfig.addStandaloneServer(varargin{:});
+        end
+        
+        function addClusterQueue(obj, varargin)
+            obj.machineSetConfig.addClusterQueue(varargin{:});
+        end
+        
+        function addCloudServer(obj, varargin)
+            obj.machineSetConfig.addCloudServer(varargin{:});
+        end            
+        
+        function terminateCloudInstance(obj, resourceName, instanceName)
+            obj.machineSetConfig.terminateCloudInstance(resourceName, instanceName);
+        end
+        
+        function printConfig(obj)
+            obj.machineSetConfig.print();
         end
     end 
     

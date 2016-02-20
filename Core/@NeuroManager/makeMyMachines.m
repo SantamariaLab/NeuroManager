@@ -188,13 +188,13 @@ END OF LICENSE
 % NeuroManager based on the input config. Does not check for duplicates,
 % which are ok as long as working directories don't overlap (but not
 % desirable for other reasons). 
-function mset = makeMyMachines(obj, scratchDir, simType, config, auth)
+function mset = makeMyMachines(obj, scratchDir, simType, auth)
     mset = {};
     validMachineCount = 0;
-    for i = 1:config.getNumMachines()
+    for i = 1:obj.machineSetConfig.getNumMachines()
         [type, numSims, name, dataFunc,...
          queueData, parEnvStr, resourceStr, numNodes,...
-         baseDir, wallClockTime, ipAddr, ~] = config.getMachine(i);
+         baseDir, wallClockTime, ipAddr, ~] = obj.machineSetConfig.getMachine(i);
         if numSims
             validMachineCount = validMachineCount+1;
             mset{validMachineCount} =...

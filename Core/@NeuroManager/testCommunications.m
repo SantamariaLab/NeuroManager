@@ -186,11 +186,11 @@ END OF LICENSE
 % testCommunications.m
 % Part of the NeuroManager class.
 % Tests communications (and file transfer) with any machine in the
-% inconfig that has nonzero number of simulators. A true result
+% config that has nonzero number of simulators. A true result
 % means pass.
 
 % ----------------
-function tfResult = testCommunications(obj, inConfig)
+function tfResult = testCommunications(obj)
     testedMachines = {};
     obj.log.write(['Testing machine communications for the following configuration:']);
     if obj.simNotificationSet.isEnabled()
@@ -202,11 +202,11 @@ function tfResult = testCommunications(obj, inConfig)
     % Update the webpage
     obj.displayStatusWebPage('testmachine');
             
-    configStr = inConfig.printToStr;
+    configStr = obj.machineSetConfig.printToStr;
     obj.log.write(configStr);
-    for i = 1:inConfig.getNumMachines()
+    for i = 1:obj.machineSetConfig.getNumMachines()
         [type, numSimulators, name, dataFunc, queueData, ~, ~, ~,...
-            baseDir, ~, ipAddr, ~] = inConfig.getMachine(i);
+            baseDir, ~, ipAddr, ~] = obj.machineSetConfig.getMachine(i);
         
         % Skip machine if no simulators 
         if ~numSimulators continue; end %#ok<SEPEX>
