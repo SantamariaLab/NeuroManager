@@ -226,7 +226,8 @@ classdef StandaloneServer <  SimMachine & Server
             % Nothing specific to do for this machine; see StagingSequence.xlsx
         end
         
-                % Concrete version for this machine type (see RunJobMachine for abstract)
+        % ----------
+        % Concrete version for this machine type (see RunJobMachine for abstract)
         function jobID = runNoWait(obj, jobRoot, jfn, remoteRundir)
             command = ['cd ' path2UNIX(remoteRundir)...
                        '; ./' jfn ...

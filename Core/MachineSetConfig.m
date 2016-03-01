@@ -319,7 +319,7 @@ classdef MachineSetConfig < handle
             p.StructExpand = true;
             p.CaseSensitive = true;
             p.KeepUnmatched = false;
-            
+%             
             [~, validIDs] = enumeration('MachineType');
             typeCheck = @(x) ismember(char(x),validIDs);
             
@@ -556,7 +556,8 @@ classdef MachineSetConfig < handle
                 end
             end
             obj.log.write(['Machine Set Config: Unable to terminate Cloud Instance named '...
-                           instanceName ' on resource ' resourceName '. Does it exist?']);
+                           instanceName ' on resource ' resourceName ...
+                           '. It may not exist or perhaps was not used in the config.']);
         end
         
         % -----------
