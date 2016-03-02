@@ -203,11 +203,30 @@ classdef StandaloneServer <  SimMachine & Server
                             simType, numSims,...
                             xCompilationMachine,...
                             xCompilationScratchDir,...
-                            auth, log, notificationSet, dataFunc,...
+                            auth, log, notificationSet, config,...
                             ~, ~, ~, ~)
-            md = dataFunc();
-            md.addSetting('id', md.getSetting('resourceName'));
-            md.addSetting('commsID', md.getSetting('resourceName'));
+            % Temporary; the config should just go down            
+            md = RMD();
+            md.addSetting('resourceCategory',	 config.getResourceType());
+            md.addSetting('resourceName',        config.getResourceName());
+            md.addSetting('instanceName',        config.getMachineName());
+            md.addSetting('id',                  md.getSetting('resourceName'));
+            md.addSetting('commsID',             md.getSetting('resourceName'));
+
+            md.addSetting('fsUserName',          config.getUserName());
+            md.addSetting('fsPassword',          '');
+            md.addSetting('fsIPAddress',         config.getIpAddress());
+            md.addSetting('jsUserName',          config.getUserName());
+            md.addSetting('jsPassword',          '');
+            md.addSetting('jsIPAddress',         config.getIpAddress());
+
+            md.addSetting('matlabCompilerDir',   config.getCompilerDir());
+            md.addSetting('matlabCompiler',      config.getCompiler());
+            md.addSetting('matlabExecutable',    config.getExecutable());
+            md.addSetting('mcrDir',              config.getMcrDir());
+            md.addSetting('xCompDir',            config.getXCompDir());
+            
+            numSims
             
             obj = obj@Server(md, xCompilationMachine,...
                              xCompilationScratchDir,...

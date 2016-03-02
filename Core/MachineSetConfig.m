@@ -201,21 +201,22 @@ classdef MachineSetConfig < handle
     methods
         function obj = MachineSetConfig(singleMachine, log)
             obj.singleMachine = singleMachine;
-            obj.MSConfig = struct('type', MachineType.UNASSIGNED,...
-                                  'numSimulators', 0,...
-                                  'resourceCategory', '',...
-                                  'resourceName', '',...
-                                  'instanceName', '',...
-                                  'instance', 0,...
-                                  'dataFunc', 0,...
-                                  'queueData', 0,...
-                                  'parEnvStr', '',...
-                                  'resourceStr', '',...
-                                  'numNodes', 1,...
-                                  'baseDir', '',...
-                                  'wallClockTime', '',...
-                                  'ipAddress', '',...
-                                  'deleteInstanceWhenDone', false);
+            obj.MSConfig = MachineConfig.empty();
+%             struct('type', MachineType.UNASSIGNED,...
+%                                   'numSimulators', 0,...
+%                                   'resourceCategory', '',...
+%                                   'resourceName', '',...
+%                                   'instanceName', '',...
+%                                   'instance', 0,...
+%                                   'dataFunc', 0,...
+%                                   'queueData', 0,...
+%                                   'parEnvStr', '',...
+%                                   'resourceStr', '',...
+%                                   'numNodes', 1,...
+%                                   'baseDir', '',...
+%                                   'wallClockTime', '',...
+%                                   'ipAddress', '',...
+%                                   'deleteInstanceWhenDone', false);
             obj.numMachines = 0;
             obj.timeCheckFunc = @obj.timeCheck;
             obj.log = log;
@@ -320,28 +321,34 @@ classdef MachineSetConfig < handle
             p.CaseSensitive = true;
             p.KeepUnmatched = false;
 %             
-            [~, validIDs] = enumeration('MachineType');
-            typeCheck = @(x) ismember(char(x),validIDs);
+%             [~, validIDs] = enumeration('MachineType');
+%             typeCheck = @(x) ismember(char(x),validIDs);
             
-            addRequired(p, 'type', typeCheck);
+            addRequired(p, 'simCoreName', @ischar);
+            addRequired(p, 'configFile', @ischar);
+%             addRequired(p, 'type', typeCheck);
             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
             % Check for basedir existence is elsewhere since it is remote
             % and needs machine object for communications.
-            addRequired(p, 'dataFunc',@(x) MachineSetConfig.isaFuncHandle(x)); 
-            addRequired(p, 'baseDir', @ischar); 
+%             addRequired(p, 'dataFunc',@(x) MachineSetConfig.isaFuncHandle(x)); 
+            addRequired(p, 'baseDir', @(x) ischar(x) && ~isempty(x)); 
             parse(p, varargin{:});                              
             
-            i = obj.numMachines+1;
-            obj.MSConfig(i).type = p.Results.type;
+            i = obj.numMachines + 1;
+            obj.MSConfig(i) = StandaloneConfig(p.Results.configFile);
+            obj.MSConfig(i).simCoreName = p.Results.simCoreName;
+%             obj.MSConfig(i).setResourceName() 
+%             obj.MSConfig(i).setResourceType(p.Results.type); % Need to check for valid type
+p.Results.numSimulators
             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-            obj.MSConfig(i).dataFunc = p.Results.dataFunc;
-            obj.MSConfig(i).baseDir = p.Results.baseDir;
+%             obj.MSConfig(i).dataFunc = p.Results.dataFunc;
+            obj.MSConfig(i).workDir = p.Results.baseDir;
             obj.numMachines = i;
 
             % Pull in data from local information struct
-            md = obj.MSConfig(i).dataFunc('','');
-            obj.MSConfig(i).resourceCategory = md.getSetting('resourceCategory');
-            obj.MSConfig(i).resourceName = md.getSetting('resourceName');
+%             md = obj.MSConfig(i).dataFunc('','');
+%             obj.MSConfig(i).resourceCategory = md.getSetting('resourceCategory');
+%             obj.MSConfig(i).resourceName = md.getSetting('resourceName');
 
             % SingleMachine configuration requires a positive number of
             % simulators
@@ -562,7 +569,7 @@ classdef MachineSetConfig < handle
         
         % -----------
         % getMachine
-        function [type, numSimulators, instanceName, dataFunc,...
+        function [type, numSimulators, instanceName, config,...
                   queueData, parEnvStr, resourceStr, numNodes, baseDir,...
                   wallClockTime, ipAddr, deleteInstanceWhenDone] =...
                                                     getMachine(obj, index)
@@ -570,7 +577,7 @@ classdef MachineSetConfig < handle
                 type = MachineType.UNASSIGNED;
                 numSimulators = 0;
                 instanceName = '';
-                dataFunc = 0;
+                config = 0;
                 queueData = 0;
                 parEnvStr = '';
                 resourceStr = '';
@@ -581,19 +588,36 @@ classdef MachineSetConfig < handle
                 deleteInstanceWhenDone = false;
                 return;
             end
-            type = obj.MSConfig(index).type;
-            numSimulators = obj.MSConfig(index).numSimulators;
-            instanceName = obj.MSConfig(index).instanceName;
-            dataFunc = obj.MSConfig(index).dataFunc;
-            queueData = obj.MSConfig(index).queueData;
-            parEnvStr = obj.MSConfig(index).parEnvStr;
-            resourceStr = obj.MSConfig(index).resourceStr;
-            numNodes = obj.MSConfig(index).numNodes;
-            baseDir = obj.MSConfig(index).baseDir;
-            wallClockTime = obj.MSConfig(index).wallClockTime;
-            ipAddr = obj.MSConfig(index).ipAddress;
-            deleteInstanceWhenDone = ...
-                            obj.MSConfig(index).deleteInstanceWhenDone;
+            
+            % ALL THIS UNDER CONSTRUCTION
+            switch obj.MSConfig(index).resourceType;
+                case 'STANDALONE'
+                    type = MachineType.STANDALONESERVER;
+            end
+% type = '';
+%             type = obj.MSConfig(index).type;
+            numSimulators = obj.MSConfig(index).getNumSimulators();
+%             numSimulators = obj.MSConfig(index).numSimulators;
+            instanceName = obj.MSConfig(index).getMachineName();
+%             instanceName = obj.MSConfig(index).instanceName;
+            config = obj.MSConfig(index);
+%             queueData = obj.MSConfig(index).queueData;
+            queueData = '';
+%             parEnvStr = obj.MSConfig(index).parEnvStr;
+            parEnvStr = '';
+%             resourceStr = obj.MSConfig(index).resourceStr;
+            resourceStr = '';
+%             numNodes = obj.MSConfig(index).numNodes;
+            numNodes = 0;
+%             baseDir = obj.MSConfig(index).baseDir;
+            baseDir = obj.MSConfig(index).getWorkDir();
+%             wallClockTime = obj.MSConfig(index).wallClockTime;
+            wallClockTime = 0;
+%             ipAddr = obj.MSConfig(index).ipAddress;
+ipAddr = obj.MSConfig(index).getIpAddress();
+%             deleteInstanceWhenDone = ...
+%                             obj.MSConfig(index).deleteInstanceWhenDone;
+deleteInstanceWhenDone = false;
         end
         
         % -----------
@@ -625,15 +649,16 @@ classdef MachineSetConfig < handle
         function print(obj)
             fprintf('%s\n', 'MachineSetConfig:');
             for i = 1:obj.numMachines
-                dataFunc = obj.MSConfig(i).dataFunc;
-                md = dataFunc('','');
+%                 dataFunc = obj.MSConfig(i).dataFunc;
+%                 md = dataFunc('','');
                 fprintf('%u: %s %s %s\t\t %u %s %s\n', i,...
-                    char(obj.MSConfig(i).type),...
-                    md.getSetting('resourceName'),...
-                    obj.MSConfig(i).instanceName,...
-                    obj.MSConfig(i).numSimulators,...
-                    obj.MSConfig(i).baseDir,...
-                    obj.MSConfig(i).wallClockTime);
+                    char(obj.MSConfig(i).getResourceType()),...
+                    obj.MSConfig(i).getResourceName(),...
+                    obj.MSConfig(i).getMachineName(),...
+                    obj.MSConfig(i).getNumSimulators(),...
+                    obj.MSConfig(i).getWorkDir());
+%                 ,...
+%                     obj.MSConfig(i).wallClockTime);
             end
             fprintf('%s\n', '--------------------');
         end
@@ -643,16 +668,15 @@ classdef MachineSetConfig < handle
             str = '';
             str = [str sprintf('%s\n', 'MachineSetConfig:')];
             for i = 1:obj.numMachines
-                dataFunc = obj.MSConfig(i).dataFunc;
-                md = dataFunc('','');
+%                 dataFunc = obj.MSConfig(i).dataFunc;
+%                 md = dataFunc('','');
                 str = [str ...
                     sprintf('%u: %s %s %s\t\t %u %s %s\n', i,...
-                    char(obj.MSConfig(i).type),...
-                    md.getSetting('resourceName'),...
-                    obj.MSConfig(i).instanceName,...
-                    obj.MSConfig(i).numSimulators,...
-                    obj.MSConfig(i).baseDir,...
-                    obj.MSConfig(i).wallClockTime)]; %#ok<AGROW>
+                    char(obj.MSConfig(i).getResourceType()),...
+                    obj.MSConfig(i).getResourceName(),...
+                    obj.MSConfig(i).getMachineName(),...
+                    obj.MSConfig(i).getNumSimulators(),...
+                    obj.MSConfig(i).getWorkDir())]; %#ok<AGROW>
             end
         end
     end
