@@ -204,9 +204,9 @@ classdef MachineSetConfig < handle
             obj.MSConfig = MachineConfig.empty();
 %             struct('type', MachineType.UNASSIGNED,...
 %                                   'numSimulators', 0,...
-%                                   'resourceCategory', '',...
+%                                   'resourceType', '',...
 %                                   'resourceName', '',...
-%                                   'instanceName', '',...
+%                                   'machineName', '',...
 %                                   'instance', 0,...
 %                                   'dataFunc', 0,...
 %                                   'queueData', 0,...
@@ -297,7 +297,7 @@ classdef MachineSetConfig < handle
 %                        'setup requires at least one simulator.']);
 %             end        
 %         end
-        
+       %       
         
         % -----------
         function addStandaloneServer(obj, varargin)
@@ -320,35 +320,26 @@ classdef MachineSetConfig < handle
             p.StructExpand = true;
             p.CaseSensitive = true;
             p.KeepUnmatched = false;
-%             
-%             [~, validIDs] = enumeration('MachineType');
-%             typeCheck = @(x) ismember(char(x),validIDs);
             
             addRequired(p, 'simCoreName', @ischar);
             addRequired(p, 'configFile', @ischar);
-%             addRequired(p, 'type', typeCheck);
             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
             % Check for basedir existence is elsewhere since it is remote
             % and needs machine object for communications.
-%             addRequired(p, 'dataFunc',@(x) MachineSetConfig.isaFuncHandle(x)); 
-            addRequired(p, 'baseDir', @(x) ischar(x) && ~isempty(x)); 
+            addRequired(p, 'workDir', @(x) ischar(x) && ~isempty(x)); 
             parse(p, varargin{:});                              
             
             i = obj.numMachines + 1;
+            % The constructor checks for file existence
             obj.MSConfig(i) = StandaloneConfig(p.Results.configFile);
+            
+            % Need to check simCoreName to see if it is in SimCores.json
             obj.MSConfig(i).simCoreName = p.Results.simCoreName;
-%             obj.MSConfig(i).setResourceName() 
-%             obj.MSConfig(i).setResourceType(p.Results.type); % Need to check for valid type
-p.Results.numSimulators
             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-%             obj.MSConfig(i).dataFunc = p.Results.dataFunc;
-            obj.MSConfig(i).workDir = p.Results.baseDir;
+            
+            % Need multiple checks on this; here and elsewhere IMPORTANT!!!
+            obj.MSConfig(i).workDir = p.Results.workDir;
             obj.numMachines = i;
-
-            % Pull in data from local information struct
-%             md = obj.MSConfig(i).dataFunc('','');
-%             obj.MSConfig(i).resourceCategory = md.getSetting('resourceCategory');
-%             obj.MSConfig(i).resourceName = md.getSetting('resourceName');
 
             % SingleMachine configuration requires a positive number of
             % simulators
@@ -419,7 +410,7 @@ p.Results.numSimulators
 
             % Pull in data from local information struct
             md = obj.MSConfig(i).dataFunc('','');
-            obj.MSConfig(i).resourceCategory = md.getSetting('resourceCategory');
+            obj.MSConfig(i).resourceType = md.getSetting('resourceType');
             obj.MSConfig(i).resourceName = md.getSetting('resourceName');
 
             % SingleMachine configuration requires a positive number of
@@ -453,41 +444,30 @@ p.Results.numSimulators
             p.CaseSensitive = true;
             p.KeepUnmatched = false;
             
-            [~, validIDs] = enumeration('MachineType');
-            typeCheck = @(x) ismember(char(x),validIDs);
-            
-            defaultIPAddress = 'missing IPAddress';
             defaultDeleteInstanceWhenDone = false;
 
-            addRequired(p, 'type', typeCheck);
+            addRequired(p, 'simCoreName', @ischar);
+            addRequired(p, 'configFile', @ischar);
             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
-            % Check for basedir existence is elsewhere since it is remote
+            % Check for workdir existence is elsewhere since it is remote
             % and needs machine object for communications.
-            addRequired(p, 'instanceName', @ischar);
-            addRequired(p, 'dataFunc',@(x) MachineSetConfig.isaFuncHandle(x)); 
-            addRequired(p, 'baseDir', @ischar); 
-            addParamValue(p, 'ipAddress', defaultIPAddress, @ischar);
+            addRequired(p, 'workDir', @ischar); 
             addParamValue(p, 'deleteInstanceWhenDone', ...
                              defaultDeleteInstanceWhenDone, @islogical);
             parse(p, varargin{:}); 
             
             i = obj.numMachines+1;
-            obj.MSConfig(i).type = p.Results.type;
+            % The constructor checks for configFile existence
+            obj.MSConfig(i) = CloudConfig(p.Results.configFile);
+            
+            % Need to check simCoreName to see if it is in SimCores.json
+            obj.MSConfig(i).simCoreName = p.Results.simCoreName;
             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-            obj.MSConfig(i).instanceName = p.Results.instanceName; 
-            obj.MSConfig(i).dataFunc = p.Results.dataFunc;
-            obj.MSConfig(i).baseDir = p.Results.baseDir;
-            obj.MSConfig(i).ipAddress = p.Results.ipAddress;
-            obj.MSConfig(i).deleteInstanceWhenDone = ...
-                                        p.Results.deleteInstanceWhenDone;
+            
+            % Need multiple checks on this; here and elsewhere IMPORTANT!!!
+            obj.MSConfig(i).workDir = p.Results.workDir;
             obj.numMachines = i;
 
-            % Pull in data from local information struct
-            md = obj.MSConfig(i).dataFunc('','');
-            obj.MSConfig(i).resourceCategory = md.getSetting('resourceCategory');
-            obj.MSConfig(i).resourceName = md.getSetting('resourceName');
-
-            
             % SingleMachine configuration requires a positive number of
             % simulators
             if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
@@ -503,35 +483,44 @@ p.Results.numSimulators
             % data from the script addCloudServer line. 
             if obj.MSConfig(i).numSimulators ~= 0
                 obj.log.write(['Connecting to or attempting to launch instance '...
-                               obj.MSConfig(i).instanceName]);
-                obj.MSConfig(i).resourceCategory = md.getSetting('resourceCategory');
-                obj.MSConfig(i).resourceName = md.getSetting('resourceName');
+                               obj.MSConfig(i).machineName]);
+%                 obj.MSConfig(i).resourceType = md.getSetting('resourceType');
+%                 obj.MSConfig(i).resourceName = md.getSetting('resourceName');
+
+                % Try to get rid of this switch somehow
                 switch obj.MSConfig(i).resourceName
                     case 'Chameleon'
                         ccImageRef = ...
                             'http://openstack.tacc.chameleoncloud.org:8774/CH-817259/images/4c40655f-59ac-4600-bec2-8ecf6333d655';
                         ccFlavorRef = ...
                             'http://openstack.tacc.chameleoncloud.org:8774/CH-817259/flavors/3';
-                        instance = CCCloudInstance(obj.MSConfig(i).instanceName,...
+                        instance = CCCloudInstance(obj.MSConfig(i).machineName,...
                             ccImageRef, ccFlavorRef);
                         obj.MSConfig(i).instance = instance;
                     case 'Rackspace'
-                        rsImageRef = ...
-                            'https://dfw.servers.api.rackspacecloud.com/v2/994023/images/bf86ef12-5c84-43e1-a4dd-cfbfadf15cf8';
-                        rsFlavorRef = ...
-                            'https://dfw.servers.api.rackspacecloud.com/994023/flavors/general1-1';
-                        instance = RSCloudInstance(obj.MSConfig(i).instanceName, rsImageRef, rsFlavorRef);
-                        obj.MSConfig(i).instance = instance;
+%                         rsImageRef = ...
+%                             'https://dfw.servers.api.rackspacecloud.com/v2/994023/images/bf86ef12-5c84-43e1-a4dd-cfbfadf15cf8';
+%                         rsFlavorRef = ...
+%                             'https://dfw.servers.api.rackspacecloud.com/994023/flavors/general1-1';
+%                         instance = RSCloudInstance(obj.MSConfig(i).machineName, rsImageRef, rsFlavorRef);
+%                         obj.MSConfig(i).instance = instance;
+%                         imageRef = obj.MSConfig(i).imageRef;
+%                         flavorRef = obj.MSConfig(i).flavorRef;
+                        obj.MSConfig(i).instance = ...
+                            RSCloudInstance(obj.MSConfig(i).machineName,...
+                                            obj.MSConfig(i).imageRef,...
+                                            obj.MSConfig(i).flavorRef);
                     otherwise
-                        error(['MachineSetConfig: unknown resource ' resourceName])
+                        error(['MachineSetConfig: unknown resource ' obj.MSConfig(i).resourceName])
                 end
-                [~, name, ~, ipAddr] = instance.getData();
-                obj.MSConfig(i).instanceName = name;
-                obj.MSConfig(i).ipAddress = ipAddr;
+                [~, name, ~, ipAddress] = obj.MSConfig(i).instance.getData();
+                obj.MSConfig(i).machineName = name;
+                obj.MSConfig(i).ipAddress = ipAddress;
                 % HAVE TO DEAL WITH BASE DIR as parameter with default
                 % since it is actually part of the image used to create the
                 % instance. (etc)
-                obj.log.write(['Instance ' obj.MSConfig(i).instanceName ' ready.']);
+                
+                obj.log.write(['Instance ' obj.MSConfig(i).machineName ' ready.']);
 %                 assignin('base', 'details', instance.getDetails())  % debug only
 
                 % Now we create a temporary FileTransferMachine in order to
@@ -547,42 +536,42 @@ p.Results.numSimulators
             end
         end
         
-        function terminateCloudInstance(obj, resourceName, instanceName)
+        function terminateCloudInstance(obj, resourceName, machineName)
             for i = 1:obj.numMachines
-                if (strcmp(obj.MSConfig(i).resourceCategory, 'CLOUD') && ...
+                if (strcmp(obj.MSConfig(i).resourceType, 'CLOUD') && ...
                     strcmp(obj.MSConfig(i).resourceName, resourceName) && ...
-                    strcmp(obj.MSConfig(i).instanceName, instanceName) && ...
+                    strcmp(obj.MSConfig(i).machineName, machineName) && ...
                     ~isempty(obj.MSConfig(i).instance))
                     obj.log.write(['Terminating instance '...
-                                   obj.MSConfig(i).instanceName]);
+                                   obj.MSConfig(i).machineName]);
                     obj.MSConfig(i).instance.terminate();
                     obj.log.write(['Instance '...
-                                   obj.MSConfig(i).instanceName ...
+                                   obj.MSConfig(i).machineName ...
                                    ' terminated.']);
                     return;
                 end
             end
             obj.log.write(['Machine Set Config: Unable to terminate Cloud Instance named '...
-                           instanceName ' on resource ' resourceName ...
+                           machineName ' on resource ' resourceName ...
                            '. It may not exist or perhaps was not used in the config.']);
         end
         
         % -----------
         % getMachine
-        function [type, numSimulators, instanceName, config,...
-                  queueData, parEnvStr, resourceStr, numNodes, baseDir,...
+        function [type, numSimulators, machineName, config,...
+                  queueData, parEnvStr, resourceStr, numNodes, workDir,...
                   wallClockTime, ipAddr, deleteInstanceWhenDone] =...
                                                     getMachine(obj, index)
             if ((index > obj.numMachines) || (index < 1))
                 type = MachineType.UNASSIGNED;
                 numSimulators = 0;
-                instanceName = '';
+                machineName = '';
                 config = 0;
                 queueData = 0;
                 parEnvStr = '';
                 resourceStr = '';
                 numNodes = 1;
-                baseDir = '';
+                workDir = '';
                 wallClockTime = '';
                 ipAddr = '';
                 deleteInstanceWhenDone = false;
@@ -593,13 +582,15 @@ p.Results.numSimulators
             switch obj.MSConfig(index).resourceType;
                 case 'STANDALONE'
                     type = MachineType.STANDALONESERVER;
+                case 'CLOUDSERVER'
+                    type = MachineType.CLOUDSERVER;
             end
 % type = '';
 %             type = obj.MSConfig(index).type;
             numSimulators = obj.MSConfig(index).getNumSimulators();
 %             numSimulators = obj.MSConfig(index).numSimulators;
-            instanceName = obj.MSConfig(index).getMachineName();
-%             instanceName = obj.MSConfig(index).instanceName;
+            machineName = obj.MSConfig(index).getMachineName();
+%             machineName = obj.MSConfig(index).machineName;
             config = obj.MSConfig(index);
 %             queueData = obj.MSConfig(index).queueData;
             queueData = '';
@@ -610,7 +601,7 @@ p.Results.numSimulators
 %             numNodes = obj.MSConfig(index).numNodes;
             numNodes = 0;
 %             baseDir = obj.MSConfig(index).baseDir;
-            baseDir = obj.MSConfig(index).getWorkDir();
+            workDir = obj.MSConfig(index).getWorkDir();
 %             wallClockTime = obj.MSConfig(index).wallClockTime;
             wallClockTime = 0;
 %             ipAddr = obj.MSConfig(index).ipAddress;
