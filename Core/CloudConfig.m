@@ -16,6 +16,8 @@ classdef CloudConfig  < MachineConfig
         cloudWorkDir;
         hostKeyFingerprint;
         instanceUsername;
+        keyFile;
+        curlDir;
         
         instance;
 
@@ -28,6 +30,7 @@ classdef CloudConfig  < MachineConfig
             % We already know from previous line that configFile and
             % imageFile exist and are parseable.  We just need to get the
             % Cloud specific stuff out of them.
+            % Perhaps store these in the superclass to avoid reprocessing
             configData = loadjson(configFile);
             imageFile = configData.image.file;
             imageData = loadjson(imageFile); 

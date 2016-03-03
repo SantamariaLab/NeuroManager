@@ -201,6 +201,7 @@ classdef NeuroManager < handle
         simSpecFileDir;    % Where to look for the SimSpec
         simResultsBaseDir; % Where user wants the results tree to be attached
         simResultsDir;     % The pathname of the results tree (automatically generated)
+        curlDir;           % The path of the directory containing the cURL executable
 
         oldPath;    % Retains user's old MATLAB search path for the duration
         
@@ -301,6 +302,8 @@ classdef NeuroManager < handle
                                                  obj.hostMachineData.osType);
             obj.simSpecFileDir = pathConversion(p.Results.simSpecFileDir,...
                                                  obj.hostMachineData.osType);
+            obj.curlDir = pathConversion(p.Results.curlDir,...
+                                                 obj.hostMachineData.osType);
             % Add the custom directory to the
             % MATLAB search path; that is where the user's
             % UserSimulation function must be located as well as other
@@ -366,6 +369,7 @@ classdef NeuroManager < handle
             obj.log.write(['LocalMachine Directory: ' obj.localMachineDir]);
             obj.log.write(['SimResultsBase Directory: ' obj.simResultsBaseDir]);
             obj.log.write(['SimResults Directory: ' obj.simResultsDir]);
+            obj.log.write(['cURL Directory: ' obj.curlDir]);
 
             % Tell Notifications about the new log
             obj.simNotificationSet.setLog(obj.log);
@@ -454,7 +458,9 @@ classdef NeuroManager < handle
             
             % Initialize the machineSetConfiguration; the user configures
             % this overtly in the script
-            obj.machineSetConfig = MachineSetConfig(obj.isSingleMachine(), obj.log);
+            obj.machineSetConfig = ...
+                MachineSetConfig(obj.isSingleMachine(), obj.curlDir, ...
+                                 obj.auth, obj.log);
 
             % Send a "starting" message to verify notifications setup
             if obj.simNotificationSet.isEnabled()

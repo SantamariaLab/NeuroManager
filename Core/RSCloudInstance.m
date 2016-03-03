@@ -14,19 +14,20 @@ classdef RSCloudInstance < RSCloud
     end
     
     methods
-        function obj = RSCloudInstance(name, image, flavor)
-            if nargin==0
-                name = '';
-            end
-            md = createRackspaceData('','');
-            obj = obj@RSCloud(md);
+        function obj = RSCloudInstance(config)
+%             md = createRackspaceData('','');
+            obj = obj@RSCloud(config);
             % Create the machine if necessary and get it into running state
             % for NeuroManager use
+            name = config.machineName;
+            image = config.imageRef;
+            flavor = config.flavorRef;
+
             if isempty(name)
                 nameNum = 0;
                 while isempty(name)
                     nameNum = nameNum + 1;
-                    name = [obj.autoNameRoot '-' num2str(nameNum, '%06u')];
+                    name = [obj.autoNameRoot '-' num2str(nameNum, '%03u')];
                     [name, instanceID, ipAddr] = obj.createServer(name, image, flavor);
                 end
                 obj.instanceName = name;

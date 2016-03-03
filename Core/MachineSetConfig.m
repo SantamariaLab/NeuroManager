@@ -195,11 +195,13 @@ classdef MachineSetConfig < handle
         numMachines;
         % Handle of TimeCheck method
         timeCheckFunc;
+        auth; % used for automated construction of cloud instances
+        curlDir;
         log;
     end
     
     methods
-        function obj = MachineSetConfig(singleMachine, log)
+        function obj = MachineSetConfig(singleMachine, curlDir, auth, log)
             obj.singleMachine = singleMachine;
             obj.MSConfig = MachineConfig.empty();
 %             struct('type', MachineType.UNASSIGNED,...
@@ -219,6 +221,8 @@ classdef MachineSetConfig < handle
 %                                   'deleteInstanceWhenDone', false);
             obj.numMachines = 0;
             obj.timeCheckFunc = @obj.timeCheck;
+            obj.curlDir = curlDir;
+            obj.auth = auth;
             obj.log = log;
         end
         
@@ -482,34 +486,34 @@ classdef MachineSetConfig < handle
             % Similarly, data pulled from an existing instance overrides
             % data from the script addCloudServer line. 
             if obj.MSConfig(i).numSimulators ~= 0
-                obj.log.write(['Connecting to or attempting to launch instance '...
-                               obj.MSConfig(i).machineName]);
-%                 obj.MSConfig(i).resourceType = md.getSetting('resourceType');
-%                 obj.MSConfig(i).resourceName = md.getSetting('resourceName');
+                if ~isempty(obj.MSConfig(i).machineName)
+                    obj.log.write(['Connecting to or attempting to launch instance '...
+                                   obj.MSConfig(i).machineName]);
+                else
+                    obj.log.write(['Attempting to launch ephemeral instance;'...
+                                   'name to be determined automatically.']);
+                end
 
+                % Launching instances requires a local keyfile path and the
+                % location of the cURL executable to be passed to the
+                % instance management code
+                obj.MSConfig(i).keyFile = obj.auth.getKeyFile();
+                obj.MSConfig(i).curlDir = obj.curlDir;
+                
                 % Try to get rid of this switch somehow
                 switch obj.MSConfig(i).resourceName
                     case 'Chameleon'
-                        ccImageRef = ...
-                            'http://openstack.tacc.chameleoncloud.org:8774/CH-817259/images/4c40655f-59ac-4600-bec2-8ecf6333d655';
-                        ccFlavorRef = ...
-                            'http://openstack.tacc.chameleoncloud.org:8774/CH-817259/flavors/3';
-                        instance = CCCloudInstance(obj.MSConfig(i).machineName,...
-                            ccImageRef, ccFlavorRef);
-                        obj.MSConfig(i).instance = instance;
-                    case 'Rackspace'
-%                         rsImageRef = ...
-%                             'https://dfw.servers.api.rackspacecloud.com/v2/994023/images/bf86ef12-5c84-43e1-a4dd-cfbfadf15cf8';
-%                         rsFlavorRef = ...
-%                             'https://dfw.servers.api.rackspacecloud.com/994023/flavors/general1-1';
-%                         instance = RSCloudInstance(obj.MSConfig(i).machineName, rsImageRef, rsFlavorRef);
-%                         obj.MSConfig(i).instance = instance;
-%                         imageRef = obj.MSConfig(i).imageRef;
-%                         flavorRef = obj.MSConfig(i).flavorRef;
                         obj.MSConfig(i).instance = ...
-                            RSCloudInstance(obj.MSConfig(i).machineName,...
+                            CCCloudInstance(obj.MSConfig(i).machineName,...
                                             obj.MSConfig(i).imageRef,...
                                             obj.MSConfig(i).flavorRef);
+                    case 'Rackspace'
+                        config = obj.MSConfig(i);
+                        obj.MSConfig(i).instance = ...
+                            RSCloudInstance(config);
+%                             RSCloudInstance(obj.MSConfig(i).machineName,...
+%                                             obj.MSConfig(i).imageRef,...
+%                                             obj.MSConfig(i).flavorRef);
                     otherwise
                         error(['MachineSetConfig: unknown resource ' obj.MSConfig(i).resourceName])
                 end

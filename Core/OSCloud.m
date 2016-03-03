@@ -34,7 +34,7 @@ classdef OSCloud < handle
         OS_PASSWORD;
         OS_KEY_NAME;    % on the cloud
         localKeyFile;   % on the NM host
-        curldir;
+        curlDir;
         network;
         powerStatePhrase;   % better terminology and handling necessary
         extAddressRoot; 
@@ -51,21 +51,21 @@ classdef OSCloud < handle
         deleteServer(obj)
     end
     methods
-        function obj = OSCloud(cloudData)
-            obj.OS_IdentityEndpoint = cloudData.getSetting('OS_IdentityEndpoint');
-            obj.OS_ComputeEndpoint = cloudData.getSetting('OS_ComputeEndpoint');
-            obj.OS_TENANT_NAME = cloudData.getSetting('OS_TENANT_NAME');
-            obj.OS_USERNAME = cloudData.getSetting('OS_USERNAME');
-            obj.OS_PASSWORD = cloudData.getSetting('OS_PASSWORD');
-            obj.OS_KEY_NAME = cloudData.getSetting('OS_KEY_NAME');
-            obj.network = cloudData.getSetting('network');
-            obj.powerStatePhrase = cloudData.getSetting('powerStatePhrase');
+        function obj = OSCloud(config)
+            obj.OS_IdentityEndpoint = config.OS_IdentityEndpoint;
+            obj.OS_ComputeEndpoint = config.OS_ComputeEndpoint;
+            obj.OS_TENANT_NAME = config.OS_TENANT_NAME;
+            obj.OS_USERNAME = config.OS_USERNAME;
+            obj.OS_PASSWORD = config.OS_PASSWORD;
+            obj.OS_KEY_NAME = config.OS_KEY_NAME;
+            obj.network = config.network;
+            obj.powerStatePhrase = config.powerStatePhrase;
             % Not sure where this comes from
-            obj.extAddressRoot = cloudData.getSetting('extAddressRoot');
+            obj.extAddressRoot = config.extAddressRoot;
 
             % -----
-            obj.localKeyFile = cloudData.getSetting('localKeyFile');
-            obj.curldir = cloudData.getSetting('curldir');
+            obj.localKeyFile = config.keyFile;
+            obj.curlDir = config.curlDir;
             obj.waitingDelay = 0.25;
             obj.currentComputeToken = obj.getToken();
         end
@@ -344,7 +344,7 @@ classdef OSCloud < handle
         % address is the url to which to write
         function [result, answer, responseCode] = ...
                 issueComputeEndpointCommand(obj, responseBody, options, addressExt)
-            cmd = [fullfile(obj.curldir, 'curl -sS ') ...
+            cmd = [fullfile(obj.curlDir, 'curl -sS ') ...
                    '-H "X-Auth-Token: ' obj.currentComputeToken '" '...
                    '-H "Content-Type: application/json " '...
                    '--key-type PEM '...

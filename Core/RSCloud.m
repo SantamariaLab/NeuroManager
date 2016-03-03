@@ -2,8 +2,8 @@ classdef RSCloud < OSCloud
     properties
     end
     methods
-        function obj = RSCloud(cloudData)
-            obj = obj@OSCloud(cloudData);
+        function obj = RSCloud(config)
+            obj = obj@OSCloud(config);
         end
 
         % -----
@@ -110,14 +110,14 @@ classdef RSCloud < OSCloud
         % -----
         function token = getToken(obj)
             if ~isunix
-                cmd = [fullfile(obj.curldir, 'curl -sS ') ...
+                cmd = [fullfile(obj.curlDir, 'curl -sS ') ...
                        '-X POST ' obj.OS_IdentityEndpoint '/tokens '...
                        '-H "Content-Type: application/json" '...
                        '-d "{\"auth\": {\"RAX-KSKEY:apiKeyCredentials\":  '...
                        '{\"username\": \"' obj.OS_USERNAME '\", '...
                         '\"apiKey\": \"' obj.OS_PASSWORD '\"}'...
                        '}}" '...
-                       ];
+                       ]
 %                        '--key-type PEM '...
 %                        ['--key ' obj.localKeyFile ' ']...
             else
@@ -125,7 +125,7 @@ classdef RSCloud < OSCloud
                 %     cmd = ['./curl-7.46.0-win64-mingw/bin/curl --help'];
             end
             [~, answer] = system(cmd);
-            data = loadjson(answer);
+            data = loadjson(answer); % Need check for rejection of request
             token = data.access.token.id;
         end
     end

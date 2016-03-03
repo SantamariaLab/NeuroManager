@@ -202,6 +202,8 @@ function p = neuroManagerInputParser(obj) %#ok<INUSD>
     defaultLocalMachineDir = '.';
     defaultSimSpecFileDir = '.';
     defaultResultsDir = '.';
+    defaultCurlDir = '';
+    
     addParamValue(p, 'nmMainDir',       defaultNMMainDir,       @dirCheck); %#ok<*NVREPL>
     addParamValue(p, 'coreDir',         defaultCoreDir,         @dirCheck);
     addParamValue(p, 'sshLibDir',       defaultSSHLibDir,       @dirCheck);
@@ -210,6 +212,7 @@ function p = neuroManagerInputParser(obj) %#ok<INUSD>
     addParamValue(p, 'localMachineDir', defaultLocalMachineDir, @dirCheck);
     addParamValue(p, 'simSpecFileDir',  defaultSimSpecFileDir,  @dirCheck);
     addParamValue(p, 'resultsDir',      defaultResultsDir,      @dirCheck);
+    addParamValue(p, 'curlDir',         defaultCurlDir,         @dirCheck);
     
     defaultAuthFile = '';
     defaultPuttyAuthFile = '';

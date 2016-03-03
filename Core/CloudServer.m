@@ -230,15 +230,15 @@ classdef CloudServer < SimMachine & Cloud
 
             % Are not these used only for instance management and not
             % necessary here?
-            md.addSetting('OS_TENANT_NAME',      config.OS_TENANT_NAME);
-            md.addSetting('OS_ComputeEndpoint',  config.OS_ComputeEndpoint);
-            md.addSetting('OS_IdentityEndpoint', config.OS_IdentityEndpoint);
-            md.addSetting('OS_USERNAME',         config.OS_USERNAME);
-            md.addSetting('OS_PASSWORD',         config.OS_PASSWORD);
-            md.addSetting('OS_KEY_NAME',         config.OS_KEY_NAME);
-            md.addSetting('network',             config.network);
-            md.addSetting('powerStatePhrase',    config.powerStatePhrase);
-            md.addSetting('extAddressRoot',      config.extAddressRoot);
+%             md.addSetting('OS_TENANT_NAME',      config.OS_TENANT_NAME);
+%             md.addSetting('OS_ComputeEndpoint',  config.OS_ComputeEndpoint);
+%             md.addSetting('OS_IdentityEndpoint', config.OS_IdentityEndpoint);
+%             md.addSetting('OS_USERNAME',         config.OS_USERNAME);
+%             md.addSetting('OS_PASSWORD',         config.OS_PASSWORD);
+%             md.addSetting('OS_KEY_NAME',         config.OS_KEY_NAME);
+%             md.addSetting('network',             config.network);
+%             md.addSetting('powerStatePhrase',    config.powerStatePhrase);
+%             md.addSetting('extAddressRoot',      config.extAddressRoot);
             
             % Use cross-compilation on Dendrite (just to test the
             % cross-compilation code)

@@ -25,7 +25,7 @@ classdef OSCloudInstance < OSCloud
                 nameNum = 0;
                 while isempty(name)
                     nameNum = nameNum + 1;
-                    name = [obj.autoNameRoot '-' num2str(nameNum, '%06u')];
+                    name = [obj.autoNameRoot '-' num2str(nameNum, '%03u')];
                     [name, instanceID, ipAddr] = obj.createServer(name);
                 end
                 obj.instanceName = name;
