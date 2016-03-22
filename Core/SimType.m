@@ -190,29 +190,36 @@ END OF LICENSE
 classdef SimType
     properties
         constrFunc;
+        simCoreList;
     end
     methods
-        function t = SimType(func)
+        function t = SimType(func, list)
             t.constrFunc = func;
+            t.simCoreList = list;
         end
     end
     enumeration
         % Type name                         (@ConstructorName)
         
         % Mostly for constructor-ish stuff; must be present!
-        UNASSIGNED                          (0)
+        UNASSIGNED                          (0,{})
             
         % A MATLAB-only simulator that plots sine waves
-        SIM_SINESIM                          (@SimSineSim)
+        SIM_SINESIM                          (@SimSineSim, ...
+                                              {'MATLAB_ONLY_2012b',...
+                                               'MATLAB_ONLY_2013a',...
+                                               'MATLAB_ONLY_2015a',...
+                                               'MATLAB_ONLY_2015b'})
 
         % Neuron example simulators
-        SIM_NEURON_NEURONTUTORIALA          (@SimNeuronNeuronTutorialA)
-        SIM_NEURON_SIMPLESPIKE01            (@SimNeuronSimpleSpike01)
-        SIM_NEURON_SIMPLESPIKE02A           (@SimNeuronSimpleSpike02A)
-        SIM_NEURON_SIMPLESPIKE02B           (@SimNeuronSimpleSpike02B)
-        SIM_NEURON_SIMPLESPIKE02C           (@SimNeuronSimpleSpike02C)
-        SIM_NEURON_SIMPLESPIKE03            (@SimNeuronSimpleSpike03)
-        SIM_NEUR_PURKINJE_MIYASHO2001       (@SimNeurPurkinjeMiyasho2001)
-        SIM_NEUR_PURKINJE_MIYASHO2001_KH    (@SimNeurPurkinjeMiyasho2001Kh)
+%         SIM_NEURON_NEURONTUTORIALA          (@SimNeuronNeuronTutorialA)
+%         SIM_NEURON_SIMPLESPIKE01            (@SimNeuronSimpleSpike01)
+%         SIM_NEURON_SIMPLESPIKE02A           (@SimNeuronSimpleSpike02A)
+%         SIM_NEURON_SIMPLESPIKE02B           (@SimNeuronSimpleSpike02B)
+%         SIM_NEURON_SIMPLESPIKE02C           (@SimNeuronSimpleSpike02C)
+%         SIM_NEURON_SIMPLESPIKE03            (@SimNeuronSimpleSpike03)
+%         SIM_NEUR_PURKINJE_MIYASHO2001       (@SimNeurPurkinjeMiyasho2001)
+         SIM_NEUR_PURKINJE_MIYASHO2001_KH    (@SimNeurPurkinjeMiyasho2001Kh,...
+                                              {'NEURON_74_PYTHON'})
     end
 end 

@@ -191,17 +191,23 @@ END OF LICENSE
 classdef SimType
     properties
         constrFunc;
+		simCoreList;
     end
     methods
-        function t = SimType(func)
+        function t = SimType(func, list)
             t.constrFunc = func;
+			t.simCoreList = list;
         end
     end
     enumeration
         % Mostly for constructor-ish stuff
-        UNASSIGNED                          (0)
+        UNASSIGNED                          (0,{})
             
-        % A MATLAB-only test simulation that plots sine waves
-        SIM_SINESIM                         (@SimSineSim)
+        % A MATLAB-only simulator that plots sine waves
+        SIM_SINESIM                          (@SimSineSim, ...
+                                              {'MATLAB_ONLY_2012b',...
+                                               'MATLAB_ONLY_2013a',...
+                                               'MATLAB_ONLY_2015a',...
+                                               'MATLAB_ONLY_2015b'})
     end
 end 

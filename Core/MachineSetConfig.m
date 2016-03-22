@@ -232,8 +232,8 @@ classdef MachineSetConfig < handle
         % Checks to see if the str is a valid time in the format hh:mm:ss
             result = true;
         end
-        
-        % -----------
+%% cell start        
+%{ -----------
 %         function addMachine(obj, varargin)
 %         % Adds a (non-cloud) machine to the machine set. Parameters are, in
 %         % order: type, number of simulators, name, data function, basedir,
@@ -301,7 +301,8 @@ classdef MachineSetConfig < handle
 %                        'setup requires at least one simulator.']);
 %             end        
 %         end
-       %       
+%} 
+%% cell end
         
         % -----------
         function addStandaloneServer(obj, varargin)
@@ -325,8 +326,8 @@ classdef MachineSetConfig < handle
             p.CaseSensitive = true;
             p.KeepUnmatched = false;
             
-            addRequired(p, 'simCoreName', @ischar);
-            addRequired(p, 'configFile', @ischar);
+            addRequired(p, 'requestedSimCoreName', @ischar);
+            addRequired(p, 'infoFile', @ischar);
             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
             % Check for basedir existence is elsewhere since it is remote
             % and needs machine object for communications.
@@ -335,13 +336,17 @@ classdef MachineSetConfig < handle
             
             i = obj.numMachines + 1;
             % The constructor checks for file existence
-            obj.MSConfig(i) = StandaloneConfig(p.Results.configFile);
+            obj.MSConfig(i) = StandaloneConfig(p.Results.infoFile);
             
-            % Need to check simCoreName to see if it is in SimCores.json
-            obj.MSConfig(i).simCoreName = p.Results.simCoreName;
+            % Need to check requestedSimCoreName to see if it is in
+            % SimCores.json and in the SimCores data from the infoFile
+            % (not implemented yet)
+            obj.MSConfig(i).requestedSimCoreName = ...
+                                        p.Results.requestedSimCoreName;
             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
             
             % Need multiple checks on this; here and elsewhere IMPORTANT!!!
+            % (not implemented yet)
             obj.MSConfig(i).workDir = p.Results.workDir;
             obj.numMachines = i;
 
@@ -450,8 +455,8 @@ classdef MachineSetConfig < handle
             
             defaultDeleteInstanceWhenDone = false;
 
-            addRequired(p, 'simCoreName', @ischar);
-            addRequired(p, 'configFile', @ischar);
+            addRequired(p, 'requestedSimCoreName', @ischar);
+            addRequired(p, 'infoFile', @ischar);
             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
             % Check for workdir existence is elsewhere since it is remote
             % and needs machine object for communications.
@@ -461,11 +466,11 @@ classdef MachineSetConfig < handle
             parse(p, varargin{:}); 
             
             i = obj.numMachines+1;
-            % The constructor checks for configFile existence
-            obj.MSConfig(i) = CloudConfig(p.Results.configFile);
+            % The constructor checks for infoFile existence
+            obj.MSConfig(i) = CloudConfig(p.Results.infoFile);
             
             % Need to check simCoreName to see if it is in SimCores.json
-            obj.MSConfig(i).simCoreName = p.Results.simCoreName;
+            obj.MSConfig(i).requestedSimCoreName = p.Results.requestedSimCoreName;
             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
             
             % Need multiple checks on this; here and elsewhere IMPORTANT!!!
@@ -609,10 +614,10 @@ classdef MachineSetConfig < handle
 %             wallClockTime = obj.MSConfig(index).wallClockTime;
             wallClockTime = 0;
 %             ipAddr = obj.MSConfig(index).ipAddress;
-ipAddr = obj.MSConfig(index).getIpAddress();
+            ipAddr = obj.MSConfig(index).getIpAddress();
 %             deleteInstanceWhenDone = ...
 %                             obj.MSConfig(index).deleteInstanceWhenDone;
-deleteInstanceWhenDone = false;
+            deleteInstanceWhenDone = false;
         end
         
         % -----------

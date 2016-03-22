@@ -194,6 +194,11 @@ classdef Simulator < handle
         
         type; % From SimType class
         
+        % A cell array of compatible SimCores. Empty means nothing is
+        % compatible, so subclasses have to set this list according to
+        % their SimCore requirements. MOVED TO SIMTYPE
+%         simCoreCompatibilityList = {}; 
+        
         % The list of files to be uploaded as part of the simulator;
         % dependent on simtype and machine. A cell array of strings.
         % Filenames only

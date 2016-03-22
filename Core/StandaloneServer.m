@@ -226,7 +226,7 @@ classdef StandaloneServer <  SimMachine & Server
             md.addSetting('mcrDir',              config.getMcrDir());
             md.addSetting('xCompDir',            config.getXCompDir());
             
-            numSims
+%             numSims
             
             obj = obj@Server(md, xCompilationMachine,...
                              xCompilationScratchDir,...
