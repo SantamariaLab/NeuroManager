@@ -191,7 +191,8 @@ classdef StandaloneServer <  SimMachine & Server
     properties
         % Machine data specific to the machine; will be passed up to target
         % via a data file called MachineData.dat.
-        md;  
+%         md;  
+        config; % Not sure yet...
     end
     methods
         % name not used; assumed to be in the create....m file for the
@@ -206,37 +207,41 @@ classdef StandaloneServer <  SimMachine & Server
                             auth, log, notificationSet, config,...
                             ~, ~, ~, ~)
             % Temporary; the config should just go down            
-            md = RMD();
-            md.addSetting('resourceCategory',	 config.getResourceType());
-            md.addSetting('resourceName',        config.getResourceName());
-            md.addSetting('instanceName',        config.getMachineName());
-            md.addSetting('id',                  md.getSetting('resourceName'));
-            md.addSetting('commsID',             md.getSetting('resourceName'));
-
-            md.addSetting('fsUserName',          config.getUserName());
-            md.addSetting('fsPassword',          '');
-            md.addSetting('fsIPAddress',         config.getIpAddress());
-            md.addSetting('jsUserName',          config.getUserName());
-            md.addSetting('jsPassword',          '');
-            md.addSetting('jsIPAddress',         config.getIpAddress());
-
-            md.addSetting('matlabCompilerDir',   config.getCompilerDir());
-            md.addSetting('matlabCompiler',      config.getCompiler());
-            md.addSetting('matlabExecutable',    config.getExecutable());
-            md.addSetting('mcrDir',              config.getMcrDir());
-            md.addSetting('xCompDir',            config.getXCompDir());
+%             md = RMD();
+%             md.addSetting('resourceCategory',	 config.getResourceType());
+%             md.addSetting('resourceName',        config.getResourceName());
+%             md.addSetting('instanceName',        config.getMachineName());
+%             md.addSetting('id',                  md.getSetting('resourceName'));
+%             md.addSetting('commsID',             md.getSetting('resourceName'));
+% 
+%             md.addSetting('fsUserName',          config.getUserName());
+%             md.addSetting('fsPassword',          '');
+%             md.addSetting('fsIPAddress',         config.getIpAddress());
+%             md.addSetting('jsUserName',          config.getUserName());
+%             md.addSetting('jsPassword',          '');
+%             md.addSetting('jsIPAddress',         config.getIpAddress());
+% 
+%             md.addSetting('matlabCompilerDir',   config.getCompilerDir());
+%             md.addSetting('matlabCompiler',      config.getCompiler());
+%             md.addSetting('matlabExecutable',    config.getExecutable());
+%             md.addSetting('mcrDir',              config.getMcrDir());
+%             md.addSetting('xCompDir',            config.getXCompDir());
             
-%             numSims
+            % These are different for the gross machine types (server,
+            % cluster, etc) and so have to be set here for each type
+            config.commsID = config.getResourceName();
+            config.instanceName = config.getMachineName();
             
-            obj = obj@Server(md, xCompilationMachine,...
+            obj = obj@Server(config, xCompilationMachine,...
                              xCompilationScratchDir,...
                              hostID, hostOS, '', auth);
-            obj = obj@SimMachine(md, hostID, baseDir, scratchDir,...
+            obj = obj@SimMachine(config, hostID, baseDir, scratchDir,...
                            simFileSourceDir, custFileSourceDir,...
                            modelFileSourceDir,...
                            simType, numSims,...
                            auth, log, notificationSet);
-            obj.md = md;
+%             obj.md = md;
+            obj.config = config;
         end
         
         % ----------

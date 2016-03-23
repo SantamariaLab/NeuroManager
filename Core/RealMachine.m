@@ -226,31 +226,39 @@ classdef RealMachine < handle
     methods
         % ----------
         % Constructor
-        function obj = RealMachine(md, hostID, auth)
-            obj.id           = md.getSetting('id');
-            obj.commsID      = md.getSetting('commsID');
-            obj.fsUserName   = md.getSetting('fsUserName');
-            obj.fsPassword   = md.getSetting('fsPassword');
-            obj.fsIPAddress  = md.getSetting('fsIPAddress');
-            obj.jsUserName   = md.getSetting('jsUserName');
-            obj.jsPassword   = md.getSetting('jsPassword');
-            obj.jsIPAddress  = md.getSetting('jsIPAddress');
+        function obj = RealMachine(config, hostID, auth)
+%             obj.id           = md.getSetting('id');
+            obj.id = config.getResourceName();
+%             obj.commsID      = md.getSetting('commsID');
+            obj.commsID      = config.getCommsID();
+%             obj.fsUserName   = md.getSetting('fsUserName');
+            obj.fsUserName   = config.getUserName();
+%             obj.fsPassword   = md.getSetting('fsPassword');
+            obj.fsPassword   = config.getPassword();
+%             obj.fsIPAddress  = md.getSetting('fsIPAddress');
+            obj.fsIPAddress  = config.getIpAddress();
+            
+            obj.jsUserName   = obj.fsUserName;
+            obj.jsPassword   = obj.fsPassword;
+            obj.jsIPAddress  = obj.fsIPAddress;
+            
             % Basic assumption is that all targets are unix.
             obj.osType       = OSType.UNIX; 
 
             obj.simAuth = auth;
             obj.hostID  = hostID;
-            obj.machineDataFilename = [md.getSetting('id') 'Data.dat'];
+            obj.machineDataFilename = [obj.id 'Data.dat'];
 %             obj.configureDualKey();
         end
         
         % -----
-        function configureDualKey(obj, md)
-            if md.isSetting('hostKeyFingerprint')
-                obj.hostKeyFingerprint = md.getSetting('hostKeyFingerprint');
-            else
-                obj.hostKeyFingerprint   = '';
-            end
+        function configureDualKey(obj, config)
+%             if md.isSetting('hostKeyFingerprint')
+%                 obj.hostKeyFingerprint = md.getSetting('hostKeyFingerprint');
+                obj.hostKeyFingerprint = config.getHostKeyFingerprint();
+%             else
+%                 obj.hostKeyFingerprint   = '';
+%             end
       LOOK = obj.hostKeyFingerprint
 
             % Unless is a single machine setup, we check validity of

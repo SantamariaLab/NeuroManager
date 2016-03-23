@@ -8,9 +8,11 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
         resourceName;
         resourceType;
         userName;
+        password;
         requestedSimCoreName;
         simCores;
         ipAddress;
+        hostKeyFingerprint;
         numSimulators;
         workDir;
         
@@ -26,6 +28,10 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
         executable;
         mcrDir;
         xCompDir;
+        
+        % will be set later
+        commsID;
+        instanceName;
     end
     
     methods
@@ -35,7 +41,9 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                 obj.resourceName = '';
                 obj.resourceType = '';
                 obj.userName = '';
+                obj.password = '';
                 obj.ipAddress = '';
+                obj.hostKeyFingerprint = '';
                 obj.requestedSimCoreName = '';
                 obj.numSimulators = -1;
                 obj.workDir = '';
@@ -51,6 +59,8 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                 obj.executable = '';
                 obj.mcrDir = '';
                 obj.xCompDir = '';
+                obj.commsID = '';
+                obj.instanceName = '';
             else
                 % Pull in the infoFile (JSON format) and fill in the data
                 % related to this class
@@ -69,6 +79,8 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                 obj.resourceName        = infoData.resourceName;
                 obj.resourceType        = infoData.resourceType;
                 obj.userName            = infoData.userName;
+                obj.password            = infoData.password;
+
                 obj.numProcessors       = infoData.flavor.numProcessors;
                 obj.coresPerProcessor   = infoData.flavor.coresPerProcessor;
                 obj.RAM                 = infoData.flavor.RAM;
@@ -86,11 +98,16 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                     error(msg, imageFile, ME.identifier, ME.message);
                 end
                 obj.ipAddress           = imageData.ipAddress;
+                obj.hostKeyFingerprint  = imageData.hostKeyFingerprint;
+
                 obj.compilerDir         = imageData.matlab.compilerDir;
                 obj.compiler            = imageData.matlab.compiler;
                 obj.executable          = imageData.matlab.executable;
                 obj.mcrDir              = imageData.matlab.mcrDir;
                 obj.xCompDir            = imageData.matlab.xCompDir;
+                obj.commsID             = '';
+                obj.instanceName        = '';
+
                 obj.simCores            = imageData.simCores; % Cell array
                 % Need to check each simCore name to see if it is in SimCores.json
                 % (not implemented yet)
@@ -104,6 +121,16 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
         % ---
         function name = getResourceName(obj)
             name = obj.resourceName;
+        end
+        
+        % ---
+        function id = getCommsID(obj)
+            id = obj.commsID;
+        end
+        
+        % ---
+        function name = getInstanceName(obj)
+            name = obj.instanceName;
         end
         
         % ---
@@ -122,8 +149,18 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
         end
         
         % ---
+        function pw = getPassword(obj)
+            pw = obj.password;
+        end
+        
+        % ---
         function ipAddress = getIpAddress(obj)
             ipAddress = obj.ipAddress;
+        end
+        
+        % ---
+        function fp = getHostKeyFingerprint(obj)
+            fp = obj.hostKeyFingerprint;
         end
         
         % ---

@@ -192,8 +192,8 @@ classdef FileTransferMachine < RealMachine
     end
     
     methods
-        function obj = FileTransferMachine(md, hostId, hostOs, auth)
-                 obj = obj@RealMachine(md, hostId, auth);
+        function obj = FileTransferMachine(config, hostId, hostOs, auth)
+                 obj = obj@RealMachine(config, hostId, auth);
                  obj.hostOS = hostOs;
         end        
         
