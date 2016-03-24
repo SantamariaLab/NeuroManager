@@ -186,12 +186,25 @@ END OF LICENSE
 % NeuronPythonPrep
 % Adds a machine-specific prefix to the indicated file, then creates a wrapper
 % that following code can use to run the simulation.
-function [wrapPath] = neuronPythonPrep(md, runDir, inputDir, outputDir,...
+function [wrapPath] = neuronPythonPrep(simCore, runDir, inputDir, outputDir,...
                                        inFilename, pyFuncName, arguments)
- % Fix up the uploaded file (infilename) with the machine's proper python path
+% 	% Get the proper SimCore configuration
+%     simCore = {};
+%     for i = 1:length(config.simCores)
+%         if strcmp(config.simCores{1,i}.name, config.assignedSimCoreName)
+%             simCore = config.simCores{1,i};
+%         end
+%     end
+%     if isempty(simCore)
+%         % Deal with errors here and in the rest of the file 
+%         % (not implemented yet)
+%     end
+    
+    % Fix up the uploaded file (infilename) with the machine's proper python path
     prefixFile = fullfile(inputDir, 'pyprefix.py');
     f = fopen(prefixFile, 'w');
-	fprintf(f, '%s\n', ['#!' md.getSetting('pythonPath')]);
+% 	fprintf(f, '%s\n', ['#!' md.getSetting('pythonPath')]);
+	fprintf(f, '%s\n', ['#!' simCore.config.pythonPath]);
     fclose(f);
     root = strtok(inFilename, '.');
     modRoot = [root 'MOD'];
@@ -210,7 +223,9 @@ function [wrapPath] = neuronPythonPrep(md, runDir, inputDir, outputDir,...
     % the individual simulation. 
     wrapPath = fullfile(inputDir, 'wrap.py'); 
     f = fopen(wrapPath, 'w');
-	fprintf(f, ['#!' md.getSetting('pythonPath')...
+% 	fprintf(f, ['#!' md.getSetting('pythonPath')...
+%                 '\nimport sys\nimport ' modRoot '\n\n']);
+	fprintf(f, ['#!' simCore.config.pythonPath...
                 '\nimport sys\nimport ' modRoot '\n\n']);
     fprintf(f, ['result = ' modRoot '.' pyFuncName '(']);
     % Following not available in 2012b so use a loop

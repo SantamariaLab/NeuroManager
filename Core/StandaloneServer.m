@@ -192,7 +192,7 @@ classdef StandaloneServer <  SimMachine & Server
         % Machine data specific to the machine; will be passed up to target
         % via a data file called MachineData.dat.
 %         md;  
-        config; % Not sure yet...
+%         config; % Not sure yet...
     end
     methods
         % name not used; assumed to be in the create....m file for the
@@ -241,7 +241,7 @@ classdef StandaloneServer <  SimMachine & Server
                            simType, numSims,...
                            auth, log, notificationSet);
 %             obj.md = md;
-            obj.config = config;
+%             obj.config = config;
         end
         
         % ----------

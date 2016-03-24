@@ -340,10 +340,57 @@ classdef MachineSetConfig < handle
             
             % Need to check requestedSimCoreName to see if it is in
             % SimCores.json and in the SimCores data from the infoFile
-            % (not implemented yet)
+            % (not implemented yet) 
+            %  Also need to be able to assign a different, yet compatible
+            %  SimCore; for now we just do a simple pass-through
             obj.MSConfig(i).requestedSimCoreName = ...
                                         p.Results.requestedSimCoreName;
+            obj.MSConfig(i).assignedSimCoreName = ...
+                                        obj.MSConfig(i).requestedSimCoreName;
+
             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
+            
+            % Now that we have assigned a SimCore, we must add its
+            % properties to this object:
+            % -- get the type
+            simCore = {};
+            for j = 1:length(obj.MSConfig(i).simCores)
+                if strcmp(obj.MSConfig(i).simCores{1,j}.name,...
+                          obj.MSConfig(i).assignedSimCoreName)
+                    simCore = obj.MSConfig(i).simCores{1,j};
+                end
+            end
+            if isempty(simCore)
+                % Deal with errors here and in the rest of the file 
+                % (not implemented yet)
+            end
+%             simCoreType = simCore.type;
+            
+            % -- get the defined properties for that type
+            try
+                typeInfo = loadjson('SimCoreTypes.json');
+            catch ME
+                msg = ['Error processing %s. Possible syntax error.\n' ...
+                           'Information given is: %s, %s.'];
+                error(msg, imageFile, ME.identifier, ME.message);
+            end
+            simCoreType = {};
+            for j = 1:length(typeInfo.SimCoreTypes)
+                if strcmp(typeInfo.SimCoreTypes{1,j}.name, simCore.type)
+                    simCoreType = typeInfo.SimCoreTypes{1,j};
+                    break;
+                end
+            end
+            % -- add the type's properties to this object
+            % -- and copy from the struct to this object 
+            % -- also assemble the uploadData struct for ship to remote
+            numProps = length(simCoreType.properties);
+            for j = 1:numProps
+                obj.MSConfig(i).addprop(simCoreType.properties{j})
+                obj.MSConfig(i).(simCoreType.properties{j}) = ...
+                                simCore.config.(simCoreType.properties{j});
+            end
+            
             
             % Need multiple checks on this; here and elsewhere IMPORTANT!!!
             % (not implemented yet)

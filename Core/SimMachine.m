@@ -265,7 +265,11 @@ classdef SimMachine < RealMachine
 
             % Save this machine's data in scratch dir for later upload
             sourceFile = fullfile(scratchDir, obj.machineDataFilename);
-            save(sourceFile, 'md', '-mat', '-v7.3');
+            
+%             disp('!!!!!!!!!!!!!!!!!')
+%             uploadMachineConfig = config.uploadMachineConfig
+%             save(sourceFile, 'uploadMachineConfig', '-mat', '-v7.3');
+            save(sourceFile, 'config', '-mat', '-v7.3');
 
             % Get the first simulator construction started and return;
             % The FinishSimulators method makes the others. This
@@ -279,6 +283,7 @@ classdef SimMachine < RealMachine
                 obj.makeSimulator(obj.sType, simulatorID,...
                                   obj.log, obj.notificationSet);
         end
+        
         
         % -----------
         function preUploadFiles(obj)

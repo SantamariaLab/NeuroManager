@@ -2,14 +2,13 @@
 % and user parameters to supply NeuroManager with a unified group of data
 % for machine setup and compatibility checking.
 
-classdef MachineConfig < matlab.mixin.Heterogeneous
+classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
     properties 
         machineName;
         resourceName;
         resourceType;
         userName;
         password;
-        requestedSimCoreName;
         simCores;
         ipAddress;
         hostKeyFingerprint;
@@ -30,8 +29,11 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
         xCompDir;
         
         % will be set later
+        requestedSimCoreName;
+        assignedSimCoreName;
         commsID;
         instanceName;
+%         uploadMachineConfig; % for uploading paths etc
     end
     
     methods
@@ -45,6 +47,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                 obj.ipAddress = '';
                 obj.hostKeyFingerprint = '';
                 obj.requestedSimCoreName = '';
+                obj.assignedSimCoreName = '';
                 obj.numSimulators = -1;
                 obj.workDir = '';
                 obj.simCores = {};
@@ -61,6 +64,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                 obj.xCompDir = '';
                 obj.commsID = '';
                 obj.instanceName = '';
+%                 obj.uploadMachineConfig = struct;
             else
                 % Pull in the infoFile (JSON format) and fill in the data
                 % related to this class
@@ -81,6 +85,8 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                 obj.userName            = infoData.userName;
                 obj.password            = infoData.password;
 
+                obj.requestedSimCoreName = '';
+                obj.assignedSimCoreName = '';
                 obj.numProcessors       = infoData.flavor.numProcessors;
                 obj.coresPerProcessor   = infoData.flavor.coresPerProcessor;
                 obj.RAM                 = infoData.flavor.RAM;
@@ -107,6 +113,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
                 obj.xCompDir            = imageData.matlab.xCompDir;
                 obj.commsID             = '';
                 obj.instanceName        = '';
+%                 obj.uploadMachineConfig = struct;
 
                 obj.simCores            = imageData.simCores; % Cell array
                 % Need to check each simCore name to see if it is in SimCores.json
@@ -176,6 +183,17 @@ classdef MachineConfig < matlab.mixin.Heterogeneous
         % ---
         function simCores = getSimCores(obj)
             simCores = obj.simCores;
+        end
+        
+        % ---
+        function name = getRequestedSimCoreName(obj)
+            name = obj.requestedSimCoreName;
+        end
+
+%START HERE
+        % ---
+        function name = getAssignedSimCoreName(obj)
+            name = obj.assignedSimCoreName;
         end
         
         % ---
