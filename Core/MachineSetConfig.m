@@ -340,7 +340,8 @@ classdef MachineSetConfig < handle
             
             % Need to check requestedSimCoreName to see if it is in
             % SimCores.json and in the SimCores data from the infoFile
-            % (not implemented yet) 
+            % (not implemented yet)
+            
             %  Also need to be able to assign a different, yet compatible
             %  SimCore; for now we just do a simple pass-through
             obj.MSConfig(i).requestedSimCoreName = ...
