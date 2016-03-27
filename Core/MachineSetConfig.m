@@ -365,7 +365,6 @@ classdef MachineSetConfig < handle
                 % Deal with errors here and in the rest of the file 
                 % (not implemented yet)
             end
-%             simCoreType = simCore.type;
             
             % -- get the defined properties for that type
             try
@@ -382,6 +381,11 @@ classdef MachineSetConfig < handle
                     break;
                 end
             end
+            if isempty(simCoreType)
+                % Deal with errors here and in the rest of the file 
+                % (not implemented yet)
+            end
+            
             % -- add the type's properties to this object
             % -- and copy from the struct to this object 
             % -- also assemble the uploadData struct for ship to remote
@@ -391,7 +395,6 @@ classdef MachineSetConfig < handle
                 obj.MSConfig(i).(simCoreType.properties{j}) = ...
                                 simCore.config.(simCoreType.properties{j});
             end
-            
             
             % Need multiple checks on this; here and elsewhere IMPORTANT!!!
             % (not implemented yet)
@@ -436,13 +439,14 @@ classdef MachineSetConfig < handle
             defaultResourceStr = '';
             defaultNumNodes = 1;
             
-            addRequired(p, 'type', typeCheck);
+            addRequired(p, 'requestedSimCoreName', @ischar);
+            addRequired(p, 'infoFile', @ischar);
+            addRequired(p, 'queueName', @ischar); 
             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
             % Check for basedir existence is elsewhere since it is remote
             % and needs machine object for communications.
-            addRequired(p, 'dataFunc',@(x) MachineSetConfig.isaFuncHandle(x)); 
-            addRequired(p, 'queueData'); % No validation function for now
-            addRequired(p, 'baseDir', @ischar); 
+            addRequired(p, 'workDir', @(x) ischar(x) && ~isempty(x)); 
+
             addParamValue(p, 'wallClockTime', defaultWallClockTime,...
                                               obj.timeCheckFunc); %#ok<*NVREPL>
             addParamValue(p, 'parEnvStr', defaultParEnvStr,...
@@ -454,15 +458,16 @@ classdef MachineSetConfig < handle
             parse(p, varargin{:});                              
             
             i = obj.numMachines+1;
-            obj.MSConfig(i).type = p.Results.type;
-            obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-            obj.MSConfig(i).dataFunc = p.Results.dataFunc;
-            obj.MSConfig(i).queueData = p.Results.queueData;
-            obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
-            obj.MSConfig(i).resourceStr = p.Results.resourceStr;
-            obj.MSConfig(i).numNodes = p.Results.numNodes;
-            obj.MSConfig(i).baseDir = p.Results.baseDir;
-            obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
+            obj.MSConfig(i) = ClusterConfig(p.Results.infoFile);
+%             obj.MSConfig(i).type = p.Results.type;
+%             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
+%             obj.MSConfig(i).dataFunc = p.Results.dataFunc;
+%             obj.MSConfig(i).queueData = p.Results.queueData;
+%             obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
+%             obj.MSConfig(i).resourceStr = p.Results.resourceStr;
+%             obj.MSConfig(i).numNodes = p.Results.numNodes;
+%             obj.MSConfig(i).baseDir = p.Results.baseDir;
+%             obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
             obj.numMachines = i;
 
             % Pull in data from local information struct
@@ -593,6 +598,7 @@ classdef MachineSetConfig < handle
             end
         end
         
+        % -----------
         function terminateCloudInstance(obj, resourceName, machineName)
             for i = 1:obj.numMachines
                 if (strcmp(obj.MSConfig(i).resourceType, 'CLOUD') && ...
@@ -637,7 +643,7 @@ classdef MachineSetConfig < handle
             
             % ALL THIS UNDER CONSTRUCTION
             switch obj.MSConfig(index).resourceType;
-                case 'STANDALONE'
+                case 'STANDALONESERVER'
                     type = MachineType.STANDALONESERVER;
                 case 'CLOUDSERVER'
                     type = MachineType.CLOUDSERVER;

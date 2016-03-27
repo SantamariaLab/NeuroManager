@@ -227,20 +227,15 @@ classdef RealMachine < handle
         % ----------
         % Constructor
         function obj = RealMachine(config, hostID, auth)
-%             obj.id           = md.getSetting('id');
-            obj.id = config.getResourceName();
-%             obj.commsID      = md.getSetting('commsID');
+            obj.id = config.getMachineName();
             obj.commsID      = config.getCommsID();
-%             obj.fsUserName   = md.getSetting('fsUserName');
-            obj.fsUserName   = config.getUserName();
-%             obj.fsPassword   = md.getSetting('fsPassword');
-            obj.fsPassword   = config.getPassword();
-%             obj.fsIPAddress  = md.getSetting('fsIPAddress');
-            obj.fsIPAddress  = config.getIpAddress();
+            obj.fsUserName   = config.getFsUserName();
+            obj.fsPassword   = config.getFsPassword();
+            obj.fsIPAddress  = config.getFsIpAddress();
             
-            obj.jsUserName   = obj.fsUserName;
-            obj.jsPassword   = obj.fsPassword;
-            obj.jsIPAddress  = obj.fsIPAddress;
+            obj.jsUserName   = config.getJsUserName();
+            obj.jsPassword   = config.getJsPassword();
+            obj.jsIPAddress  = config.getJsIpAddress();
             
             % Basic assumption is that all targets are unix.
             obj.osType       = OSType.UNIX; 
@@ -248,18 +243,13 @@ classdef RealMachine < handle
             obj.simAuth = auth;
             obj.hostID  = hostID;
             obj.machineDataFilename = [obj.id 'Data.dat'];
-%             obj.configureDualKey();
         end
         
         % -----
+        % Critique: for machines without a fs/js difference, this sets up
+        % twice as many connections as necessary.
         function configureDualKey(obj, config)
-%             if md.isSetting('hostKeyFingerprint')
-%                 obj.hostKeyFingerprint = md.getSetting('hostKeyFingerprint');
-                obj.hostKeyFingerprint = config.getHostKeyFingerprint();
-%             else
-%                 obj.hostKeyFingerprint   = '';
-%             end
-      LOOK = obj.hostKeyFingerprint
+            obj.hostKeyFingerprint = config.getHostKeyFingerprint();
 
             % Unless is a single machine setup, we check validity of
             % password/dual key settings and set up connections to the fs

@@ -266,6 +266,10 @@ classdef Simulator < handle
                                  log, notificationSet)
             obj.id = id;
             obj.type = SimType.UNASSIGNED; 
+            
+            % List defined in SimType.m
+%     	    obj.simCoreCompatibilityList = type.simCoreList;
+            
             % This file list is true for all simulators; located in the
             % core directory
             obj.stdUploadFiles = {'runSimulation.m',...
@@ -303,7 +307,7 @@ classdef Simulator < handle
                        path2UNIX(obj.targetBaseDir)...
                        '; mkdir  -m ug=rwx '...
                        path2UNIX(obj.targetCommonDir)...
-                       ];
+                       ]
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
 
             % Upload or transfer std/cust files
@@ -343,6 +347,11 @@ classdef Simulator < handle
         function str = getVersion(obj)
             str = obj.version;
         end
+        
+        % --------------
+%         function tf = checkSimCoreCompatibility(testName)
+%             tf = any(strcmp(testName, obj.simCoreCompatibilityList));
+%         end
         
         % --------------
         function uploadStdFiles(obj)
@@ -602,7 +611,7 @@ classdef Simulator < handle
                                   seconds(simFullProcTime-runCompleteTime));
                 if 0 % just for ease of debug
                     [mPR, sPT, mWT, sWT, mRT, sRT, mFT, sFT] =...
-                                                    obj.stats.getStats(); %#ok<UNRCH,ASGLU>
+                                                    obj.stats.getStats(); %#ok<UNRCH>
 %                     fprintf(['%s:  mPR %f, sPT %f | mWT %f, sWT %f '...
 %                              '| mRT %f, sRT %f | mFT %f, sFT %f'],...
 %                             obj.getID(), mPR, sPT, mWT, sWT,...

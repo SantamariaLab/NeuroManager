@@ -184,7 +184,8 @@ END OF LICENSE
 %}
 
 % SimType
-% A class which defines the type a Simulator / Simulation can be.
+% A class which defines the type a Simulator / Simulation can be and which
+% SimCores it is compatible with.
 % This file can be edited in Core or overridden with a second file and a
 % higher entry in the MATLAB path.
 classdef SimType

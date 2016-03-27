@@ -247,7 +247,8 @@ classdef SimMachine < RealMachine
                                   auth, log, notificationSet)
             obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
             obj.state = MachineState.COMPILING;
-            obj.baseDir = baseDir;          % on the target
+%             obj.baseDir = baseDir;          % on the target
+            obj.baseDir = config.getWorkDir();          % on the target
             obj.scratchDir = scratchDir;    % on the host
             obj.simFileSourceDir = simFileSourceDir;
             obj.custFileSourceDir = custFileSourceDir;
@@ -264,12 +265,12 @@ classdef SimMachine < RealMachine
             obj.sType = simType;  
 
             % Save this machine's data in scratch dir for later upload
-            sourceFile = fullfile(scratchDir, obj.machineDataFilename);
+            dataFile = fullfile(scratchDir, obj.machineDataFilename);
             
 %             disp('!!!!!!!!!!!!!!!!!')
 %             uploadMachineConfig = config.uploadMachineConfig
 %             save(sourceFile, 'uploadMachineConfig', '-mat', '-v7.3');
-            save(sourceFile, 'config', '-mat', '-v7.3');
+            save(dataFile, 'config', '-mat', '-v7.3');
 
             % Get the first simulator construction started and return;
             % The FinishSimulators method makes the others. This

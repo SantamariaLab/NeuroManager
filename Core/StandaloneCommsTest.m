@@ -2,7 +2,6 @@ classdef StandaloneCommsTest < MachineCommsTest
     methods
         function obj = StandaloneCommsTest(config, hostID, hostOS,...
                          hostScratchDir, targetBaseDir, auth, log, ~)
-%             md = createSynapseData();
             obj = obj@MachineCommsTest(config, hostID, hostOS,...
                          hostScratchDir, targetBaseDir, auth, log);
         end

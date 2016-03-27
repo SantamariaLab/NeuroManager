@@ -1,6 +1,6 @@
 classdef Server < RunJobMachine
     properties
-        config;
+%         config;
     end
     methods
         function obj = Server(config, xCmpMach, xCmpDir,...
@@ -8,7 +8,7 @@ classdef Server < RunJobMachine
             obj = obj@RunJobMachine(config, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
             obj.configureDualKey(config);
-            obj.config = config;
+%             obj.config = config;
         end
     end
 end

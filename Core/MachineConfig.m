@@ -4,16 +4,27 @@
 
 classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
     properties 
+        instanceName;
         machineName;
         resourceName;
         resourceType;
         userName;
+        fsUserName;
+        jsUserName;
         password;
+        fsPassword;
+        jsPassword;
         simCores;
         ipAddress;
+        fsIpAddress;
+        jsIpAddress;
         hostKeyFingerprint;
         numSimulators;
         workDir;
+        requestedSimCoreName;
+        assignedSimCoreName;
+        id;
+        commsID;
         
         % flavor
         numProcessors;
@@ -28,12 +39,9 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         mcrDir;
         xCompDir;
         
-        % will be set later
-        requestedSimCoreName;
-        assignedSimCoreName;
-        commsID;
-        instanceName;
-%         uploadMachineConfig; % for uploading paths etc
+        % raw input
+        infoData;
+        imageData;
     end
     
     methods
@@ -43,8 +51,14 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.resourceName = '';
                 obj.resourceType = '';
                 obj.userName = '';
+                obj.fsUserName = '';
+                obj.jsUserName = '';
                 obj.password = '';
+                obj.fsPassword = '';
+                obj.jsPassword = '';
                 obj.ipAddress = '';
+                obj.jsIpAddress = '';
+                obj.fsIpAddress = '';
                 obj.hostKeyFingerprint = '';
                 obj.requestedSimCoreName = '';
                 obj.assignedSimCoreName = '';
@@ -64,7 +78,6 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.xCompDir = '';
                 obj.commsID = '';
                 obj.instanceName = '';
-%                 obj.uploadMachineConfig = struct;
             else
                 % Pull in the infoFile (JSON format) and fill in the data
                 % related to this class
@@ -73,49 +86,78 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                            infoFile ' during configuration processing.']);
                 end
                 try
-                    infoData = loadjson(infoFile);
+                    obj.infoData = loadjson(infoFile);
                 catch ME
                     msg = ['Error processing %s. Possible syntax error.\n' ...
                            'Information given is: %s, %s.'];
                     error(msg, infoFile, ME.identifier, ME.message);
                 end
-                obj.machineName         = infoData.machineName;
-                obj.resourceName        = infoData.resourceName;
-                obj.resourceType        = infoData.resourceType;
-                obj.userName            = infoData.userName;
-                obj.password            = infoData.password;
+                
+%                 if isfield(obj.infoData, 'instanceName')
+%                     obj.instanceName    = obj.infoData.instanceName;
+%                 end
+%                 obj.machineName         = infoData.machineName;
+
+                if isfield(obj.infoData, 'resourceName')
+                    obj.resourceName        = obj.infoData.resourceName;
+                else
+                    error(['Infofile ' infoFile ' must specify resourceName.']);
+                end
+                
+                % NEED TO CHECK FOR VALID TYPE
+                % (not implemented yet)
+                if isfield(obj.infoData, 'resourceType')
+                    obj.resourceType        = obj.infoData.resourceType;
+                else
+                    error(['Infofile ' infoFile ' must specify resourceType.']);
+                end
+                
+%                 if isfield(obj.infoData, 'userName')
+%                     obj.userName        = obj.infoData.userName;
+%                 end
+%                 if isfield(obj.infoData, 'fsUserName')
+%                     obj.fsUserName      = obj.infoData.fsUserName;
+%                 end
+%                 if isfield(obj.infoData, 'jsUserName')
+%                     obj.jsUserName      = obj.infoData.jsUserName;
+%                 end
+%                 obj.password            = obj.infoData.password;
 
                 obj.requestedSimCoreName = '';
                 obj.assignedSimCoreName = '';
-                obj.numProcessors       = infoData.flavor.numProcessors;
-                obj.coresPerProcessor   = infoData.flavor.coresPerProcessor;
-                obj.RAM                 = infoData.flavor.RAM;
-                obj.storage             = infoData.flavor.storage;
-                imageFile               = infoData.image.file;
+
+                % Clusters have flavors buried in the queue and we do those
+                % in the subclass.
+%                 if isfield(obj.infoData, 'flavor')
+%                     obj.numProcessors       = obj.infoData.flavor.numProcessors;
+%                     obj.coresPerProcessor   = obj.infoData.flavor.coresPerProcessor;
+%                     obj.RAM                 = obj.infoData.flavor.RAM;
+%                     obj.storage             = obj.infoData.flavor.storage;
+%                 end
+                
+                imageFile               = obj.infoData.image.file;
                 if ~exist(imageFile, 'file') == 2
                     error(['Error: NeuroManager could not find the file '...
                            imageFile ' during configuration processing.']);
                 end
                 try
-                    imageData = loadjson(imageFile); 
+                    obj.imageData = loadjson(imageFile); 
                 catch ME
                     msg = ['Error processing %s. Possible syntax error.\n' ...
                            'Information given is: %s, %s.'];
                     error(msg, imageFile, ME.identifier, ME.message);
                 end
-                obj.ipAddress           = imageData.ipAddress;
-                obj.hostKeyFingerprint  = imageData.hostKeyFingerprint;
+                
+                obj.ipAddress           = obj.imageData.ipAddress;
+                obj.hostKeyFingerprint  = obj.imageData.hostKeyFingerprint;
 
-                obj.compilerDir         = imageData.matlab.compilerDir;
-                obj.compiler            = imageData.matlab.compiler;
-                obj.executable          = imageData.matlab.executable;
-                obj.mcrDir              = imageData.matlab.mcrDir;
-                obj.xCompDir            = imageData.matlab.xCompDir;
-                obj.commsID             = '';
-                obj.instanceName        = '';
-%                 obj.uploadMachineConfig = struct;
+                obj.compilerDir         = obj.imageData.matlab.compilerDir;
+                obj.compiler            = obj.imageData.matlab.compiler;
+                obj.executable          = obj.imageData.matlab.executable;
+                obj.mcrDir              = obj.imageData.matlab.mcrDir;
+                obj.xCompDir            = obj.imageData.matlab.xCompDir;
 
-                obj.simCores            = imageData.simCores; % Cell array
+                obj.simCores            = obj.imageData.simCores; % Cell array
                 % Need to check each simCore name to see if it is in SimCores.json
                 % (not implemented yet)
             end
@@ -156,13 +198,43 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         end
         
         % ---
+        function name = getFsUserName(obj)
+            name = obj.fsUserName;
+        end
+        
+        % ---
+        function name = getJsUserName(obj)
+            name = obj.jsUserName;
+        end
+        
+        % ---
         function pw = getPassword(obj)
             pw = obj.password;
         end
         
         % ---
+        function pw = getFsPassword(obj)
+            pw = obj.fsPassword;
+        end
+        
+        % ---
+        function pw = getJsPassword(obj)
+            pw = obj.jsPassword;
+        end
+        
+        % ---
         function ipAddress = getIpAddress(obj)
             ipAddress = obj.ipAddress;
+        end
+        
+        % ---
+        function ipAddress = getFsIpAddress(obj)
+            ipAddress = obj.fsIpAddress;
+        end
+        
+        % ---
+        function ipAddress = getJsIpAddress(obj)
+            ipAddress = obj.jsIpAddress;
         end
         
         % ---
@@ -190,7 +262,6 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
             name = obj.requestedSimCoreName;
         end
 
-%START HERE
         % ---
         function name = getAssignedSimCoreName(obj)
             name = obj.assignedSimCoreName;
