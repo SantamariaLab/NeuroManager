@@ -188,13 +188,13 @@ END OF LICENSE
 % files.
 classdef Cluster < RunJobMachine
     methods
-        function obj = Cluster(md, xCmpMach, xCmpDir,...
-                                    hostID, hostOS, idExt, auth)
+        function obj = Cluster(config, xCmpMach, xCmpDir,...
+                                    hostID, hostOS, ~, auth)
             % Move the extension inside machine data 
-            md.addSetting('id', [md.getSetting('resourceName') idExt]);
-            obj = obj@RunJobMachine(md, xCmpMach, xCmpDir,...
+%             config.addSetting('id', [config.getSetting('resourceName') idExt]);
+            obj = obj@RunJobMachine(config, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
-            obj.configureDualKey(md);
+            obj.configureDualKey(config);
         end
     end
     

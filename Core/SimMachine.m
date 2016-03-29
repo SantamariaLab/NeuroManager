@@ -240,10 +240,10 @@ classdef SimMachine < RealMachine
     
     methods (Access = public)
         % ----------------
-        function obj = SimMachine(config, hostID, baseDir, scratchDir,...
+        function obj = SimMachine(config, hostID, ~, scratchDir,...
                                   simFileSourceDir, custFileSourceDir,...
                                   modelFileSourceDir,...
-                                  simType, numSims,...
+                                  simType, ~,...
                                   auth, log, notificationSet)
             obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
             obj.state = MachineState.COMPILING;
@@ -254,7 +254,7 @@ classdef SimMachine < RealMachine
             obj.custFileSourceDir = custFileSourceDir;
             obj.modelFileSourceDir = modelFileSourceDir;
 
-            obj.numSimulators = numSims;
+            obj.numSimulators = config.numSimulators;
             obj.log = log;
             obj.notificationSet = notificationSet;
 

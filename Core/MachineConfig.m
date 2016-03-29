@@ -148,7 +148,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                     error(msg, imageFile, ME.identifier, ME.message);
                 end
                 
-                obj.ipAddress           = obj.imageData.ipAddress;
+%                 obj.ipAddress           = obj.imageData.ipAddress;
                 obj.hostKeyFingerprint  = obj.imageData.hostKeyFingerprint;
 
                 obj.compilerDir         = obj.imageData.matlab.compilerDir;

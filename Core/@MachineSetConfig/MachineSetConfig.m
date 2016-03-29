@@ -304,186 +304,7 @@ classdef MachineSetConfig < handle
 %} 
 %% cell end
         
-        % -----------
-        function addStandaloneServer(obj, varargin)
-        % Adds a (non-cloud) standalone server to the machine set.
-        % Parameters are, in order: type, number of simulators, name, data
-        % function, basedir, and wallclocktime.   
-        % Basedir must already exist on the target and preferably be
-        % empty. Assume that everything in the basedir will be deleted
-        % automatically. Wallclocktime is a string in hh:mm:ss format;
-        % 00:00:00 or empty string indicates there is to be no timelimit on
-        % the job. 
-            % If adding a second machine to a single machine config, is a
-            % fatal error, even if the number of simulators is zero.
-            if (obj.singleMachine && (obj.numMachines > 0))
-                error(['MachineSetConfig error: Attempt to '...
-                       'add a second machine to a single machine setup.']);
-            end
-            
-            p = inputParser();
-            p.StructExpand = true;
-            p.CaseSensitive = true;
-            p.KeepUnmatched = false;
-            
-            addRequired(p, 'requestedSimCoreName', @ischar);
-            addRequired(p, 'infoFile', @ischar);
-            addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
-            % Check for basedir existence is elsewhere since it is remote
-            % and needs machine object for communications.
-            addRequired(p, 'workDir', @(x) ischar(x) && ~isempty(x)); 
-            parse(p, varargin{:});                              
-            
-            i = obj.numMachines + 1;
-            % The constructor checks for file existence
-            obj.MSConfig(i) = StandaloneConfig(p.Results.infoFile);
-            
-            % Need to check requestedSimCoreName to see if it is in
-            % SimCores.json and in the SimCores data from the infoFile
-            % (not implemented yet)
-            
-            %  Also need to be able to assign a different, yet compatible
-            %  SimCore; for now we just do a simple pass-through
-            obj.MSConfig(i).requestedSimCoreName = ...
-                                        p.Results.requestedSimCoreName;
-            obj.MSConfig(i).assignedSimCoreName = ...
-                                        obj.MSConfig(i).requestedSimCoreName;
-
-            obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-            
-            % Now that we have assigned a SimCore, we must add its
-            % properties to this object:
-            % -- get the type
-            simCore = {};
-            for j = 1:length(obj.MSConfig(i).simCores)
-                if strcmp(obj.MSConfig(i).simCores{1,j}.name,...
-                          obj.MSConfig(i).assignedSimCoreName)
-                    simCore = obj.MSConfig(i).simCores{1,j};
-                end
-            end
-            if isempty(simCore)
-                % Deal with errors here and in the rest of the file 
-                % (not implemented yet)
-            end
-            
-            % -- get the defined properties for that type
-            try
-                typeInfo = loadjson('SimCoreTypes.json');
-            catch ME
-                msg = ['Error processing %s. Possible syntax error.\n' ...
-                           'Information given is: %s, %s.'];
-                error(msg, imageFile, ME.identifier, ME.message);
-            end
-            simCoreType = {};
-            for j = 1:length(typeInfo.SimCoreTypes)
-                if strcmp(typeInfo.SimCoreTypes{1,j}.name, simCore.type)
-                    simCoreType = typeInfo.SimCoreTypes{1,j};
-                    break;
-                end
-            end
-            if isempty(simCoreType)
-                % Deal with errors here and in the rest of the file 
-                % (not implemented yet)
-            end
-            
-            % -- add the type's properties to this object
-            % -- and copy from the struct to this object 
-            % -- also assemble the uploadData struct for ship to remote
-            numProps = length(simCoreType.properties);
-            for j = 1:numProps
-                obj.MSConfig(i).addprop(simCoreType.properties{j})
-                obj.MSConfig(i).(simCoreType.properties{j}) = ...
-                                simCore.config.(simCoreType.properties{j});
-            end
-            
-            % Need multiple checks on this; here and elsewhere IMPORTANT!!!
-            % (not implemented yet)
-            obj.MSConfig(i).workDir = p.Results.workDir;
-            obj.numMachines = i;
-
-            % SingleMachine configuration requires a positive number of
-            % simulators
-            if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
-                error(['MachineSetConfig error: Single machine '... 
-                       'setup requires at least one simulator.']);
-            end        
-        end
-        
-        % -----------
-        function addClusterQueue(obj, varargin)
-        % Adds a (non-cloud) machine to the machine set. Parameters are, in
-        % order: type, number of simulators, name, data function, basedir,
-        % and wallclocktime.   
-        % Basedir  must already exist on the target and preferably be
-        % empty. Assume that everything in the basedir will be deleted
-        % automatically. Wallclocktime is a string in hh:mm:ss format;
-        % 00:00:00 or empty string indicates there is to be no timelimit on
-        % the job. 
-            % If adding a second machine to a single machine config, is a
-            % fatal error, even if the number of simulators is zero.
-            if (obj.singleMachine && (obj.numMachines > 0))
-                error(['MachineSetConfig error: Attempt to '...
-                       'add a second machine to a single machine setup.']);
-            end
-            
-            p = inputParser();
-            p.StructExpand = true;
-            p.CaseSensitive = true;
-            p.KeepUnmatched = false;
-            
-            [~, validIDs] = enumeration('MachineType');
-            typeCheck = @(x) ismember(char(x),validIDs);
-            
-            defaultWallClockTime = '00:00:00';
-            defaultParEnvStr = '';
-            defaultResourceStr = '';
-            defaultNumNodes = 1;
-            
-            addRequired(p, 'requestedSimCoreName', @ischar);
-            addRequired(p, 'infoFile', @ischar);
-            addRequired(p, 'queueName', @ischar); 
-            addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
-            % Check for basedir existence is elsewhere since it is remote
-            % and needs machine object for communications.
-            addRequired(p, 'workDir', @(x) ischar(x) && ~isempty(x)); 
-
-            addParamValue(p, 'wallClockTime', defaultWallClockTime,...
-                                              obj.timeCheckFunc); %#ok<*NVREPL>
-            addParamValue(p, 'parEnvStr', defaultParEnvStr,...
-                                              @ischar); %#ok<*NVREPL>
-            addParamValue(p, 'resourceStr', defaultResourceStr,...
-                                              @ischar); %#ok<*NVREPL>
-            addParamValue(p, 'numNodes', defaultNumNodes,...
-                                              @isnumeric);
-            parse(p, varargin{:});                              
-            
-            i = obj.numMachines+1;
-            obj.MSConfig(i) = ClusterConfig(p.Results.infoFile);
-%             obj.MSConfig(i).type = p.Results.type;
-%             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-%             obj.MSConfig(i).dataFunc = p.Results.dataFunc;
-%             obj.MSConfig(i).queueData = p.Results.queueData;
-%             obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
-%             obj.MSConfig(i).resourceStr = p.Results.resourceStr;
-%             obj.MSConfig(i).numNodes = p.Results.numNodes;
-%             obj.MSConfig(i).baseDir = p.Results.baseDir;
-%             obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
-            obj.numMachines = i;
-
-            % Pull in data from local information struct
-            md = obj.MSConfig(i).dataFunc('','');
-            obj.MSConfig(i).resourceType = md.getSetting('resourceType');
-            obj.MSConfig(i).resourceName = md.getSetting('resourceName');
-
-            % SingleMachine configuration requires a positive number of
-            % simulators
-            if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
-                error(['MachineSetConfig error: Single machine '... 
-                       'setup requires at least one simulator.']);
-            end        
-        end
-        
-        
+       
         % -----------
         function addCloudServer(obj, varargin)
         % Adds a cloud machine to the machine set. Parameters are, in
@@ -647,6 +468,8 @@ classdef MachineSetConfig < handle
                     type = MachineType.STANDALONESERVER;
                 case 'CLOUDSERVER'
                     type = MachineType.CLOUDSERVER;
+                case 'SGECLUSTER'
+                    type = MachineType.SGECLUSTER;
             end
 % type = '';
 %             type = obj.MSConfig(index).type;
@@ -738,5 +561,8 @@ classdef MachineSetConfig < handle
         function tf = isaFuncHandle(fh)
             tf = isa(fh,'function_handle');
         end
+        
+        % definition in separate file
+        ProcessSimCore(configObject)
     end
 end

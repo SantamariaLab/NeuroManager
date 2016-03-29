@@ -228,6 +228,7 @@ function preCompile(obj, targetBaseDir)
     mlCompShellTarget = fullfile(compileDir, obj.compileShellName);
 
     f = fopen(mlCompShell, 'w');
+    fprintf(f, '%s\n', '#!/bin/bash');
     fprintf(f, '%s\n', ['cd '  convCompileDir]);
     fprintf(f, '%s\n', compileCommand);
     fprintf(f, '%s\n', 'result=$?');
