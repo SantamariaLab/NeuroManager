@@ -49,7 +49,8 @@ function addClusterQueue(obj, varargin)
     obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
     obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
     obj.MSConfig(i).resourceStr = p.Results.resourceStr;
-
+    obj.MSConfig(i).numNodes = p.Results.numNodes;
+    
     % ++++ Queue Processing
     % Pull out the queue info for the requested queue
     queueData = {};

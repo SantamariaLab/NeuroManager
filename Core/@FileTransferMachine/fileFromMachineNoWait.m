@@ -251,7 +251,7 @@ function fileFromMachineNoWait(obj, hostDir, targetPath,...
             fprintf(f, '%s\n', ['   type nul>>' errorFilename ' )']);
             %fprintf(f, '%s\n', ['     )']);
             fclose(f);
-            system(['cd ' hostDir '&& START /B Download.bat']);
+            system(['cd ' hostDir '&& START /B Download.bat >dwnldbatchout.txt 2>&1']);
         else
             % LINUX HOST
             if obj.fsUseDualKey

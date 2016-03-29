@@ -259,6 +259,11 @@ classdef MATLABCompileMachine < FileTransferMachine
         end
         
         % ----------
+        function dir = getXCompilationScratchDir(obj)
+            dir = obj.xCompilationScratchDir;
+        end
+
+        % ----------
         function uploadStdSimulatorFiles(obj, fileList, destDir)
             if(obj.xCompilationMachine == 0)
                 % Straight upload + special for machinedata.dat

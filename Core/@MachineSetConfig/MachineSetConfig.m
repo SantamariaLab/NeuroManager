@@ -470,6 +470,8 @@ classdef MachineSetConfig < handle
                     type = MachineType.CLOUDSERVER;
                 case 'SGECLUSTER'
                     type = MachineType.SGECLUSTER;
+                case 'SLURMCLUSTER'
+                    type = MachineType.SLURMCLUSTER;
             end
 % type = '';
 %             type = obj.MSConfig(index).type;

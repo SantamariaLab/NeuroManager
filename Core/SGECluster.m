@@ -212,15 +212,18 @@ classdef SGECluster < SimMachine & Cluster
 
             % Use cross-compilation on Dendrite (just to test the
             % cross-compilation code)
-            useCrossCompilation = false;
+            useCrossCompilation = true;
             if useCrossCompilation
                 xCompilationMachine =...
                             xCompileDendrite(hostID, hostOS,...
                                               'XCOMPILE', auth); %#ok<*UNRCH>
                 % DEAL WITH THIS IN A TEMPORARY WAY
-                mdx = createDendriteData();
-                xCompilationScratchDir =...
-                            mdx.getSetting('xCompDir');
+%                 mdx = createDendriteData();
+%                 xCompilationScratchDir =...
+%                             mdx.getSetting('xCompDir');
+                xCompilationScratchDir = ...
+                    xCompilationMachine.getXCompilationScratchDir();
+                        
             else
                 xCompilationMachine = 0; 
                 xCompilationScratchDir = ''; 

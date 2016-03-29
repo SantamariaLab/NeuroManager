@@ -186,19 +186,24 @@ END OF LICENSE
 % xCompileMachine
 % A class which supports MATLAB cross-compilation.
 classdef xCompileMachine < NoSubMachine
+    properties
+%         xCompilationScratchDir;
+    end
     methods
-        function obj = xCompileMachine(md, hostID, hostOS, auth)
-            obj = obj@NoSubMachine(md, 0, '', hostID, hostOS, auth);
-            obj.configureDualKey(md);
+        function obj = xCompileMachine(config, hostID, hostOS, auth)
+            obj = obj@NoSubMachine(config, 0, '', hostID, hostOS, auth);
+            obj.configureDualKey(config);
 
             % Check for existence of x-compile dir
-            result = obj.checkForDirectory(md.getSetting('xCompDir'));
+            result = obj.checkForDirectory(config.xCompDir);
             if ~result
-                 error(['XCompile Directory ' md.getSetting('xCompDir') ...
+                 error(['XCompile Directory ' config.xCompDir ...
                      ' does not exist on machine '...
                      obj.id '. Directory must be created by user'...
                      ' before use of NeuroManager with that machine.']);
             end
+            
+            obj.xCompilationScratchDir = config.xCompDir;
         end
     end
 end
