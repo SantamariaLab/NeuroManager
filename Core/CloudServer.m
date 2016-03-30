@@ -191,80 +191,38 @@ classdef CloudServer < SimMachine & Cloud
     properties
         % Machine data specific to the machine; will be passed up to target
         % via a data file called MachineData.dat.
-        md;
+%         md;
         % Handles the instance, whether it currently exists or not
-        cloudInstance;
+%         cloudInstance;
     end
     methods
         function obj = CloudServer(~,...
-                            hostID, hostOS, name, ipAddr, baseDir, scratchDir, ...
+                            hostID, hostOS, ~, ~, ~, scratchDir, ...
                             simFileSourceDir, custFileSourceDir,... 
                             modelFileSourceDir,... 
-                            simType, numSims,...
+                            simType, ~,...
                             xCompilationMachine,...
                             xCompilationScratchDir,...
                             auth, log, notificationSet, config,...
                             ~, ~, ~, ~) %#ok<INUSL>
-            % Temporary; the config should just go down            
-            md = RMD();
-            md.addSetting('resourceCategory',	 config.getResourceType());
-            md.addSetting('resourceName',        config.getResourceName());
-            md.addSetting('instanceName',        config.getMachineName());
-            md.addSetting('id',                  md.getSetting('instanceName'));
-            md.addSetting('commsID',             md.getSetting('instanceName'));
-
-            md.addSetting('fsUserName',          config.instanceUsername);
-            md.addSetting('fsPassword',          '');
-            md.addSetting('fsIPAddress',         config.getIpAddress());
-            md.addSetting('jsUserName',          config.instanceUsername);
-            md.addSetting('jsPassword',          '');
-            md.addSetting('jsIPAddress',         config.getIpAddress());
-
-            md.addSetting('matlabCompilerDir',   config.getCompilerDir());
-            md.addSetting('matlabCompiler',      config.getCompiler());
-            md.addSetting('matlabExecutable',    config.getExecutable());
-            md.addSetting('mcrDir',              config.getMcrDir());
-            md.addSetting('xCompDir',            config.getXCompDir());
-
-            md.addSetting('hostKeyFingerprint',  config.hostKeyFingerprint);
-
-            % Are not these used only for instance management and not
-            % necessary here?
-%             md.addSetting('OS_TENANT_NAME',      config.OS_TENANT_NAME);
-%             md.addSetting('OS_ComputeEndpoint',  config.OS_ComputeEndpoint);
-%             md.addSetting('OS_IdentityEndpoint', config.OS_IdentityEndpoint);
-%             md.addSetting('OS_USERNAME',         config.OS_USERNAME);
-%             md.addSetting('OS_PASSWORD',         config.OS_PASSWORD);
-%             md.addSetting('OS_KEY_NAME',         config.OS_KEY_NAME);
-%             md.addSetting('network',             config.network);
-%             md.addSetting('powerStatePhrase',    config.powerStatePhrase);
-%             md.addSetting('extAddressRoot',      config.extAddressRoot);
             
-            % Use cross-compilation on Dendrite (just to test the
-            % cross-compilation code)
-            useCrossCompilation = true;
-            if useCrossCompilation
-                xCompilationMachine =...
-                            xCompileDendrite(hostID, hostOS,...
-                                              'XCOMPILE', auth); %#ok<*UNRCH>
-                mdx = createDendriteData();
-                xCompilationScratchDir =...
-                            mdx.getSetting('xCompDir');
-            else
-                xCompilationMachine = 0; 
-                xCompilationScratchDir = ''; 
-            end
+            % Use cross-compilation on Dendrite 
+            xCompilationMachine =...
+                        xCompileDendrite(hostID, hostOS,...
+                                          'XCOMPILE', auth); %#ok<*UNRCH>
+            xCompilationScratchDir = ...
+                xCompilationMachine.getXCompilationScratchDir();
             
-            obj = obj@Cloud(md, xCompilationMachine,...
+            obj = obj@Cloud(config, xCompilationMachine,...
                                   xCompilationScratchDir,...
                                   hostID, hostOS, auth);
-            obj = obj@SimMachine(md, ...
-                           hostID, baseDir, scratchDir,...
+            obj = obj@SimMachine(config, ...
+                           hostID, '', scratchDir,...
                            simFileSourceDir, custFileSourceDir,...
                            modelFileSourceDir,...
-                           simType, numSims,...
+                           simType, '',...
                            auth, log, notificationSet);
-            obj.md = md;
+%             obj.md = md;
         end
         
         % ----------

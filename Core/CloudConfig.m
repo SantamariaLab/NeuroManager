@@ -11,30 +11,62 @@ classdef CloudConfig  < MachineConfig
         powerStatePhrase;
         extAddressRoot;
         
-        imageRef;
-        flavorRef;
-        cloudWorkDir;
-        hostKeyFingerprint;
-        instanceUsername;
-        keyFile;
-        curlDir;
+        instanceName;
+%         imageRef;
+%         flavorRef;
+%         cloudWorkDir;
+%         hostKeyFingerprint;
+%         instanceUsername;
+%         keyFile;
+%         curlDir;
         
-        instance;
+%         instance;
 
 %         quotas; % Not used for now
     end
     
     methods
-        function obj = CloudConfig(configFile)
-            obj = obj@MachineConfig(configFile);
-            % We already know from previous line that configFile and
-            % imageFile exist and are parseable.  We just need to get the
-            % Cloud specific stuff out of them.
-            % Perhaps store these in the superclass to avoid reprocessing
-            configData = loadjson(configFile);
-            imageFile = configData.image.file;
-            imageData = loadjson(imageFile); 
-            cloudInfoFile = configData.infoFile;
+        function obj = CloudConfig(infoFile)
+            obj = obj@MachineConfig(infoFile);
+            
+            % Cloud-specific details
+            if isfield(obj.infoData, 'userName')
+                obj.userName = obj.infoData.userName;
+            else
+                error(['Infofile ' infoFile ' must specify userName.']);
+            end
+            obj.fsUserName = obj.userName;
+            obj.jsUserName = obj.userName;
+            
+            if isfield(obj.infoData, 'password')
+                obj.password = obj.infoData.password;
+            else
+                error(['Infofile ' infoFile ' must specify password.']);
+            end
+            obj.fsPassword = obj.password;
+            obj.jsPassword = obj.password;
+
+            if isfield(obj.imageData, 'ipAddress')
+                obj.ipAddress = obj.imageData.ipAddress;
+            else
+                error(['Imagefile ' imageFile ' must specify ipAddress.']);
+            end
+            obj.fsIpAddress = obj.ipAddress;
+            obj.jsIpAddress = obj.ipAddress;
+            
+            if isfield(obj.infoData, 'instanceName')
+                obj.instanceName    = obj.infoData.instanceName;
+            else
+                error(['infoFile ' infoFile ' must specify instanceName.']);
+            end
+
+            obj.machineName = obj.instanceName;
+            obj.userName = obj.infoData.userName;
+            obj.id = obj.machineName;
+            obj.commsID = obj.resourceName;
+            
+            % Possibly superfluous for this type
+            cloudInfoFile = obj.infoData.cloudInfoFile;
             if ~exist(cloudInfoFile, 'file') == 2
                 error(['Error: NeuroManager could not find the file '...
                        cloudInfoFile ' during configuration processing.']);
@@ -57,11 +89,8 @@ classdef CloudConfig  < MachineConfig
             obj.powerStatePhrase    = cloudInfoData.powerStatePhrase;
             obj.extAddressRoot      = cloudInfoData.extAddressRoot;
 
-            obj.imageRef            = imageData.imageRef;
-            obj.flavorRef           = imageData.flavorRef; 
-            obj.cloudWorkDir        = imageData.workDir; 
-            obj.hostKeyFingerprint  = imageData.hostKeyFingerprint;
-            obj.instanceUsername    = imageData.userName;
         end
+        
+
     end
 end

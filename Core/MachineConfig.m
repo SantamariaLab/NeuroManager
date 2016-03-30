@@ -4,7 +4,6 @@
 
 classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
     properties 
-        instanceName;
         machineName;
         resourceName;
         resourceType;
@@ -77,7 +76,6 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.mcrDir = '';
                 obj.xCompDir = '';
                 obj.commsID = '';
-                obj.instanceName = '';
             else
                 % Pull in the infoFile (JSON format) and fill in the data
                 % related to this class
@@ -93,11 +91,6 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                     error(msg, infoFile, ME.identifier, ME.message);
                 end
                 
-%                 if isfield(obj.infoData, 'instanceName')
-%                     obj.instanceName    = obj.infoData.instanceName;
-%                 end
-%                 obj.machineName         = infoData.machineName;
-
                 if isfield(obj.infoData, 'resourceName')
                     obj.resourceName        = obj.infoData.resourceName;
                 else
