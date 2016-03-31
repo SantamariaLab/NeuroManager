@@ -189,6 +189,8 @@ END OF LICENSE
 % Generic machine stuff like IPaddress is handled by other classes.
 classdef SimMachine < RealMachine
     properties
+        config; % Holds customizing details from the SimCore specification
+        
         state; % State of machine from MachineState class
         
         % Existing location on remote where simulator dirs will be built.
@@ -246,6 +248,7 @@ classdef SimMachine < RealMachine
                                   simType, ~,...
                                   auth, log, notificationSet)
             obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
+            obj.config = config;
             obj.state = MachineState.COMPILING;
 %             obj.baseDir = baseDir;          % on the target
             obj.baseDir = config.getWorkDir();          % on the target
