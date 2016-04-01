@@ -189,10 +189,6 @@ END OF LICENSE
 % that can be done, but this is most bang-for-buck.
 classdef StandaloneServer <  SimMachine & Server
     properties
-        % Machine data specific to the machine; will be passed up to target
-        % via a data file called MachineData.dat.
-%         md;  
-%         config; % Not sure yet...
     end
     methods
         % name not used; assumed to be in the create....m file for the
@@ -207,11 +203,6 @@ classdef StandaloneServer <  SimMachine & Server
                             auth, log, notificationSet, config,...
                             ~, ~, ~, ~)
             
-            % These are different for the gross machine types (server,
-            % cluster, etc) and so have to be set here for each type
-%             config.commsID = config.getCommsID();
-%             config.machineName = config.getMachineName();
-            
             obj = obj@Server(config, xCompilationMachine,...
                              xCompilationScratchDir,...
                              hostID, hostOS, '', auth);
@@ -220,8 +211,6 @@ classdef StandaloneServer <  SimMachine & Server
                            modelFileSourceDir,...
                            simType, numSims,...
                            auth, log, notificationSet);
-%             obj.md = md;
-%             obj.config = config;
         end
         
         % ----------

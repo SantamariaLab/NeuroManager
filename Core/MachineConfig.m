@@ -13,10 +13,10 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         password;
         fsPassword;
         jsPassword;
-        simCores;
         ipAddress;
         fsIpAddress;
         jsIpAddress;
+        simCores; % Cell array of all SimCores in the json file in use
         hostKeyFingerprint;
         numSimulators;
         workDir;
@@ -105,29 +105,9 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                     error(['Infofile ' infoFile ' must specify resourceType.']);
                 end
                 
-%                 if isfield(obj.infoData, 'userName')
-%                     obj.userName        = obj.infoData.userName;
-%                 end
-%                 if isfield(obj.infoData, 'fsUserName')
-%                     obj.fsUserName      = obj.infoData.fsUserName;
-%                 end
-%                 if isfield(obj.infoData, 'jsUserName')
-%                     obj.jsUserName      = obj.infoData.jsUserName;
-%                 end
-%                 obj.password            = obj.infoData.password;
-
                 obj.requestedSimCoreName = '';
                 obj.assignedSimCoreName = '';
 
-                % Clusters have flavors buried in the queue and we do those
-                % in the subclass.
-%                 if isfield(obj.infoData, 'flavor')
-%                     obj.numProcessors       = obj.infoData.flavor.numProcessors;
-%                     obj.coresPerProcessor   = obj.infoData.flavor.coresPerProcessor;
-%                     obj.RAM                 = obj.infoData.flavor.RAM;
-%                     obj.storage             = obj.infoData.flavor.storage;
-%                 end
-                
                 imageFile               = obj.infoData.image.file;
                 if ~exist(imageFile, 'file') == 2
                     error(['Error: NeuroManager could not find the file '...
@@ -142,7 +122,11 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 end
                 
 %                 obj.ipAddress           = obj.imageData.ipAddress;
-                obj.hostKeyFingerprint  = obj.imageData.hostKeyFingerprint;
+                if isfield(obj.imageData, 'hostKeyFingerprint')
+                    obj.hostKeyFingerprint = strtrim(obj.imageData.hostKeyFingerprint);
+                else
+                    obj.hostKeyFingerprint = '';
+                end
 
                 obj.compilerDir         = obj.imageData.matlab.compilerDir;
                 obj.compiler            = obj.imageData.matlab.compiler;
@@ -303,41 +287,6 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         % ---
         function dir = getXCompDir(obj)
             dir = obj.xCompDir;
-        end
-        
-%         function setResourceName(obj, name)
-%             obj.resourceName = name;
-%         end
-%         function setResourceType(obj, type)
-%             obj.resourceType = type;
-%         end
-%         function setMachineName(obj, name)
-%             obj.machineName = name;
-%         end
-%         function setUserName(obj, name)
-%             obj.userName = name;
-%         end
-%         function setIpAddress(obj, ipAddress)
-%             obj.ipAddress = ipAddress;
-%         end
-%         function setNumSimulators(obj, num)
-%             obj.numSimulators = num;
-%         end
-%         function setWorkDir(obj, dir)
-%             obj.workDir = dir;
-%         end
-%         function setSimCoreName(obj, name)
-%             obj.simCoreName = name;
-%         end
-%         function setNumCores(obj, num)
-%             obj.numCores = num;
-%         end
-%         function setRAM(obj, ram)
-%             obj.RAM = ram;
-%         end
-%         function setStorage(obj, storage)
-%             obj.Storage = storage;
-%         end
-        
+        end        
     end
 end

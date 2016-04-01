@@ -1,4 +1,4 @@
-        % -----------
+% -----------
 function addStandaloneServer(obj, varargin)
 % Adds a (non-cloud) standalone server to the machine set.
 % Parameters are, in order: type, number of simulators, name, data

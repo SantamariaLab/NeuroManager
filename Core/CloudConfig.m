@@ -30,6 +30,12 @@ classdef CloudConfig  < MachineConfig
             obj = obj@MachineConfig(infoFile);
             
             % Cloud-specific details
+            if isfield(obj.infoData, 'instanceName')
+                obj.instanceName    = obj.infoData.instanceName;
+            else
+                error(['infoFile ' infoFile ' must specify instanceName.']);
+            end
+            
             if isfield(obj.infoData, 'userName')
                 obj.userName = obj.infoData.userName;
             else
@@ -46,6 +52,7 @@ classdef CloudConfig  < MachineConfig
             obj.fsPassword = obj.password;
             obj.jsPassword = obj.password;
 
+            % ==
             if isfield(obj.imageData, 'ipAddress')
                 obj.ipAddress = obj.imageData.ipAddress;
             else
@@ -54,40 +61,34 @@ classdef CloudConfig  < MachineConfig
             obj.fsIpAddress = obj.ipAddress;
             obj.jsIpAddress = obj.ipAddress;
             
-            if isfield(obj.infoData, 'instanceName')
-                obj.instanceName    = obj.infoData.instanceName;
-            else
-                error(['infoFile ' infoFile ' must specify instanceName.']);
-            end
-
             obj.machineName = obj.instanceName;
             obj.userName = obj.infoData.userName;
             obj.id = obj.machineName;
             obj.commsID = obj.resourceName;
             
             % Possibly superfluous for this type
-            cloudInfoFile = obj.infoData.cloudInfoFile;
-            if ~exist(cloudInfoFile, 'file') == 2
-                error(['Error: NeuroManager could not find the file '...
-                       cloudInfoFile ' during configuration processing.']);
-            end
-            try
-                cloudInfoData = loadjson(cloudInfoFile);
-            catch ME
-                msg = ['Error processing %s. Possible syntax error.\n' ...
-                       'Information given is: %s, %s.'];
-                error(msg, cloudInfoFile, ME.identifier, ME.message);
-            end
-            
-            obj.OS_TENANT_NAME      = cloudInfoData.OS_TENANT_NAME;
-            obj.OS_ComputeEndpoint  = cloudInfoData.OS_ComputeEndpoint;
-            obj.OS_IdentityEndpoint = cloudInfoData.OS_IdentityEndpoint;
-            obj.OS_USERNAME         = cloudInfoData.OS_USERNAME;
-            obj.OS_PASSWORD         = cloudInfoData.OS_PASSWORD;
-            obj.OS_KEY_NAME         = cloudInfoData.OS_KEY_NAME;
-            obj.network             = cloudInfoData.network;
-            obj.powerStatePhrase    = cloudInfoData.powerStatePhrase;
-            obj.extAddressRoot      = cloudInfoData.extAddressRoot;
+%             cloudInfoFile = obj.infoData.cloudInfoFile;
+%             if ~exist(cloudInfoFile, 'file') == 2
+%                 error(['Error: NeuroManager could not find the file '...
+%                        cloudInfoFile ' during configuration processing.']);
+%             end
+%             try
+%                 cloudInfoData = loadjson(cloudInfoFile);
+%             catch ME
+%                 msg = ['Error processing %s. Possible syntax error.\n' ...
+%                        'Information given is: %s, %s.'];
+%                 error(msg, cloudInfoFile, ME.identifier, ME.message);
+%             end
+%             
+%             obj.OS_TENANT_NAME      = cloudInfoData.OS_TENANT_NAME;
+%             obj.OS_ComputeEndpoint  = cloudInfoData.OS_ComputeEndpoint;
+%             obj.OS_IdentityEndpoint = cloudInfoData.OS_IdentityEndpoint;
+%             obj.OS_USERNAME         = cloudInfoData.OS_USERNAME;
+%             obj.OS_PASSWORD         = cloudInfoData.OS_PASSWORD;
+%             obj.OS_KEY_NAME         = cloudInfoData.OS_KEY_NAME;
+%             obj.network             = cloudInfoData.network;
+%             obj.powerStatePhrase    = cloudInfoData.powerStatePhrase;
+%             obj.extAddressRoot      = cloudInfoData.extAddressRoot;
 
         end
         

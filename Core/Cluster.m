@@ -190,8 +190,6 @@ classdef Cluster < RunJobMachine
     methods
         function obj = Cluster(config, xCmpMach, xCmpDir,...
                                     hostID, hostOS, ~, auth)
-            % Move the extension inside machine data 
-%             config.addSetting('id', [config.getSetting('resourceName') idExt]);
             obj = obj@RunJobMachine(config, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
             obj.configureDualKey(config);

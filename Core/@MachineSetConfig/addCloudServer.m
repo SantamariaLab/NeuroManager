@@ -20,7 +20,7 @@ function addCloudServer(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
-    defaultDeleteInstanceWhenDone = false;
+%     defaultDeleteInstanceWhenDone = false;
 
     addRequired(p, 'requestedSimCoreName', @ischar);
     addRequired(p, 'infoFile', @ischar);

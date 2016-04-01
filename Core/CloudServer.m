@@ -189,11 +189,6 @@ END OF LICENSE
 % that can be done, but this is most bang-for-buck.
 classdef CloudServer < SimMachine & Cloud
     properties
-        % Machine data specific to the machine; will be passed up to target
-        % via a data file called MachineData.dat.
-%         md;
-        % Handles the instance, whether it currently exists or not
-%         cloudInstance;
     end
     methods
         function obj = CloudServer(~,...
@@ -222,7 +217,6 @@ classdef CloudServer < SimMachine & Cloud
                            modelFileSourceDir,...
                            simType, '',...
                            auth, log, notificationSet);
-%             obj.md = md;
         end
         
         % ----------
