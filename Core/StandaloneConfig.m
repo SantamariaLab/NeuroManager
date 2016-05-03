@@ -4,27 +4,32 @@ classdef StandaloneConfig  < MachineConfig
             obj = obj@MachineConfig(infoFile);
             
             % Standalone-specific details 
-            if isfield(obj.infoData, 'userName')
-                obj.userName = obj.infoData.userName;
+%             imageName = obj.resourceName;
+            if isfield(obj.imageData, 'user')
+                obj.userName = obj.imageData.user;
             else
-                error(['Infofile ' infoFile ' must specify userName.']);
+                error(['Infofile ' infoFile ...
+                       ' images section must specify user.']);
             end
-            obj.fsUserName = obj.userName;
-            obj.jsUserName = obj.userName;
             
-            if isfield(obj.infoData, 'password')
-                obj.password = obj.infoData.password;
+            if isfield(obj.imageData, 'password')
+                obj.password = obj.imageData.password;
             else
-                error(['Infofile ' infoFile ' must specify password.']);
+                error(['Infofile ' infoFile ...
+                       ' images section must specify password.']);
             end
-            obj.fsPassword = obj.password;
-            obj.jsPassword = obj.password;
 
             if isfield(obj.imageData, 'ipAddress')
                 obj.ipAddress = obj.imageData.ipAddress;
             else
-                error(['Imagefile ' imageFile ' must specify ipAddress.']);
+                error(['Imagefile ' infoFile ...
+                       ' images section must specify ipAddress.']);
             end
+            
+            obj.fsUserName = obj.userName;
+            obj.jsUserName = obj.userName;
+            obj.fsPassword = obj.password;
+            obj.jsPassword = obj.password;
             obj.fsIpAddress = obj.ipAddress;
             obj.jsIpAddress = obj.ipAddress;
 

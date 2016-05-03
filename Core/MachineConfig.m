@@ -108,18 +108,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.requestedSimCoreName = '';
                 obj.assignedSimCoreName = '';
 
-                imageFile               = obj.infoData.image.file;
-                if ~exist(imageFile, 'file') == 2
-                    error(['Error: NeuroManager could not find the file '...
-                           imageFile ' during configuration processing.']);
-                end
-                try
-                    obj.imageData = loadjson(imageFile); 
-                catch ME
-                    msg = ['Error processing %s. Possible syntax error.\n' ...
-                           'Information given is: %s, %s.'];
-                    error(msg, imageFile, ME.identifier, ME.message);
-                end
+                obj.imageData = obj.infoData.images;
                 
 %                 obj.ipAddress           = obj.imageData.ipAddress;
                 if isfield(obj.imageData, 'hostKeyFingerprint')

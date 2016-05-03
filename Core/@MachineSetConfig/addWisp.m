@@ -27,20 +27,25 @@ function addWisp(obj, varargin)
 %                      defaultDeleteInstanceWhenDone, @islogical);
     parse(p, varargin{:}); 
     
-    wispName = p.Results.wispName;
+    wispName                = p.Results.wispName;
+    wispInfoFile            = p.Results.wispInfoFile;
+    requestedSimCoreName    = p.Results.requestedSimCoreName;
+    numSimulators           = p.Results.numSimulators;
+    workDir                 = p.Results.workDir;
+    
     % load up the wisp info and construct the cloud manager so we can build
     % the wisp
     try 
-        wispInfo = loadjson(p.Results.wispInfoFile);
+        wispInfo = loadjson(wispInfoFile);
     catch ME
         msg = ['Error processing %s. Possible syntax error.\n' ...
                    'Information given is: %s, %s.'];
         error(msg, imageFile, ME.identifier, ME.message);
     end
-    cloudInfoFileName = wispInfo.cloudInfoFileName;
-    imageName = wispInfo.imageName;
-    flavorName = wispInfo.flavorName;
-    networkName = wispInfo.networkName;
+    cloudInfoFileName   = wispInfo.cloudInfoFileName;
+    imageName           = wispInfo.imageName;
+    flavorName          = wispInfo.flavorName;
+    networkName         = wispInfo.networkName;
 
     % Load up the cloud info to determine which constructor to use
     try 
@@ -55,7 +60,8 @@ function addWisp(obj, varargin)
         actualCloudType = CloudManagementType.(requestedCloudType);
     catch ME
         msg = ['Error processing %s. Invalid Cloud Type.\n' ...
-               'Check CloudManagementType.m for valid types (add new types if necessary).\n' ...
+               'Check CloudManagementType.m for valid types '...
+               '(add new types if necessary).\n' ...
                    'Information given is: %s, %s.'];
         error(msg, cloudInfoFileName, ME.identifier, ME.message);
     end
@@ -65,26 +71,30 @@ function addWisp(obj, varargin)
     
     % Check for preexistence of the requested wisp (not allowed)
     if ~isempty(cm.serverIdFromName(wispName))
-        error(['Server ' wispName ' already exists.  Use the addCloudServer method instead.']);
+        error(['Server ' wispName ' already exists. '...
+               ' Use the addCloudServer method instead.']);
     end
     
     % Check for valid image, flavor, and network
     if ~cm.existsImageName(imageName)
-        error(['Image ' imageName ' does not exist on this cloud/tenant.']);
+        error(['Image ' imageName ...
+               ' does not exist on this cloud/tenant.']);
     end
     if ~cm.existsFlavorName(flavorName)
-        error(['Flavor ' flavorName ' does not exist on this cloud/tenant.']);
+        error(['Flavor ' flavorName ...
+               ' does not exist on this cloud/tenant.']);
     end
     if ~cm.existsNetworkName(networkName)
-        error(['Network ' networkName ' does not exist on this cloud/tenant.']);
+        error(['Network ' networkName ...
+               ' does not exist on this cloud/tenant.']);
     end
     
     % All ok for creating the instance
     [serverName, serverId] = ...
         cm.createServer(wispName, imageName, flavorName, networkName);
+    [~, ~, ipAddr] = cm.getServerDataId(serverId);
     
-    
-    #START HERE 
+%     #START HERE 
 %     Rework info files for cloud and wisp both.  "Image" isn't 
 %     used properly, and probably flavor should be named rather than details 
 %     in the files like AutoBotInfo.json which are specific to an instance. If
@@ -96,42 +106,75 @@ function addWisp(obj, varargin)
 %     SimCores, etc. then the dbs-test02 info file refers to that image
 %     file, not the way things are right now.
 
-    
     % Create a temporary info file for the new server that acts like a
     % cloud config file
-    wispInfoFilePath = fullfile(obj.machineScratchDir, [wispName '_Info.json']);
-    wispInfo.instanceName = wispName;
-    wispInfo.resourceName = 
-    wispInfo.resourceType = 'CLOUDSERVER';
-    wispInfo.cloudInfoFile = cloudInfoFileName; % location?
-    wispInfo.userName = 
-    wispInfo.password = '';
-    wispInfo.image = struct('file', imageName, 'buildscript', '');
-    wispInfo.flavor = struct('numProcessors', xxxx,...
-                             'coresPerProcessor', xxxx,...
-                             'RAM', xxxx,...
-                             'storage', xxxx);
-	
+%     wispInfoFilePath = ...
+%                 fullfile(obj.machineScratchDir, [wispName 'Info.json']);
+%     wispInfo.instanceName = wispName;
+%     wispInfo.resourceName = cloudInfo.name;
+%     wispInfo.resourceType = 'CLOUDSERVER';
+%     wispInfo.cloudInfoFile = ...
+%                         fullfile(obj.localMachineDir, cloudInfoFileName); 
+%     wispInfo.userName = 'cc';                   % hardcoded for now
+%     wispInfo.password = '';                     % hardcoded for now
+%     wispInfo.image = struct('file', imageName, 'buildscript', '');
+%     wispInfo.flavor = struct('numProcessors', 2,...
+%                              'coresPerProcessor', 1,...
+%                              'RAM', 4,...
+%                              'storage', 40);    % hardcoded for now
+% 	savejson('', wispInfo, wispInfoFilePath);
     
     i = obj.numMachines+1;
     % The constructor checks for cloud infoFile existence
-    obj.MSConfig(i) = CloudConfig(p.Results.infoFile);
+%     obj.MSConfig(i) = CloudConfig(wispInfoFilePath);
+    
+    %===
+    % Create a blank config and fill it in here
+    obj.MSConfig(i) = CloudConfig();
+    % MachineConfig stuff
+    obj.MSConfig(i).resourceName = cloudInfo.name;
+    obj.MSConfig(i).resourceType = 'CLOUDSERVER';
+    obj.MSConfig(i).imageData = 
+    obj.MSConfig(i).hostKeyFingerprint =
+    obj.MSConfig(i).compilerDir = 
+    obj.MSConfig(i).compiler = 
+    obj.MSConfig(i).executable = 
+    obj.MSConfig(i).mcrDir = 
+    obj.MSConfig(i).xCompDir = 
+    obj.MSConfig(i).simCores = 
+    obj.MSConfig(i).instanceName = serverName;
+    obj.MSConfig(i).userName = 
+    obj.MSConfig(i).password = 
+    obj.MSConfig(i).ipAddress = ipAddr;
+    
+    obj.MSConfig(i).fsUserName = obj.MSConfig(i).userName;
+    obj.MSConfig(i).jsUserName = obj.MSConfig(i).userName;
+    obj.MSConfig(i).fsPassword = obj.MSConfig(i).password;
+    obj.MSConfig(i).jsPassword = obj.MSConfig(i).password;
+    obj.MSConfig(i).fsIpAddress = obj.MSConfig(i).ipAddress;
+    obj.MSConfig(i).jsIpAddress = obj.MSConfig(i).ipAddress;
+
+    obj.MSConfig(i).machineName = obj.MSConfig(i).instanceName;
+%     obj.MSConfig(i).userName = obj.infoData.userName;
+    obj.MSConfig(i).id = obj.MSConfig(i).machineName;
+    obj.MSConfig(i).commsID = obj.MSConfig(i).resourceName;
+
+    %===
 
     %  Also need to be able to assign a different, yet compatible
     %  SimCore; for now we just do a simple pass-through
-    obj.MSConfig(i).requestedSimCoreName = ...
-                                p.Results.requestedSimCoreName;
+    obj.MSConfig(i).requestedSimCoreName = requestedSimCoreName;
     obj.MSConfig(i).assignedSimCoreName = ...
                                 obj.MSConfig(i).requestedSimCoreName;
 
-    obj.MSConfig(i).numSimulators = p.Results.numSimulators;
+    obj.MSConfig(i).numSimulators = numSimulators;
 
     % Now that we have assigned a SimCore, we must add its
     % properties to the config object in question:
 	MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
 
     % Need multiple checks on this; here and elsewhere IMPORTANT!!!
-    obj.MSConfig(i).workDir = p.Results.workDir;
+    obj.MSConfig(i).workDir = workDir;
     obj.numMachines = i;
 
     % SingleMachine configuration requires a positive number of
@@ -140,7 +183,4 @@ function addWisp(obj, varargin)
         error(['MachineSetConfig error: Single machine '... 
                'setup requires at least one simulator.']);
     end  
-
-
-
 end
