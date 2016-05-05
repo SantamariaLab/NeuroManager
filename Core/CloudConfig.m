@@ -1,12 +1,14 @@
 classdef CloudConfig  < MachineConfig
     properties
         instanceName;
+        isWisp; % indicates need for removal of instance
+        cloudInfoFile; % Used for Wisp removal
     end
     
     methods
         function obj = CloudConfig(infoFile)
                 obj = obj@MachineConfig(infoFile);
-            if nargin==0
+            if (nargin==0 || isempty(infoFile))
                 obj.instanceName = '';
                 obj.userName = '';
                 obj.password = '';
@@ -41,7 +43,8 @@ classdef CloudConfig  < MachineConfig
                            ' images section must specify ipAddress.']);
                 end
             end
-                
+            obj.isWisp = false; % default
+            obj.cloudInfoFile = ''; % default
             obj.fsUserName = obj.userName;
             obj.jsUserName = obj.userName;
             obj.fsPassword = obj.password;
@@ -50,7 +53,6 @@ classdef CloudConfig  < MachineConfig
             obj.jsIpAddress = obj.ipAddress;
 
             obj.machineName = obj.instanceName;
-%             obj.userName = obj.infoData.userName;
             obj.id = obj.machineName;
             obj.commsID = obj.resourceName;
         end

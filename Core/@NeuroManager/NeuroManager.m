@@ -310,6 +310,9 @@ classdef NeuroManager < handle
             % simulation files. 
             % Add it to the MATLAB search path and preserve old
             obj.oldPath = addpath(obj.customSimDir);
+            % TEMPORARY
+            addpath('C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\CloudStuff\OSCloud');
+            
             %path
             %pause
 
@@ -654,6 +657,14 @@ classdef NeuroManager < handle
         function addCloudServer(obj, varargin)
             obj.machineSetConfig.addCloudServer(varargin{:});
         end            
+        
+        function addWisp(obj, varargin)
+            obj.machineSetConfig.addWisp(varargin{:});
+        end
+        
+        function removeWisps(obj)
+            obj.machineSetConfig.removeWisps();
+        end
         
         function terminateCloudInstance(obj, resourceName, instanceName)
             obj.machineSetConfig.terminateCloudInstance(resourceName, instanceName);

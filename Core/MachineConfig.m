@@ -45,7 +45,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
     
     methods
         function obj = MachineConfig(infoFile)
-            if nargin==0
+            if (nargin==0 || isempty(infoFile))
                 obj.machineName = '';
                 obj.resourceName = '';
                 obj.resourceType = '';

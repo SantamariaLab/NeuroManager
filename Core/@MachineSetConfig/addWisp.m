@@ -42,7 +42,7 @@ function addWisp(obj, varargin)
                    'Information given is: %s, %s.'];
         error(msg, imageFile, ME.identifier, ME.message);
     end
-    cloudInfoFileName   = wispInfo.cloudInfoFileName;
+    cloudInfoFileName   = wispInfo.cloudInfoFile;
     imageName           = wispInfo.imageName;
     flavorName          = wispInfo.flavorName;
     networkName         = wispInfo.networkName;
@@ -55,7 +55,7 @@ function addWisp(obj, varargin)
                    'Information given is: %s, %s.'];
         error(msg, imageFile, ME.identifier, ME.message);
     end
-    requestedCloudType = cloudInfo.type;
+    requestedCloudType = cloudInfo.cloudManagementType;
     try
         actualCloudType = CloudManagementType.(requestedCloudType);
     catch ME
@@ -89,63 +89,50 @@ function addWisp(obj, varargin)
                ' does not exist on this cloud/tenant.']);
     end
     
-    % All ok for creating the instance
+    % All ok so create the instance
     [serverName, serverId] = ...
         cm.createServer(wispName, imageName, flavorName, networkName);
     [~, ~, ipAddr] = cm.getServerDataId(serverId);
     
-%     #START HERE 
-%     Rework info files for cloud and wisp both.  "Image" isn't 
-%     used properly, and probably flavor should be named rather than details 
-%     in the files like AutoBotInfo.json which are specific to an instance. If
-%     the details are necessary than we can get them from the cloud info
-%     file.  One point of definition...  User must request flavor, etc by
-%     name. Also ImageAutoBot.json... what is that?  Is the word image used
-%     properly there? probably not.  what I need is an image file that
-%     describes the CC-CentOS7-to-MCRNEURON image, with its supported
-%     SimCores, etc. then the dbs-test02 info file refers to that image
-%     file, not the way things are right now.
-
-    % Create a temporary info file for the new server that acts like a
-    % cloud config file
-%     wispInfoFilePath = ...
-%                 fullfile(obj.machineScratchDir, [wispName 'Info.json']);
-%     wispInfo.instanceName = wispName;
-%     wispInfo.resourceName = cloudInfo.name;
-%     wispInfo.resourceType = 'CLOUDSERVER';
-%     wispInfo.cloudInfoFile = ...
-%                         fullfile(obj.localMachineDir, cloudInfoFileName); 
-%     wispInfo.userName = 'cc';                   % hardcoded for now
-%     wispInfo.password = '';                     % hardcoded for now
-%     wispInfo.image = struct('file', imageName, 'buildscript', '');
-%     wispInfo.flavor = struct('numProcessors', 2,...
-%                              'coresPerProcessor', 1,...
-%                              'RAM', 4,...
-%                              'storage', 40);    % hardcoded for now
-% 	savejson('', wispInfo, wispInfoFilePath);
-    
     i = obj.numMachines+1;
-    % The constructor checks for cloud infoFile existence
-%     obj.MSConfig(i) = CloudConfig(wispInfoFilePath);
-    
-    %===
-    % Create a blank config and fill it in here
-    obj.MSConfig(i) = CloudConfig();
-    % MachineConfig stuff
-    obj.MSConfig(i).resourceName = cloudInfo.name;
-    obj.MSConfig(i).resourceType = 'CLOUDSERVER';
-    obj.MSConfig(i).imageData = 
-    obj.MSConfig(i).hostKeyFingerprint =
-    obj.MSConfig(i).compilerDir = 
-    obj.MSConfig(i).compiler = 
-    obj.MSConfig(i).executable = 
-    obj.MSConfig(i).mcrDir = 
-    obj.MSConfig(i).xCompDir = 
-    obj.MSConfig(i).simCores = 
+   
+    % Create a blank config and fill it in here rather from a single static
+    % server info file
+    obj.MSConfig(i) = CloudConfig('');
+    obj.MSConfig(i).isWisp = true;
+	obj.MSConfig(i).cloudInfoFile = cloudInfoFileName;
+    obj.MSConfig(i).infoData = cloudInfo;
+    obj.MSConfig(i).resourceName = cloudInfo.resourceName;
+    obj.MSConfig(i).resourceType = wispInfo.resourceType;
+    % Pick out the desired image and stick it in here
+    requestedImage = wispInfo.imageName;
+    imageLocated = false;
+    for j = 1:length(cloudInfo.images)
+        if strcmp(cloudInfo.images{j}.name, requestedImage)
+            obj.MSConfig(i).imageData = cloudInfo.images{j};
+            imageLocated = true;
+            break;
+        end
+    end
+    if ~imageLocated
+        error(['Requested image ' imageName ' not found in info file ' ...
+               cloudInfoFileName '.']);
+    end
+    obj.MSConfig(i).hostKeyFingerprint = ...
+                            obj.MSConfig(i).imageData.hostKeyFingerprint;
+    obj.MSConfig(i).compilerDir = ...
+                            obj.MSConfig(i).imageData.matlab.compilerDir;
+    obj.MSConfig(i).compiler = ...
+                            obj.MSConfig(i).imageData.matlab.compiler;
+    obj.MSConfig(i).executable = ...
+                            obj.MSConfig(i).imageData.matlab.executable;
+    obj.MSConfig(i).mcrDir = obj.MSConfig(i).imageData.matlab.mcrDir;
+    obj.MSConfig(i).xCompDir = obj.MSConfig(i).imageData.matlab.xCompDir;
+    obj.MSConfig(i).simCores = obj.MSConfig(i).imageData.simCores;
     obj.MSConfig(i).instanceName = serverName;
-    obj.MSConfig(i).userName = 
-    obj.MSConfig(i).password = 
-    obj.MSConfig(i).ipAddress = ipAddr;
+    obj.MSConfig(i).userName = obj.MSConfig(i).imageData.user;
+    obj.MSConfig(i).password = obj.MSConfig(i).imageData.password;
+    obj.MSConfig(i).ipAddress = ipAddr{1}.address;
     
     obj.MSConfig(i).fsUserName = obj.MSConfig(i).userName;
     obj.MSConfig(i).jsUserName = obj.MSConfig(i).userName;
@@ -155,9 +142,8 @@ function addWisp(obj, varargin)
     obj.MSConfig(i).jsIpAddress = obj.MSConfig(i).ipAddress;
 
     obj.MSConfig(i).machineName = obj.MSConfig(i).instanceName;
-%     obj.MSConfig(i).userName = obj.infoData.userName;
     obj.MSConfig(i).id = obj.MSConfig(i).machineName;
-    obj.MSConfig(i).commsID = obj.MSConfig(i).resourceName;
+    obj.MSConfig(i).commsID = obj.MSConfig(i).instanceName;
 
     %===
 

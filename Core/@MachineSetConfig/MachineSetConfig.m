@@ -358,29 +358,16 @@ classdef MachineSetConfig < handle
                 case 'SLURMCLUSTER'
                     type = MachineType.SLURMCLUSTER;
             end
-% type = '';
-%             type = obj.MSConfig(index).type;
             numSimulators = obj.MSConfig(index).getNumSimulators();
-%             numSimulators = obj.MSConfig(index).numSimulators;
             machineName = obj.MSConfig(index).getMachineName();
-%             machineName = obj.MSConfig(index).machineName;
             config = obj.MSConfig(index);
-%             queueData = obj.MSConfig(index).queueData;
             queueData = '';
-%             parEnvStr = obj.MSConfig(index).parEnvStr;
             parEnvStr = '';
-%             resourceStr = obj.MSConfig(index).resourceStr;
             resourceStr = '';
-%             numNodes = obj.MSConfig(index).numNodes;
             numNodes = 0;
-%             baseDir = obj.MSConfig(index).baseDir;
             workDir = obj.MSConfig(index).getWorkDir();
-%             wallClockTime = obj.MSConfig(index).wallClockTime;
             wallClockTime = 0;
-%             ipAddr = obj.MSConfig(index).ipAddress;
             ipAddr = obj.MSConfig(index).getIpAddress();
-%             deleteInstanceWhenDone = ...
-%                             obj.MSConfig(index).deleteInstanceWhenDone;
             deleteInstanceWhenDone = false;
         end
         
