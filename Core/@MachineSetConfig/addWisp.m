@@ -14,8 +14,6 @@ function addWisp(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
-%     defaultDeleteInstanceWhenDone = false;
-
     addRequired(p, 'wispName', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
     addRequired(p, 'requestedSimCoreName', @ischar);
@@ -23,8 +21,6 @@ function addWisp(obj, varargin)
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
     addRequired(p, 'workDir', @(x) ischar(x) && ~isempty(x)); 
-%     addParamValue(p, 'deleteInstanceWhenDone', ...
-%                      defaultDeleteInstanceWhenDone, @islogical);
     parse(p, varargin{:}); 
     
     wispName                = p.Results.wispName;
@@ -90,9 +86,14 @@ function addWisp(obj, varargin)
     end
     
     % All ok so create the instance
+	obj.log.write(['Creating Wisp ' wispName ' on ' ...
+                   cloudInfo.cloudManagementType '.']);
     [serverName, serverId] = ...
         cm.createServer(wispName, imageName, flavorName, networkName);
     [~, ~, ipAddr] = cm.getServerDataId(serverId);
+	obj.log.write(['Wisp ' wispName ' created on ' ...
+                   cloudInfo.cloudManagementType ' with IP Address ' 
+                   ipAddr{1}.address '.']);
     
     i = obj.numMachines+1;
    
@@ -169,4 +170,7 @@ function addWisp(obj, varargin)
         error(['MachineSetConfig error: Single machine '... 
                'setup requires at least one simulator.']);
     end  
+	obj.log.write(['Wisp ' obj.MSConfig(i).instanceName ...
+                   ' added to Machine Set Configuration.']);
+
 end

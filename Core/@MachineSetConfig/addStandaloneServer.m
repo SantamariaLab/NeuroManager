@@ -59,6 +59,7 @@ function addStandaloneServer(obj, varargin)
     if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
         error(['MachineSetConfig error: Single machine '... 
                'setup requires at least one simulator.']);
-    end        
+    end
+    obj.log.write(['Standalone Server ' obj.MSConfig(i).resourceName ' added to Machine Set Configuration.']);
 end
     

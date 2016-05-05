@@ -58,7 +58,10 @@ function addCloudServer(obj, varargin)
     if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
         error(['MachineSetConfig error: Single machine '... 
                'setup requires at least one simulator.']);
-    end       
+    end
+	obj.log.write(['Cloud Server ' obj.MSConfig(i).instanceName ...
+                   ' added to Machine Set Configuration.']);
+
 if 0
     % We create a temporary CloudInstance object that provides the
     % tools to interrogate the instance in question. If there is no

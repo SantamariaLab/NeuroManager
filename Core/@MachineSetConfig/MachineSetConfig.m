@@ -204,21 +204,6 @@ classdef MachineSetConfig < handle
         function obj = MachineSetConfig(singleMachine, curlDir, auth, log)
             obj.singleMachine = singleMachine;
             obj.MSConfig = MachineConfig.empty();
-%             struct('type', MachineType.UNASSIGNED,...
-%                                   'numSimulators', 0,...
-%                                   'resourceType', '',...
-%                                   'resourceName', '',...
-%                                   'machineName', '',...
-%                                   'instance', 0,...
-%                                   'dataFunc', 0,...
-%                                   'queueData', 0,...
-%                                   'parEnvStr', '',...
-%                                   'resourceStr', '',...
-%                                   'numNodes', 1,...
-%                                   'baseDir', '',...
-%                                   'wallClockTime', '',...
-%                                   'ipAddress', '',...
-%                                   'deleteInstanceWhenDone', false);
             obj.numMachines = 0;
             obj.timeCheckFunc = @obj.timeCheck;
             obj.curlDir = curlDir;
@@ -228,105 +213,33 @@ classdef MachineSetConfig < handle
         
         % --------------
         % NOT IMPLEMENTED YET !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        function result = timeCheck(obj, str) %#ok<INUSD>
-        % Checks to see if the str is a valid time in the format hh:mm:ss
-            result = true;
-        end
-%% cell start        
-%{ -----------
-%         function addMachine(obj, varargin)
-%         % Adds a (non-cloud) machine to the machine set. Parameters are, in
-%         % order: type, number of simulators, name, data function, basedir,
-%         % and wallclocktime.   
-%         % Basedir  must already exist on the target and preferably be
-%         % empty. Assume that everything in the basedir will be deleted
-%         % automatically. Wallclocktime is a string in hh:mm:ss format;
-%         % 00:00:00 or empty string indicates there is to be no timelimit on
-%         % the job. 
-%             % If adding a second machine to a single machine config, is a
-%             % fatal error, even if the number of simulators is zero.
-%             if (obj.singleMachine && (obj.numMachines > 0))
-%                 error(['MachineSetConfig error: Attempt to '...
-%                        'add a second machine to a single machine setup.']);
-%             end
-%             
-%             p = inputParser();
-%             p.StructExpand = true;
-%             p.CaseSensitive = true;
-%             p.KeepUnmatched = false;
-%             
-%             [~, validIDs] = enumeration('MachineType');
-%             typeCheck = @(x) ismember(char(x),validIDs);
-%             
-%             defaultWallClockTime = '00:00:00';
-%             defaultParEnvStr = '';
-%             defaultResourceStr = '';
-%             defaultNumNodes = 1;
-%             
-%             addRequired(p, 'type', typeCheck);
-%             addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
-%             % Check for basedir existence is elsewhere since it is remote
-%             % and needs machine object for communications.
-%             addRequired(p, 'name', @ischar);
-%             addRequired(p, 'dataFunc',@(x) MachineSetConfig.isaFuncHandle(x)); 
-%             addRequired(p, 'queueData'); % No validation function for now
-%             addRequired(p, 'baseDir', @ischar); 
-%             addParamValue(p, 'wallClockTime', defaultWallClockTime,...
-%                                               obj.timeCheckFunc); %#ok<*NVREPL>
-%             addParamValue(p, 'parEnvStr', defaultParEnvStr,...
-%                                               @ischar); %#ok<*NVREPL>
-%             addParamValue(p, 'resourceStr', defaultResourceStr,...
-%                                               @ischar); %#ok<*NVREPL>
-%             addParamValue(p, 'numNodes', defaultNumNodes,...
-%                                               @isnumeric);
-%             parse(p, varargin{:});                              
-%             
-%             i = obj.numMachines+1;
-%             obj.MSConfig(i).type = p.Results.type;
-%             obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-%             obj.MSConfig(i).name = p.Results.name; 
-%             obj.MSConfig(i).dataFunc = p.Results.dataFunc;
-%             obj.MSConfig(i).queueData = p.Results.queueData;
-%             obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
-%             obj.MSConfig(i).resourceStr = p.Results.resourceStr;
-%             obj.MSConfig(i).numNodes = p.Results.numNodes;
-%             obj.MSConfig(i).baseDir = p.Results.baseDir;
-%             obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
-%             obj.numMachines = i;
-% 
-%             % SingleMachine configuration requires a positive number of
-%             % simulators
-%             if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
-%                 error(['MachineSetConfig error: Single machine '... 
-%                        'setup requires at least one simulator.']);
-%             end        
+%         function result = timeCheck(obj, str) %#ok<INUSD>
+%         % Checks to see if the str is a valid time in the format hh:mm:ss
+%             result = true;
 %         end
-%} 
-%% cell end
+        
+%         % -----------
+%         function terminateCloudInstance(obj, resourceName, machineName)
+%             for i = 1:obj.numMachines
+%                 if (strcmp(obj.MSConfig(i).resourceType, 'CLOUD') && ...
+%                     strcmp(obj.MSConfig(i).resourceName, resourceName) && ...
+%                     strcmp(obj.MSConfig(i).machineName, machineName) && ...
+%                     ~isempty(obj.MSConfig(i).instance))
+%                     obj.log.write(['Terminating instance '...
+%                                    obj.MSConfig(i).machineName]);
+%                     obj.MSConfig(i).instance.terminate();
+%                     obj.log.write(['Instance '...
+%                                    obj.MSConfig(i).machineName ...
+%                                    ' terminated.']);
+%                     return;
+%                 end
+%             end
+%             obj.log.write(['Machine Set Config: Unable to terminate Cloud Instance named '...
+%                            machineName ' on resource ' resourceName ...
+%                            '. It may not exist or perhaps was not used in the config.']);
+%         end
         
         % -----------
-        function terminateCloudInstance(obj, resourceName, machineName)
-            for i = 1:obj.numMachines
-                if (strcmp(obj.MSConfig(i).resourceType, 'CLOUD') && ...
-                    strcmp(obj.MSConfig(i).resourceName, resourceName) && ...
-                    strcmp(obj.MSConfig(i).machineName, machineName) && ...
-                    ~isempty(obj.MSConfig(i).instance))
-                    obj.log.write(['Terminating instance '...
-                                   obj.MSConfig(i).machineName]);
-                    obj.MSConfig(i).instance.terminate();
-                    obj.log.write(['Instance '...
-                                   obj.MSConfig(i).machineName ...
-                                   ' terminated.']);
-                    return;
-                end
-            end
-            obj.log.write(['Machine Set Config: Unable to terminate Cloud Instance named '...
-                           machineName ' on resource ' resourceName ...
-                           '. It may not exist or perhaps was not used in the config.']);
-        end
-        
-        % -----------
-        % getMachine
         function [type, numSimulators, machineName, config,...
                   queueData, parEnvStr, resourceStr, numNodes, workDir,...
                   wallClockTime, ipAddr, deleteInstanceWhenDone] =...
@@ -375,26 +288,6 @@ classdef MachineSetConfig < handle
         function num = getNumMachines(obj)
             num = obj.numMachines;
         end
-        
-        % -----------
-        % NOT FINISHED
-%         function addCloudBank(obj, type, numSims, bank)
-%         % Adds N machines to the machine set. Parameters are, in order:
-%         % simulator type, number of simulators per machine, basedir, [cloud], and
-%         % a set array of instance names ("instanceSet"). Uses addMachine to 
-%         % construct a SimMachine for each instance and distributes the N
-%         % simulators evenly across the set of instances. Some things
-%         % hardcoded for now. Instance verification checks skipped for a
-%         % short time to enable development. For now relies mostly on
-%         % addMachine() to do input parsing. Doesn't work with wallclocktime
-%         % at present. Cloud is hardwired at present and not included in
-%         % the varargin handling.
-%             ids = bank.getInstanceIDs();
-%             for i = 1:length(ids)
-%                 [name, ipAddr, wkDir] = bank.getInfo(ids{i});
-%             	obj.addCloudMachine(type, numSims, name, wkDir, ipAddr);
-%             end
-%         end
         
         % -----------
         function print(obj)
