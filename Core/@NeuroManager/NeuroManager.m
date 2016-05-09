@@ -571,7 +571,6 @@ classdef NeuroManager < handle
         % -----------------
         function removeMachineSet(obj)
         % Remove all the machines in the machine set
-
             if obj.machineSetType ~= SimType.UNASSIGNED
                 % Not the ideal place for this but ok for now
                 obj.setSnapshotTimeStr(datestr(now));

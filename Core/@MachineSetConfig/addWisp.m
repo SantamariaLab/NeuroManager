@@ -80,20 +80,23 @@ function addWisp(obj, varargin)
         error(['Flavor ' flavorName ...
                ' does not exist on this cloud/tenant.']);
     end
-    if ~cm.existsNetworkName(networkName)
-        error(['Network ' networkName ...
-               ' does not exist on this cloud/tenant.']);
+    if ~isempty(networkName)
+        if ~cm.existsNetworkName(networkName)
+            error(['Network ' networkName ...
+                   ' does not exist on this cloud/tenant.']);
+        end
     end
     
     % All ok so create the instance
 	obj.log.write(['Creating Wisp ' wispName ' on ' ...
                    cloudInfo.cloudManagementType '.']);
     [serverName, serverId] = ...
-        cm.createServer(wispName, imageName, flavorName, networkName);
-    [~, ~, ipAddr] = cm.getServerDataId(serverId);
+        cm.createServerWait(wispName, imageName, flavorName, networkName);
+    ipAddr = cm.attachIpNewServer(serverId);
+%     [~, ~, ipAddr] = cm.getServerDataId(serverId);
 	obj.log.write(['Wisp ' wispName ' created on ' ...
-                   cloudInfo.cloudManagementType ' with IP Address ' 
-                   ipAddr{1}.address '.']);
+                   cloudInfo.cloudManagementType ' with IP Address '... 
+                   ipAddr '.']);
     
     i = obj.numMachines+1;
    
@@ -133,7 +136,7 @@ function addWisp(obj, varargin)
     obj.MSConfig(i).instanceName = serverName;
     obj.MSConfig(i).userName = obj.MSConfig(i).imageData.user;
     obj.MSConfig(i).password = obj.MSConfig(i).imageData.password;
-    obj.MSConfig(i).ipAddress = ipAddr{1}.address;
+    obj.MSConfig(i).ipAddress = ipAddr;
     
     obj.MSConfig(i).fsUserName = obj.MSConfig(i).userName;
     obj.MSConfig(i).jsUserName = obj.MSConfig(i).userName;
