@@ -661,6 +661,10 @@ classdef NeuroManager < handle
             obj.machineSetConfig.addWisp(varargin{:});
         end
         
+        function addWispSet(obj, varargin)
+            obj.machineSetConfig.addWispSet(varargin{:});
+        end
+        
         function removeWisps(obj)
             obj.machineSetConfig.removeWisps();
         end
