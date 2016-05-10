@@ -607,10 +607,30 @@ classdef Simulator < handle
                                         obj.currentSimulation.getStats();
                 % Put the newly gathered simulation stats into the
                 % Simulator performance stats
-                obj.stats.addData(seconds(submissionTime-handoffTime),...
-                                  seconds(runStartTime-submissionTime),...
-                                  seconds(runCompleteTime-runStartTime),...
-                                  seconds(simFullProcTime-runCompleteTime));
+                % THIS IS NOT NECESSARILY THE CORRECT THING TO DO (the -1
+                % thing) but having a spurious problem with datetime array
+                % minus a double array giving an error
+                if (isdatetime(submissionTime) && isdatetime(handoffTime))
+                    a = seconds(submissionTime-handoffTime);
+                else
+                    a = -1;
+                end
+                if (isdatetime(runStartTime) && isdatetime(submissionTime))
+                    b = seconds(runStartTime-submissionTime);
+                else
+                    b = -1;
+                end
+                if (isdatetime(runCompleteTime) && isdatetime(runStartTime))
+                    c = seconds(runCompleteTime-runStartTime);
+                else
+                    c = -1;
+                end
+                if (isdatetime(simFullProcTime) && isdatetime(runCompleteTime))
+                    d = seconds(simFullProcTime-runCompleteTime);
+                else
+                    d = -1;
+                end
+                obj.stats.addData(a, b, c, d);
                 if 0 % just for ease of debug
                     [mPR, sPT, mWT, sWT, mRT, sRT, mFT, sFT] =...
                                                     obj.stats.getStats(); %#ok<UNRCH>
