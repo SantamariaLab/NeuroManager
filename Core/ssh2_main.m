@@ -246,7 +246,7 @@ if (ssh2_struct.authenticated == 1) % assume we're already connected
 else
     try %% MAKE A CONNECTION HERE
         ssh2_struct.connection = Connection(ssh2_struct.hostname,...
-                                            ssh2_struct.port)
+                                            ssh2_struct.port);
         ssh2_struct.connection.connect()
 
         if (~isempty(ssh2_struct.pem_private_key))

@@ -35,7 +35,7 @@ function addClusterQueue(obj, varargin)
     addRequired(p, 'workDir', @(x) ischar(x) && ~isempty(x)); 
 
     addParamValue(p, 'wallClockTime', defaultWallClockTime,...
-                                      obj.timeCheckFunc); %#ok<*NVREPL>
+                                  @(x) regexp(x,'^\d\d:\d\d:\d\d$')); %#ok<*NVREPL>
     addParamValue(p, 'parEnvStr', defaultParEnvStr,...
                                   @ischar); %#ok<*NVREPL>
     addParamValue(p, 'resourceStr', defaultResourceStr,...
@@ -115,5 +115,9 @@ function addClusterQueue(obj, varargin)
     if (obj.singleMachine && (obj.MSConfig(i).numSimulators <= 0))
         error(['MachineSetConfig error: Single machine '... 
                'setup requires at least one simulator.']);
-    end        
+    end    
+    obj.log.write(['Cluster ' obj.MSConfig(i).resourceName ...
+                    ' queue ' obj.MSConfig(i).queueString ...
+               ' added to Machine Set Configuration.']);
+
 end

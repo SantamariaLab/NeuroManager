@@ -108,7 +108,13 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.requestedSimCoreName = '';
                 obj.assignedSimCoreName = '';
 
-                obj.imageData = obj.infoData.images;
+                try
+                    obj.imageData = obj.infoData.images;
+                catch ME
+                    msg = ['Error processing %s. Possible syntax error.\n' ...
+                           'Information given is: %s, %s.'];
+                    error(msg, infoFile, ME.identifier, ME.message);
+                end
                 
 %                 obj.ipAddress           = obj.imageData.ipAddress;
                 if isfield(obj.imageData, 'hostKeyFingerprint')

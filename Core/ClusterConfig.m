@@ -1,8 +1,6 @@
 classdef ClusterConfig  < MachineConfig
     properties
         queues;
-%         id; % queue
-%         extension; % queue
         queueString; % queue
         
         parEnvStr;
@@ -16,26 +14,26 @@ classdef ClusterConfig  < MachineConfig
             obj = obj@MachineConfig(infoFile);
             
             % Cluster-specific details
-            if isfield(obj.infoData, 'fsUserName')
-                obj.fsUserName = obj.infoData.fsUserName;
+            if isfield(obj.imageData, 'fsUserName')
+                obj.fsUserName = obj.imageData.fsUserName;
             else
                 error(['Infofile ' infoFile ' must specify fsUserName.']);
             end
             
-            if isfield(obj.infoData, 'fsPassword')
-                obj.fsPassword = obj.infoData.fsPassword;
+            if isfield(obj.imageData, 'fsPassword')
+                obj.fsPassword = obj.imageData.fsPassword;
             else
                 error(['Infofile ' infoFile ' must specify fsPassword.']);
             end
             
-            if isfield(obj.infoData, 'jsUserName')
-                obj.jsUserName = obj.infoData.jsUserName;
+            if isfield(obj.imageData, 'jsUserName')
+                obj.jsUserName = obj.imageData.jsUserName;
             else
                 error(['Infofile ' infoFile ' must specify jsUserName.']);
             end
             
-            if isfield(obj.infoData, 'jsPassword')
-                obj.jsPassword = obj.infoData.jsPassword;
+            if isfield(obj.imageData, 'jsPassword')
+                obj.jsPassword = obj.imageData.jsPassword;
             else
                 error(['Infofile ' infoFile ' must specify jsPassword.']);
             end
@@ -45,7 +43,6 @@ classdef ClusterConfig  < MachineConfig
             else
                 error(['Infofile ' infoFile ' must specify at least one queue.']);
             end
-                
             
             % --
             if isfield(obj.imageData, 'fsIpAddress')
@@ -59,7 +56,6 @@ classdef ClusterConfig  < MachineConfig
             else
                 error(['Imagefile ' imageFile ' must specify jsIpAddress.']);
             end
-            
         end
     end
     
