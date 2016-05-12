@@ -4,7 +4,6 @@ classdef StandaloneConfig  < MachineConfig
             obj = obj@MachineConfig(infoFile);
             
             % Standalone-specific details 
-%             imageName = obj.resourceName;
             if isfield(obj.imageData, 'user')
                 obj.userName = obj.imageData.user;
             else

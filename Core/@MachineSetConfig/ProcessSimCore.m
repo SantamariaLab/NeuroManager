@@ -16,13 +16,15 @@ function ProcessSimCore(configObject)
     end
 
     % -- get the defined properties for that type
+    typeFile = 'SimCoreTypes.json'; %#ok<CTPCT>
     try
-        typeInfo = loadjson('SimCoreTypes.json');
+        typeInfo = loadjson(typeFile);
     catch ME
         msg = ['Error processing %s. Possible syntax error.\n' ...
                    'Information given is: %s, %s.'];
-        error(msg, imageFile, ME.identifier, ME.message);
+        error(msg, typeFile, ME.identifier, ME.message);
     end
+    
     simCoreType = {};
     for j = 1:length(typeInfo.SimCoreTypes)
         if strcmp(typeInfo.SimCoreTypes{1,j}.name, simCore.type)
@@ -40,7 +42,7 @@ function ProcessSimCore(configObject)
     % -- also assemble the uploadData struct for ship to remote
     numProps = length(simCoreType.properties);
     for j = 1:numProps
-        configObject.addprop(simCoreType.properties{j})
+        configObject.addprop(simCoreType.properties{j});
         configObject.(simCoreType.properties{j}) = ...
                         simCore.config.(simCoreType.properties{j});
     end

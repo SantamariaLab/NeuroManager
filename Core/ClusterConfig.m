@@ -58,5 +58,4 @@ classdef ClusterConfig  < MachineConfig
             end
         end
     end
-    
 end

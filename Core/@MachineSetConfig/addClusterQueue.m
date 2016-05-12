@@ -26,7 +26,7 @@ function addClusterQueue(obj, varargin)
     defaultResourceStr = '';
     defaultNumNodes = 1; % This parameter is suspect
 
-    addRequired(p, 'requestedSimCoreName', @ischar);
+    addRequired(p, 'acceptableSimCoreList', @iscell);
     addRequired(p, 'infoFile', @ischar);
     addRequired(p, 'queueName', @ischar); 
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
@@ -45,6 +45,17 @@ function addClusterQueue(obj, varargin)
 
     i = obj.numMachines+1;
     obj.MSConfig(i) = ClusterConfig(p.Results.infoFile);
+
+    % Check acceptableSimCoreList to see if there is at least one
+    % in the SimCores data from the infoFile's image; the first one we find
+    % becomes the assigned SimCore.
+    obj.MSConfig(i).acceptableSimCoreList = p.Results.acceptableSimCoreList;
+    obj.MSConfig(i).assignedSimCoreName = ...
+                                 obj.MSConfig(i).findCompatibleSimCore();
+    if isempty(obj.MSConfig(i).assignedSimCoreName)
+        error(['Could not find a compatible SimCore on ' ...
+               obj.MSConfig(i).getMachineName() '.']);
+    end
     
     obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
     obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
@@ -86,18 +97,6 @@ function addClusterQueue(obj, varargin)
     else
         error(['Infofile ' infoFile 'queue entries must specify flavor.']);
     end
-
-    % ++++ SimCore Processing
-    % Need to check requestedSimCoreName to see if it is in
-    % SimCores.json and in the SimCores data from the infoFile
-    % (not implemented yet)
-
-    %  Also need to be able to assign a different, yet compatible
-    %  SimCore; for now we just do a simple pass-through
-    obj.MSConfig(i).requestedSimCoreName = ...
-                                p.Results.requestedSimCoreName;
-    obj.MSConfig(i).assignedSimCoreName = ...
-                                obj.MSConfig(i).requestedSimCoreName;
 
     obj.MSConfig(i).numSimulators = p.Results.numSimulators;
 

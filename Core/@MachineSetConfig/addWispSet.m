@@ -17,7 +17,7 @@ function addWispSet(obj, varargin)
     addRequired(p, 'numWisps', @(x) isnumeric(x) && x>=0);
     addRequired(p, 'wispNameRoot', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'requestedSimCoreName', @ischar);
+    addRequired(p, 'acceptableSimCoreList', @iscell);
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -27,7 +27,7 @@ function addWispSet(obj, varargin)
     numWisps                = p.Results.numWisps;
     wispNameRoot            = p.Results.wispNameRoot;
     wispInfoFile            = p.Results.wispInfoFile;
-    requestedSimCoreName    = p.Results.requestedSimCoreName;
+    acceptableSimCoreList   = p.Results.acceptableSimCoreList;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -97,6 +97,36 @@ function addWispSet(obj, varargin)
         end
     end
     
+    % Check the SimCore compatibility also before taking time to construct
+    % instances. Use a patched-together config
+    tempConfig = CloudConfig('');
+    tempConfig.cloudInfoFile = cloudInfoFileName;
+    tempConfig.infoData = cloudInfo;
+    requestedImage = wispInfo.imageName;
+    imageLocated = false;
+    for j = 1:length(cloudInfo.images)
+        if strcmp(cloudInfo.images{j}.name, requestedImage)
+            tempConfig.imageData = cloudInfo.images{j};
+            imageLocated = true;
+            break;
+        end
+    end
+    if ~imageLocated
+        error(['Requested image ' imageName ' not found in info file ' ...
+               cloudInfoFileName '.']);
+    end
+    tempConfig.simCores            = tempConfig.imageData.simCores;
+    tempConfig.acceptableSimCoreList = acceptableSimCoreList;
+    tempConfig.assignedSimCoreName = ...
+                                 tempConfig.findCompatibleSimCore();
+    if isempty(tempConfig.assignedSimCoreName)
+        error(['Could not find a compatible SimCore on ' ...
+               tempConfig.getMachineName() '.']);
+    end
+    % Save the chosen SimCoreName for constructing each wisp in the set
+    assignedSimCoreName = tempConfig.assignedSimCoreName;
+    delete(tempConfig);
+
     % All ok so create the instances
 	obj.log.write(['Creating WispSet ' wispNameRoot ' on ' ...
                    cloudInfo.cloudManagementType '.']);
@@ -117,7 +147,6 @@ function addWispSet(obj, varargin)
     % This is not an optimal approach but is the quickest to implementation
     for k = 1:numWisps
         i = obj.numMachines+1;
-
         obj.MSConfig(i) = CloudConfig('');
 
         % individual-wisp-specific stuff here
@@ -174,18 +203,11 @@ function addWispSet(obj, varargin)
         obj.MSConfig(i).id = obj.MSConfig(i).machineName;
         obj.MSConfig(i).commsID = obj.MSConfig(i).instanceName;
 
-        %===
-
-        %  Also need to be able to assign a different, yet compatible
-        %  SimCore; for now we just do a simple pass-through
-        obj.MSConfig(i).requestedSimCoreName = requestedSimCoreName;
-        obj.MSConfig(i).assignedSimCoreName = ...
-                                    obj.MSConfig(i).requestedSimCoreName;
-
         obj.MSConfig(i).numSimulators = numSimulators;
 
         % Now that we have assigned a SimCore, we must add its
         % properties to the config object in question:
+        obj.MSConfig(i).assignedSimCoreName = assignedSimCoreName;
         MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
 
         % Need multiple checks on this; here and elsewhere IMPORTANT!!!

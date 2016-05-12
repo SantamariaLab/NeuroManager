@@ -20,7 +20,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         hostKeyFingerprint;
         numSimulators;
         workDir;
-        requestedSimCoreName;
+        acceptableSimCoreList;
         assignedSimCoreName;
         id;
         commsID;
@@ -43,6 +43,9 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         imageData;
     end
     
+    methods (Abstract)
+%         getSimCoreList(obj)
+    end
     methods
         function obj = MachineConfig(infoFile)
             if (nargin==0 || isempty(infoFile))
@@ -59,7 +62,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.jsIpAddress = '';
                 obj.fsIpAddress = '';
                 obj.hostKeyFingerprint = '';
-                obj.requestedSimCoreName = '';
+                obj.acceptableSimCoreList = {};
                 obj.assignedSimCoreName = '';
                 obj.numSimulators = -1;
                 obj.workDir = '';
@@ -105,7 +108,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                     error(['Infofile ' infoFile ' must specify resourceType.']);
                 end
                 
-                obj.requestedSimCoreName = '';
+                obj.acceptableSimCoreList = {};
                 obj.assignedSimCoreName = '';
 
                 try
@@ -139,6 +142,21 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
     % None of the sets works for some unknown reason - no error; they just
     % don't set.  The gets seem to work fine...
     methods (Sealed)
+        % ---
+        function name = findCompatibleSimCore(obj)
+            name = '';
+            supportedList = obj.getSimCoreList();
+            for j = 1:length(obj.acceptableSimCoreList)
+                for k = 1:length(supportedList)
+                    if strcmp(obj.acceptableSimCoreList{j}, ...
+                              supportedList{k})
+                        name = supportedList{k};
+                        return;
+                    end
+                end
+            end
+        end
+        
         % ---
         function name = getResourceName(obj)
             name = obj.resourceName;
@@ -230,9 +248,9 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         end
         
         % ---
-        function name = getRequestedSimCoreName(obj)
-            name = obj.requestedSimCoreName;
-        end
+%         function name = getRequestedSimCoreName(obj)
+%             name = obj.requestedSimCoreName;
+%         end
 
         % ---
         function name = getAssignedSimCoreName(obj)
@@ -283,5 +301,14 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         function dir = getXCompDir(obj)
             dir = obj.xCompDir;
         end        
+        
+        % -----
+        function simCoreList = getSimCoreList(obj)
+            simCoreList = {};
+            for i = 1:length(obj.simCores)
+                simCoreList = [simCoreList obj.simCores{i}.name]; %#ok<AGROW>
+            end
+        end
+
     end
 end

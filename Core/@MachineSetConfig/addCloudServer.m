@@ -20,34 +20,34 @@ function addCloudServer(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
-%     defaultDeleteInstanceWhenDone = false;
-
-    addRequired(p, 'requestedSimCoreName', @ischar);
+    addRequired(p, 'acceptableSimCoreList', @iscell);
     addRequired(p, 'infoFile', @ischar);
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
     addRequired(p, 'workDir', @(x) ischar(x) && ~isempty(x)); 
-%     addParamValue(p, 'deleteInstanceWhenDone', ...
-%                      defaultDeleteInstanceWhenDone, @islogical);
     parse(p, varargin{:}); 
 
     i = obj.numMachines+1;
     % The constructor checks for infoFile existence
     obj.MSConfig(i) = CloudConfig(p.Results.infoFile);
 
-%  Also need to be able to assign a different, yet compatible
-    %  SimCore; for now we just do a simple pass-through
-    obj.MSConfig(i).requestedSimCoreName = ...
-                                p.Results.requestedSimCoreName;
+    % Check acceptableSimCoreList to see if there is at least one
+    % in the SimCores data from the infoFile's image; the first one we find
+    % becomes the assigned SimCore.
+    obj.MSConfig(i).acceptableSimCoreList = p.Results.acceptableSimCoreList;
     obj.MSConfig(i).assignedSimCoreName = ...
-                                obj.MSConfig(i).requestedSimCoreName;
-
-    obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-
-    % Now that we have assigned a SimCore, we must add its
-    % properties to the config object in question:
+                                 obj.MSConfig(i).findCompatibleSimCore();
+    if isempty(obj.MSConfig(i).assignedSimCoreName)
+        error(['Could not find a compatible SimCore on ' ...
+               obj.MSConfig(i).getMachineName() '.']);
+    end
+    
+    % Add the assigned SimCore's properties to the config object in
+    % question: 
 	MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
+    
+    obj.MSConfig(i).numSimulators = p.Results.numSimulators;
 
     % Need multiple checks on this; here and elsewhere IMPORTANT!!!
     obj.MSConfig(i).workDir = p.Results.workDir;
@@ -61,67 +61,4 @@ function addCloudServer(obj, varargin)
     end
 	obj.log.write(['Cloud Server ' obj.MSConfig(i).instanceName ...
                    ' added to Machine Set Configuration.']);
-
-if 0
-    % We create a temporary CloudInstance object that provides the
-    % tools to interrogate the instance in question. If there is no
-    % such instance, it creates it for us.   
-    % Creating the instance overrides all data set above.
-    % Similarly, data pulled from an existing instance overrides
-    % data from the script addCloudServer line. 
-    if obj.MSConfig(i).numSimulators ~= 0
-        if ~isempty(obj.MSConfig(i).machineName)
-            obj.log.write(['Connecting to or attempting to launch instance '...
-                           obj.MSConfig(i).machineName]);
-        else
-            obj.log.write(['Attempting to launch ephemeral instance;'...
-                           'name to be determined automatically.']);
-        end
-
-        % Launching instances requires a local keyfile path and the
-        % location of the cURL executable to be passed to the
-        % instance management code
-        obj.MSConfig(i).keyFile = obj.auth.getKeyFile();
-        obj.MSConfig(i).curlDir = obj.curlDir;
-
-        % Try to get rid of this switch somehow
-        switch obj.MSConfig(i).resourceName
-            case 'Chameleon'
-                obj.MSConfig(i).instance = ...
-                    CCCloudInstance(obj.MSConfig(i).machineName,...
-                                    obj.MSConfig(i).imageRef,...
-                                    obj.MSConfig(i).flavorRef);
-            case 'Rackspace'
-                config = obj.MSConfig(i);
-                obj.MSConfig(i).instance = ...
-                    RSCloudInstance(config);
-%                             RSCloudInstance(obj.MSConfig(i).machineName,...
-%                                             obj.MSConfig(i).imageRef,...
-%                                             obj.MSConfig(i).flavorRef);
-            otherwise
-                error(['MachineSetConfig: unknown resource '...
-                      obj.MSConfig(i).resourceName])
-        end
-        [~, name, ~, ipAddress] = obj.MSConfig(i).instance.getData();
-        obj.MSConfig(i).machineName = name;
-        obj.MSConfig(i).ipAddress = ipAddress;
-        % HAVE TO DEAL WITH BASE DIR as parameter with default
-        % since it is actually part of the image used to create the
-        % instance. (etc)
-
-        obj.log.write(['Instance ' obj.MSConfig(i).machineName ' ready.']);
-%                 assignin('base', 'details', instance.getDetails())  % debug only
-
-    end
-end
-    % Now we create a temporary FileTransferMachine in order to
-        % get the host key fingerprint.  Currently the SSH library
-        % doesn't care about the host key but PuTTY does, and will
-        % cause a comms test failure. In order 
-        % to assure PuTTY we have to run commands on the host and
-        % download a file to get the host key fingerprint - using
-        % the SSH library (this appears to be a bit of a loophole
-        % but I don't yet know how to do this all automatically any
-        % other way).
-%                 tempMachine = FileTransferMachine(md, 
 end

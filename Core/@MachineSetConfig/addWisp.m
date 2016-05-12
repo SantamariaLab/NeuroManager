@@ -16,7 +16,7 @@ function addWisp(obj, varargin)
 
     addRequired(p, 'wispName', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'requestedSimCoreName', @ischar);
+    addRequired(p, 'acceptableSimCoreList', @iscell);
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -25,7 +25,7 @@ function addWisp(obj, varargin)
     
     wispName                = p.Results.wispName;
     wispInfoFile            = p.Results.wispInfoFile;
-    requestedSimCoreName    = p.Results.requestedSimCoreName;
+    acceptableSimCoreList   = p.Results.acceptableSimCoreList;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -87,21 +87,8 @@ function addWisp(obj, varargin)
         end
     end
     
-    % All ok so create the instance
-	obj.log.write(['Creating Wisp ' wispName ' on ' ...
-                   cloudInfo.cloudManagementType '.']);
-    [serverName, serverId] = ...
-        cm.createServerWait(wispName, imageName, flavorName, networkName);
-    ipAddr = cm.attachIpNewServer(serverId);
-%     [~, ~, ipAddr] = cm.getServerDataId(serverId);
-	obj.log.write(['Wisp ' wispName ' created on ' ...
-                   cloudInfo.cloudManagementType ' with IP Address '... 
-                   ipAddr '.']);
-    
+    % Create a blank config so we can do the SimCore compatibility check
     i = obj.numMachines+1;
-   
-    % Create a blank config and fill it in here rather from a single static
-    % server info file
     obj.MSConfig(i) = CloudConfig('');
     obj.MSConfig(i).isWisp = true;
 	obj.MSConfig(i).cloudInfoFile = cloudInfoFileName;
@@ -133,35 +120,48 @@ function addWisp(obj, varargin)
     obj.MSConfig(i).mcrDir = obj.MSConfig(i).imageData.matlab.mcrDir;
     obj.MSConfig(i).xCompDir = obj.MSConfig(i).imageData.matlab.xCompDir;
     obj.MSConfig(i).simCores = obj.MSConfig(i).imageData.simCores;
-    obj.MSConfig(i).instanceName = serverName;
     obj.MSConfig(i).userName = obj.MSConfig(i).imageData.user;
-    obj.MSConfig(i).password = obj.MSConfig(i).imageData.password;
-    obj.MSConfig(i).ipAddress = ipAddr;
-    
     obj.MSConfig(i).fsUserName = obj.MSConfig(i).userName;
     obj.MSConfig(i).jsUserName = obj.MSConfig(i).userName;
     obj.MSConfig(i).fsPassword = obj.MSConfig(i).password;
     obj.MSConfig(i).jsPassword = obj.MSConfig(i).password;
-    obj.MSConfig(i).fsIpAddress = obj.MSConfig(i).ipAddress;
-    obj.MSConfig(i).jsIpAddress = obj.MSConfig(i).ipAddress;
-
-    obj.MSConfig(i).machineName = obj.MSConfig(i).instanceName;
-    obj.MSConfig(i).id = obj.MSConfig(i).machineName;
-    obj.MSConfig(i).commsID = obj.MSConfig(i).instanceName;
-
-    %===
-
-    %  Also need to be able to assign a different, yet compatible
-    %  SimCore; for now we just do a simple pass-through
-    obj.MSConfig(i).requestedSimCoreName = requestedSimCoreName;
-    obj.MSConfig(i).assignedSimCoreName = ...
-                                obj.MSConfig(i).requestedSimCoreName;
-
+    obj.MSConfig(i).password = obj.MSConfig(i).imageData.password;
     obj.MSConfig(i).numSimulators = numSimulators;
+
+    % Check acceptableSimCoreList to see if there is at least one
+    % in the SimCores data from the infoFile's image; the first one we find
+    % becomes the assigned SimCore.
+    obj.MSConfig(i).acceptableSimCoreList = acceptableSimCoreList;
+    obj.MSConfig(i).assignedSimCoreName = ...
+                                 obj.MSConfig(i).findCompatibleSimCore();
+    if isempty(obj.MSConfig(i).assignedSimCoreName)
+        error(['Could not find a compatible SimCore on ' ...
+               obj.MSConfig(i).getMachineName() '.']);
+    end
 
     % Now that we have assigned a SimCore, we must add its
     % properties to the config object in question:
 	MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
+    
+    % All ok so create the instance
+	obj.log.write(['Creating Wisp ' wispName ' on ' ...
+                   cloudInfo.cloudManagementType '.']);
+    [serverName, serverId] = ...
+        cm.createServerWait(wispName, imageName, flavorName, networkName);
+    ipAddr = cm.attachIpNewServer(serverId);
+	obj.log.write(['Wisp ' wispName ' created on ' ...
+                   cloudInfo.cloudManagementType ' with IP Address '... 
+                   ipAddr '.']);
+       
+    % Now the instance is available, can fill in the rest of the config 
+    obj.MSConfig(i).instanceName = serverName;
+    obj.MSConfig(i).machineName = obj.MSConfig(i).instanceName;
+    obj.MSConfig(i).id = obj.MSConfig(i).machineName;
+    obj.MSConfig(i).commsID = obj.MSConfig(i).instanceName;
+    obj.MSConfig(i).ipAddress = ipAddr;
+    obj.MSConfig(i).fsIpAddress = obj.MSConfig(i).ipAddress;
+    obj.MSConfig(i).jsIpAddress = obj.MSConfig(i).ipAddress;
+
 
     % Need multiple checks on this; here and elsewhere IMPORTANT!!!
     obj.MSConfig(i).workDir = workDir;
