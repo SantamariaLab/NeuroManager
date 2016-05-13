@@ -42,6 +42,17 @@ classdef CloudConfig  < MachineConfig
                     error(['Imagefile ' infoFile ...
                            ' images section must specify ipAddress.']);
                 end
+                
+                if isfield(obj.infoData, 'flavor')
+                    obj.numProcessors = ...
+                                     obj.infoData.flavor.numProcessors;
+                    obj.coresPerProcessor = ...
+                                     obj.infoData.flavor.coresPerProcessor;
+                    obj.RAM        = obj.infoData.flavor.RAM;
+                    obj.storage    = obj.infoData.flavor.storage;
+                else
+                    error(['Infofile ' infoFile ' must specify flavor.']);
+                end
             end
             obj.isWisp = false; % default
             obj.cloudInfoFile = ''; % default

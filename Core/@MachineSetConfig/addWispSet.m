@@ -17,7 +17,7 @@ function addWispSet(obj, varargin)
     addRequired(p, 'numWisps', @(x) isnumeric(x) && x>=0);
     addRequired(p, 'wispNameRoot', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'acceptableSimCoreList', @iscell);
+    addRequired(p, 'simulatorType', @ischar);
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -27,7 +27,7 @@ function addWispSet(obj, varargin)
     numWisps                = p.Results.numWisps;
     wispNameRoot            = p.Results.wispNameRoot;
     wispInfoFile            = p.Results.wispInfoFile;
-    acceptableSimCoreList   = p.Results.acceptableSimCoreList;
+    simulatorType           = p.Results.simulatorType;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -97,7 +97,7 @@ function addWispSet(obj, varargin)
         end
     end
     
-    % Check the SimCore compatibility also before taking time to construct
+    % Check compatibilities before taking time to construct
     % instances. Use a patched-together config
     tempConfig = CloudConfig('');
     tempConfig.cloudInfoFile = cloudInfoFileName;
@@ -115,10 +115,44 @@ function addWispSet(obj, varargin)
         error(['Requested image ' imageName ' not found in info file ' ...
                cloudInfoFileName '.']);
     end
-    tempConfig.simCores            = tempConfig.imageData.simCores;
-    tempConfig.acceptableSimCoreList = acceptableSimCoreList;
-    tempConfig.assignedSimCoreName = ...
-                                 tempConfig.findCompatibleSimCore();
+    
+    % Pick out the desired flavor and stick it in here
+    requestedFlavor = wispInfo.flavorName;
+    flavorLocated = false;
+    for j = 1:length(cloudInfo.flavors)
+        if strcmp(cloudInfo.flavors{j}.name, requestedFlavor)
+            tempConfig.numProcessors = ...
+                                 cloudInfo.flavors{j}.numProcessors;
+            tempConfig.coresPerProcessor = ...
+                                 cloudInfo.flavors{j}.coresPerProcessor;
+            tempConfig.RAM        = cloudInfo.flavors{j}.RAM;
+            tempConfig.storage    = cloudInfo.flavors{j}.storage;
+            flavorLocated = true;
+            break;
+        end
+    end
+    if ~flavorLocated
+        error(['Requested flavor ' flavorName ' not found in info file ' ...
+               cloudInfoFileName '.']);
+    end    
+
+    % Flavor check based on simulator type
+    simType = SimType.(simulatorType);
+    if ~isenum(simType)
+        error([simulatorType ' is not a valid Simulator Type. ' ...
+               ' See SimType.m for types that have been defined.']);
+    end
+    flavorMin = simType.flavorMin;
+
+    if ~tempConfig.flavorCompatibilityCheck(flavorMin)
+        error(['Flavor of ' wispNameRoot ...
+               ' is not sufficient for Simulator minimum.' ...
+               ' See SimType.m for Simulator minimums.']);
+    end
+
+    tempConfig.acceptableSimCoreList = simType.simCoreList;
+    tempConfig.simCores = tempConfig.imageData.simCores;
+    tempConfig.assignedSimCoreName = tempConfig.findCompatibleSimCore();
     if isempty(tempConfig.assignedSimCoreName)
         error(['Could not find a compatible SimCore on ' ...
                tempConfig.getMachineName() '.']);

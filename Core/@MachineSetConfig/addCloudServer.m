@@ -20,7 +20,7 @@ function addCloudServer(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
-    addRequired(p, 'acceptableSimCoreList', @iscell);
+    addRequired(p, 'simulatorType', @ischar);
     addRequired(p, 'infoFile', @ischar);
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
@@ -32,10 +32,26 @@ function addCloudServer(obj, varargin)
     % The constructor checks for infoFile existence
     obj.MSConfig(i) = CloudConfig(p.Results.infoFile);
 
+    % Flavor and SimCore checks based on simulator type
+    simulatorType = p.Results.simulatorType;
+    simType = SimType.(simulatorType);
+    if ~isenum(simType)
+        error([simulatorType ' is not a valid Simulator Type. ' ...
+               ' See SimType.m for types that have been defined.']);
+    end
+    flavorMin = simType.flavorMin;
+    acceptableSimCoreList = simType.simCoreList;
+    
+    if ~obj.MSConfig(i).flavorCompatibilityCheck(flavorMin)
+        error(['Flavor of ' obj.MSConfig(i).resourceName ...
+               ' is not sufficient for Simulator minimum.' ...
+               ' See SimType.m for Simulator minimums.']);
+    end
+    
     % Check acceptableSimCoreList to see if there is at least one
     % in the SimCores data from the infoFile's image; the first one we find
     % becomes the assigned SimCore.
-    obj.MSConfig(i).acceptableSimCoreList = p.Results.acceptableSimCoreList;
+    obj.MSConfig(i).acceptableSimCoreList = acceptableSimCoreList;
     obj.MSConfig(i).assignedSimCoreName = ...
                                  obj.MSConfig(i).findCompatibleSimCore();
     if isempty(obj.MSConfig(i).assignedSimCoreName)

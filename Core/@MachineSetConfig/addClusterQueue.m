@@ -26,7 +26,7 @@ function addClusterQueue(obj, varargin)
     defaultResourceStr = '';
     defaultNumNodes = 1; % This parameter is suspect
 
-    addRequired(p, 'acceptableSimCoreList', @iscell);
+    addRequired(p, 'simulatorType', @ischar);
     addRequired(p, 'infoFile', @ischar);
     addRequired(p, 'queueName', @ischar); 
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
@@ -46,17 +46,31 @@ function addClusterQueue(obj, varargin)
     i = obj.numMachines+1;
     obj.MSConfig(i) = ClusterConfig(p.Results.infoFile);
 
+    % SimCore check based on simulator type
+    % Do the flavor check below after processing queue data
+    simulatorType = p.Results.simulatorType;
+    simType = SimType.(simulatorType);
+    if ~isenum(simType)
+        error([simulatorType ' is not a valid Simulator Type. ' ...
+               ' See SimType.m for types that have been defined.']);
+    end
+    acceptableSimCoreList = simType.simCoreList;
+    
     % Check acceptableSimCoreList to see if there is at least one
     % in the SimCores data from the infoFile's image; the first one we find
     % becomes the assigned SimCore.
-    obj.MSConfig(i).acceptableSimCoreList = p.Results.acceptableSimCoreList;
+    obj.MSConfig(i).acceptableSimCoreList = acceptableSimCoreList;
     obj.MSConfig(i).assignedSimCoreName = ...
                                  obj.MSConfig(i).findCompatibleSimCore();
     if isempty(obj.MSConfig(i).assignedSimCoreName)
         error(['Could not find a compatible SimCore on ' ...
                obj.MSConfig(i).getMachineName() '.']);
     end
-    
+
+    % Now that we have assigned a SimCore, we add its
+    % properties to the config object in question:
+    MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
+
     obj.MSConfig(i).wallClockTime = p.Results.wallClockTime;
     obj.MSConfig(i).parEnvStr = p.Results.parEnvStr;
     obj.MSConfig(i).resourceStr = p.Results.resourceStr;
@@ -97,12 +111,16 @@ function addClusterQueue(obj, varargin)
     else
         error(['Infofile ' infoFile 'queue entries must specify flavor.']);
     end
-
+    
+    % Now we can do the flavor check
+    flavorMin = simType.flavorMin;
+    if ~obj.MSConfig(i).flavorCompatibilityCheck(flavorMin)
+        error(['Flavor of ' obj.MSConfig(i).resourceName ...
+               ' is not sufficient for Simulator minimum.' ...
+               ' See SimType.m for Simulator minimums.']);
+    end
+    
     obj.MSConfig(i).numSimulators = p.Results.numSimulators;
-
-    % Now that we have assigned a SimCore, we add its
-    % properties to the config object in question:
-    MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
 
     % Need multiple checks on this; here and elsewhere IMPORTANT!!!
     % (not implemented yet)

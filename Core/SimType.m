@@ -192,18 +192,20 @@ classdef SimType
     properties
         constrFunc;
         simCoreList;
+        flavorMin;
     end
     methods
-        function t = SimType(func, list)
+        function t = SimType(func, list, flav)
             t.constrFunc = func;
             t.simCoreList = list;
+            t.flavorMin = flav;
         end
     end
     enumeration
         % Type name                         (@ConstructorName)
         
         % Mostly for constructor-ish stuff; must be present!
-        UNASSIGNED                          (0,{})
+        UNASSIGNED                          (0,{},struct)
             
         % A MATLAB-only simulator that plots sine waves
         SIM_SINESIM                          (@SimSineSim, ...
@@ -214,7 +216,9 @@ classdef SimType
                                                'MATLAB_ONLY_2014a', ...
                                                'MATLAB_ONLY_2013b', ...
                                                'MATLAB_ONLY_2013a', ...
-                                               'MATLAB_ONLY_2012b'})
+                                               'MATLAB_ONLY_2012b'}, ...
+                                              struct('numCores', 1,...
+                                                     'RAM', 0.5))
 
         % Neuron example simulators
 %         SIM_NEURON_NEURONTUTORIALA          (@SimNeuronNeuronTutorialA)
@@ -226,6 +230,8 @@ classdef SimType
 %         SIM_NEUR_PURKINJE_MIYASHO2001       (@SimNeurPurkinjeMiyasho2001)
          SIM_NEUR_PURKINJE_MIYASHO2001_KH    (@SimNeurPurkinjeMiyasho2001Kh,...
                                               {'NEURON_73_PYTHON', ...
-                                               'NEURON_74_PYTHON'})
+                                               'NEURON_74_PYTHON'}, ...
+                                              struct('numCores', 1,...
+                                                     'RAM', 2))
     end
 end 

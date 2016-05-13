@@ -16,7 +16,7 @@ function addWisp(obj, varargin)
 
     addRequired(p, 'wispName', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'acceptableSimCoreList', @iscell);
+    addRequired(p, 'simulatorType', @ischar);
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -25,7 +25,7 @@ function addWisp(obj, varargin)
     
     wispName                = p.Results.wispName;
     wispInfoFile            = p.Results.wispInfoFile;
-    acceptableSimCoreList   = p.Results.acceptableSimCoreList;
+    simulatorType           = p.Results.simulatorType;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -87,7 +87,7 @@ function addWisp(obj, varargin)
         end
     end
     
-    % Create a blank config so we can do the SimCore compatibility check
+    % Create a blank config so we can do the compatibility checks
     i = obj.numMachines+1;
     obj.MSConfig(i) = CloudConfig('');
     obj.MSConfig(i).isWisp = true;
@@ -109,6 +109,27 @@ function addWisp(obj, varargin)
         error(['Requested image ' imageName ' not found in info file ' ...
                cloudInfoFileName '.']);
     end
+    % Pick out the desired flavor and stick it in here
+    requestedFlavor = wispInfo.flavorName;
+    flavorLocated = false;
+    for j = 1:length(cloudInfo.flavors)
+        if strcmp(cloudInfo.flavors{j}.name, requestedFlavor)
+            obj.MSConfig(i).numProcessors = ...
+                                 cloudInfo.flavors{j}.numProcessors;
+            obj.MSConfig(i).coresPerProcessor = ...
+                                 cloudInfo.flavors{j}.coresPerProcessor;
+            obj.MSConfig(i).RAM        = cloudInfo.flavors{j}.RAM;
+            obj.MSConfig(i).storage    = cloudInfo.flavors{j}.storage;
+            flavorLocated = true;
+            break;
+        end
+    end
+    if ~flavorLocated
+        error(['Requested flavor ' flavorName ' not found in info file ' ...
+               cloudInfoFileName '.']);
+    end
+    
+    
     obj.MSConfig(i).hostKeyFingerprint = ...
                             obj.MSConfig(i).imageData.hostKeyFingerprint;
     obj.MSConfig(i).compilerDir = ...
@@ -128,6 +149,21 @@ function addWisp(obj, varargin)
     obj.MSConfig(i).password = obj.MSConfig(i).imageData.password;
     obj.MSConfig(i).numSimulators = numSimulators;
 
+    % Flavor and SimCore checks based on simulator type
+    simType = SimType.(simulatorType);
+    if ~isenum(simType)
+        error([simulatorType ' is not a valid Simulator Type. ' ...
+               ' See SimType.m for types that have been defined.']);
+    end
+    flavorMin = simType.flavorMin;
+    acceptableSimCoreList = simType.simCoreList;
+    
+    if ~obj.MSConfig(i).flavorCompatibilityCheck(flavorMin)
+        error(['Flavor of ' obj.MSConfig(i).resourceName ...
+               ' is not sufficient for Simulator minimum.' ...
+               ' See SimType.m for Simulator minimums.']);
+    end
+    
     % Check acceptableSimCoreList to see if there is at least one
     % in the SimCores data from the infoFile's image; the first one we find
     % becomes the assigned SimCore.

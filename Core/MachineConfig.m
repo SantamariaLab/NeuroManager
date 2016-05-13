@@ -302,6 +302,14 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
             dir = obj.xCompDir;
         end        
         
+        % ---
+        function tf = flavorCompatibilityCheck(obj, flavorMin)
+            % This exact comparison is TEMPORARY
+            numCores = obj.numProcessors * obj.coresPerProcessor;
+            tf = ((flavorMin.numCores <= numCores) && ...
+                  (flavorMin.RAM <= obj.RAM));
+        end
+        
         % -----
         function simCoreList = getSimCoreList(obj)
             simCoreList = {};
