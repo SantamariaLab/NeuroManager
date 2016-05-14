@@ -26,7 +26,7 @@ function addClusterQueue(obj, varargin)
     defaultResourceStr = '';
     defaultNumNodes = 1; % This parameter is suspect
 
-    addRequired(p, 'simulatorType', @ischar);
+    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'infoFile', @ischar);
     addRequired(p, 'queueName', @ischar); 
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
@@ -48,12 +48,7 @@ function addClusterQueue(obj, varargin)
 
     % SimCore check based on simulator type
     % Do the flavor check below after processing queue data
-    simulatorType = p.Results.simulatorType;
-    simType = SimType.(simulatorType);
-    if ~isenum(simType)
-        error([simulatorType ' is not a valid Simulator Type. ' ...
-               ' See SimType.m for types that have been defined.']);
-    end
+    simType = p.Results.simulatorType;
     acceptableSimCoreList = simType.simCoreList;
     
     % Check acceptableSimCoreList to see if there is at least one

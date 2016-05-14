@@ -204,10 +204,10 @@ function shellName = createHocOnlyNrnivsh(simCore, runDir, inputDir,...
                         ':$LD_LIBRARY_PATH']);
     fprintf(f, '%s\n', ['export PYTHONPATH=' inputDir ':$PYTHONPATH']);
     
-    addlEnvLines = simCore.config.envAddlLines;
-    if ~isempty(addlEnvLines)
-        for i=1:length(addlEnvLines)
-            fprintf(f, '%s\n', addlEnvLines{i});
+    addlEnvLibLines = simCore.config.envAddlLibLines;
+    if ~isempty(addlEnvLibLines)
+        for i=1:length(addlEnvLibLines)
+            fprintf(f, '%s\n', addlEnvLibLines{i});
         end
     end
 

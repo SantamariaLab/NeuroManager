@@ -16,7 +16,7 @@ function addWisp(obj, varargin)
 
     addRequired(p, 'wispName', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'simulatorType', @ischar);
+    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -25,7 +25,7 @@ function addWisp(obj, varargin)
     
     wispName                = p.Results.wispName;
     wispInfoFile            = p.Results.wispInfoFile;
-    simulatorType           = p.Results.simulatorType;
+    simType           = p.Results.simulatorType;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -150,11 +150,6 @@ function addWisp(obj, varargin)
     obj.MSConfig(i).numSimulators = numSimulators;
 
     % Flavor and SimCore checks based on simulator type
-    simType = SimType.(simulatorType);
-    if ~isenum(simType)
-        error([simulatorType ' is not a valid Simulator Type. ' ...
-               ' See SimType.m for types that have been defined.']);
-    end
     flavorMin = simType.flavorMin;
     acceptableSimCoreList = simType.simCoreList;
     
@@ -180,13 +175,14 @@ function addWisp(obj, varargin)
 	MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
     
     % All ok so create the instance
-	obj.log.write(['Creating Wisp ' wispName ' on ' ...
-                   cloudInfo.cloudManagementType '.']);
+	obj.log.write(['Creating Wisp ' wispName ' on cloud ' ...
+                   cloudInfo.resourceName ' with SimCore ' ...
+                   obj.MSConfig(i).assignedSimCoreName '.']);
     [serverName, serverId] = ...
         cm.createServerWait(wispName, imageName, flavorName, networkName);
     ipAddr = cm.attachIpNewServer(serverId);
-	obj.log.write(['Wisp ' wispName ' created on ' ...
-                   cloudInfo.cloudManagementType ' with IP Address '... 
+	obj.log.write(['Wisp ' wispName ' created on cloud ' ...
+                   cloudInfo.resourceName ' with IP Address '... 
                    ipAddr '.']);
        
     % Now the instance is available, can fill in the rest of the config 

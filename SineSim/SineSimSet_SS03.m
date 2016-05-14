@@ -211,14 +211,15 @@ nmDirectorySet.resultsDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 
 % Part IV: Create a machine set configuration with the remote server
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER02, 4, 'WorkDirectoryHere');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       4, 'WorkDirectoryHere'); 
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the server
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file.
 result = nm.runFromFile('SineSimSpec.txt');

@@ -217,29 +217,26 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
                   'useDualKey', true);
 
 % Part IV: Create a machine set configuration
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01, ...
-                                    1, 'Working Directory on MyServer01');
-config.addMachine(MachineType.MYSERVER02, ...
-                                    1, 'Working Directory on MyServer02');
-config.addMachine(MachineType.MYSGECLUSTER01QUEUE01, ...
-                        1, 'Working Directory on MySGECluster01 Queue01');
-config.addMachine(MachineType.STAMPEDENORMAL, ...
-                        1, 'Working Directory on STAMPEDE NORMAL queue',...
-                           'wallClockTime', '00:15:00');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       2, 'WorkDirOnServer01');
+nm.addStandaloneServer(simulatorType, 'Server02Info.json', ...
+                       2, 'WorkDirOnServer02');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
+                       2, 'WorkDirForQueue01');
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Create the SimSet in one of two ways: 1) Create a text file
 % just like previous examples (FromFile = true); 2) Create a SimSpec and
 % use it without creating a text file first (FromFile = false).
-fromFile = false;   % Create a SimSet text file or not?
+fromFile = false;    % Create a SimSet text file or not?
 notify = false;      % Bulk flag for notifications for individual simulations
-numSimSets = 2;     % Run separate simsets but keep same machine set
+numSimSets = 2;      % Run separate simsets but keep same machine set
 numSimulations = 18; % Simulations per simset
 rng(1); % Seed the random number generator for tutorial/testing replicability
 if fromFile % Create a text file like the other examples
@@ -310,11 +307,10 @@ else
             params = {freqStr, durStr};
             ss.addTokenSet(command, cmdParam, params, uniquenessCheckOverride);
         end
-        a(j) = nm.runFromSimSpec(ss);
+        a(j) = nm.runFromSimSpec(ss); %#ok<SAGROW>
         %a(1) = result
     end
 end
-
 
 % Part VIII: Dismantle the Machine Set
 nm.removeMachineSet();

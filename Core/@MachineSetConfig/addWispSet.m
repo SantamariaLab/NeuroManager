@@ -17,7 +17,7 @@ function addWispSet(obj, varargin)
     addRequired(p, 'numWisps', @(x) isnumeric(x) && x>=0);
     addRequired(p, 'wispNameRoot', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'simulatorType', @ischar);
+    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -27,7 +27,7 @@ function addWispSet(obj, varargin)
     numWisps                = p.Results.numWisps;
     wispNameRoot            = p.Results.wispNameRoot;
     wispInfoFile            = p.Results.wispInfoFile;
-    simulatorType           = p.Results.simulatorType;
+    simType                 = p.Results.simulatorType;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -137,11 +137,6 @@ function addWispSet(obj, varargin)
     end    
 
     % Flavor check based on simulator type
-    simType = SimType.(simulatorType);
-    if ~isenum(simType)
-        error([simulatorType ' is not a valid Simulator Type. ' ...
-               ' See SimType.m for types that have been defined.']);
-    end
     flavorMin = simType.flavorMin;
 
     if ~tempConfig.flavorCompatibilityCheck(flavorMin)
@@ -162,8 +157,10 @@ function addWispSet(obj, varargin)
     delete(tempConfig);
 
     % All ok so create the instances
-	obj.log.write(['Creating WispSet ' wispNameRoot ' on ' ...
-                   cloudInfo.cloudManagementType '.']);
+	obj.log.write(['Creating WispSet ' wispNameRoot ' with ' ...
+                   num2str(numWisps) ' wisps on cloud ' ...
+                   cloudInfo.resourceName ' with SimCore ' ...
+                   assignedSimCoreName '.']);
     wispList = ...
         cm.createMultipleServersNoWait(numWisps,... 
                                        wispNameRoot, imageName, ...
@@ -174,8 +171,8 @@ function addWispSet(obj, varargin)
             %         cm.createServerWait(wispName, imageName, flavorName, networkName);
             % ipAddr = cm.attachIpNewServer(serverId);
             %     [~, ~, ipAddr] = cm.getServerDataId(serverId);
-	obj.log.write(['WispSet ' wispNameRoot ' created on ' ...
-                   cloudInfo.cloudManagementType '.']);
+	obj.log.write(['WispSet ' wispNameRoot ' created on cloud ' ...
+                   cloudInfo.resourceName '.']);
     
 	% Now add each wisp to the config, one at a time
     % This is not an optimal approach but is the quickest to implementation

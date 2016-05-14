@@ -20,7 +20,7 @@ function addStandaloneServer(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
-    addRequired(p, 'simulatorType', @ischar);
+    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'infoFile', @ischar);
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for basedir existence is elsewhere since it is remote
@@ -33,12 +33,7 @@ function addStandaloneServer(obj, varargin)
     obj.MSConfig(i) = StandaloneConfig(p.Results.infoFile);
 
     % Flavor and SimCore checks based on simulator type
-    simulatorType = p.Results.simulatorType;
-    simType = SimType.(simulatorType);
-    if ~isenum(simType)
-        error([simulatorType ' is not a valid Simulator Type. ' ...
-               ' See SimType.m for types that have been defined.']);
-    end
+    simType = p.Results.simulatorType;
     flavorMin = simType.flavorMin;
     acceptableSimCoreList = simType.simCoreList;
     
