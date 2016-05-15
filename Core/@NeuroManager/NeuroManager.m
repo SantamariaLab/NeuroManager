@@ -640,6 +640,19 @@ classdef NeuroManager < handle
             dir = obj.simResultsDir;
         end 
         
+        function setSimSpecFileDir(obj, dir)
+                newDir = pathConversion(dir, obj.hostMachineData.osType);
+            if ~exist(newDir, 'dir')
+                error(['Could not set simSpecFileDir to ' newDir ...
+                       ' - directory does not exist.']);
+            end
+            obj.simSpecFileDir = newDir;
+        end
+        
+        function dir = getSimSpecFileDir(obj)
+            dir = obj.simSpecFileDir;
+        end
+        
         function log = getLog(obj)
             log = obj.log;
         end
