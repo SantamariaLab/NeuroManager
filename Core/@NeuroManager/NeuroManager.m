@@ -310,11 +310,6 @@ classdef NeuroManager < handle
             % simulation files. 
             % Add it to the MATLAB search path and preserve old
             obj.oldPath = addpath(obj.customSimDir);
-            % TEMPORARY
-            addpath('C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\CloudStuff\OSCloud');
-            
-            %path
-            %pause
 
             obj.simSpecFullPath = '';  % Set in RunFromFile()
             obj.nmSimSet = SimSet();   % actually assigned in nmRun()
