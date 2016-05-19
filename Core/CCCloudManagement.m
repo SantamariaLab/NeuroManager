@@ -1,7 +1,9 @@
 classdef CCCloudManagement < OSCloudManagement
     methods
-        function obj = CCCloudManagement(cloudInfoFile)
-            obj = obj@OSCloudManagement(cloudInfoFile);
+        function obj = CCCloudManagement(cloudInfoFile, ...
+                                         localCurlDir, localKeyFile)
+            obj = obj@OSCloudManagement(cloudInfoFile, ...
+                                        localCurlDir, localKeyFile);
         end
 
         function [serverName, serverId] = ...

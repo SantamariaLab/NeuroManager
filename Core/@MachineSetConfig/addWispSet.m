@@ -65,7 +65,9 @@ function addWispSet(obj, varargin)
     end
     
     % Construct the cloud management object
-    cm = actualCloudType.constrFunc(cloudInfoFileName);
+    cm = actualCloudType.constrFunc(cloudInfoFileName, ...
+                                    obj.curlDir, ...
+                                    obj.auth.getKeyFile());
     
     % Create the list of names and ipAddresses
     wispNameList = {};

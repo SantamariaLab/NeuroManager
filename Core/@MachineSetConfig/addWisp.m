@@ -63,7 +63,9 @@ function addWisp(obj, varargin)
     end
     
     % Construct the cloud management object
-    cm = actualCloudType.constrFunc(cloudInfoFileName);
+    cm = actualCloudType.constrFunc(cloudInfoFileName, ...
+                                    obj.curlDir, ...
+                                    obj.auth.getKeyFile());
     
     % Check for preexistence of the requested wisp (not allowed)
     if ~isempty(cm.serverIdFromName(wispName))

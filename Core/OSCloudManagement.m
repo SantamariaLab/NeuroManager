@@ -8,22 +8,22 @@ classdef OSCloudManagement < CloudManagement
         OS_NetworkEndpoint;
         OS_USERNAME;
         OS_PASSWORD;
-        OS_KEY_NAME;    % on the cloud
+        OS_KEY_NAME;        % on the cloud
         networks;
         powerStatePhrase;   % better terminology and handling necessary
         extAddressRoot;
         flavors;
         images;
         currentAuthToken;
-        waitingDelay; % seconds
-        localKeyFile;   % on the NM host
+        waitingDelay;       % seconds
+        localKeyFile;       % on the NM host
         curldir;
     end
     methods(Abstract)
         getToken(obj)
     end
     methods
-        function obj = OSCloudManagement(cloudInfoFile)
+        function obj = OSCloudManagement(cloudInfoFile, localCurlDir, localKeyFile)
             % Pull in the infoFile (JSON format) and fill in the data
             % related to this class
             if ~exist(cloudInfoFile, 'file') == 2
@@ -31,7 +31,6 @@ classdef OSCloudManagement < CloudManagement
                        cloudInfoFile ' during configuration processing.']);
             end
             
-            % Later choose between cloud types here
             try
                 cloudInfo = loadjson(cloudInfoFile);
             catch ME
@@ -49,7 +48,6 @@ classdef OSCloudManagement < CloudManagement
             obj.OS_PASSWORD = cloudInfo.OS_PASSWORD;
             obj.OS_KEY_NAME = cloudInfo.OS_KEY_NAME;
             obj.powerStatePhrase = cloudInfo.powerStatePhrase;
-            % Not sure where this comes from
             obj.extAddressRoot = cloudInfo.extAddressRoot;
             
             if isfield(cloudInfo, 'networks')
@@ -70,11 +68,8 @@ classdef OSCloudManagement < CloudManagement
                 error(['cloudInfoFile ' cloudInfoFile ' must specify at least one image.']);
             end
 
-            % -----
-            % Temporary
-            obj.localKeyFile =  'C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\dbsLocalMachine\DBSSSH3';
-            % Temporary
-            obj.curldir = 'C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/ProjNeuroMan/CloudStuff/curl-7.46.0-win64-mingw/bin/';
+            obj.localKeyFile =  localKeyFile;
+            obj.curldir = localCurlDir;
             obj.waitingDelay = 0.25;
             obj.currentAuthToken = obj.getToken();
         end

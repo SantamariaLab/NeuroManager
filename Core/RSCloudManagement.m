@@ -1,7 +1,9 @@
 classdef RSCloudManagement < OSCloudManagement
     methods
-        function obj = RSCloudManagement(cloudInfoFile)
-            obj = obj@OSCloudManagement(cloudInfoFile);
+        function obj = RSCloudManagement(cloudInfoFile, ...
+                                         localCurlDir, localKeyFile)
+            obj = obj@OSCloudManagement(cloudInfoFile, ...
+                                        localCurlDir, localKeyFile);
         end
 
         
