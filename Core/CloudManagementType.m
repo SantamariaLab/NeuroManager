@@ -1,12 +1,13 @@
 % CloudManagementType
-% Associates json data with NM Cloud Management classes
+% Associates cloud type as specified in the json data with NM Cloud
+% Management class constructors 
 classdef CloudManagementType
     properties
         constrFunc;
     end
     methods
         function t = CloudManagementType(constrFunc)
-            t.constrFunc = constrFunc; % Machine constructor
+            t.constrFunc = constrFunc; 
         end
     end
     enumeration

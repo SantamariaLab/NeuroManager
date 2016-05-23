@@ -1,3 +1,4 @@
+% Covers Rackspace-specific activities
 classdef RSCloudManagement < OSCloudManagement
     methods
         function obj = RSCloudManagement(cloudInfoFile, ...
@@ -5,7 +6,6 @@ classdef RSCloudManagement < OSCloudManagement
             obj = obj@OSCloudManagement(cloudInfoFile, ...
                                         localCurlDir, localKeyFile);
         end
-
         
         % -----
         function [serverName, serverId] = ...
@@ -72,6 +72,7 @@ classdef RSCloudManagement < OSCloudManagement
         
         % -----
         function tf = deleteServerId(obj, serverId)
+        % Terminate a server based on its ID.
         % true/success or false/failure
             % Check for existence first. If doesn't exist return false.
             if ~obj.existsServerId(serverId)
@@ -142,7 +143,7 @@ classdef RSCloudManagement < OSCloudManagement
                 %     cmd = ['./curl-7.46.0-win64-mingw/bin/curl --help'];
             end
             % NEED TO PROCESS ERRORS HERE
-            % (not sure yet what to do)
+            % (not implemented yet)
             [~, answer] = system(cmd);
             data = loadjson(answer);
             token = data.access.token.id;

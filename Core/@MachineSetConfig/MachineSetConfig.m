@@ -190,11 +190,8 @@ END OF LICENSE
 classdef MachineSetConfig < handle
     properties
         singleMachine; % t/f
-        % Array of structs should be private?
         MSConfig;
         numMachines;
-        % Handle of TimeCheck method
-        timeCheckFunc;
         auth; % used for automated construction of cloud instances
         curlDir;
         log;
@@ -205,39 +202,11 @@ classdef MachineSetConfig < handle
             obj.singleMachine = singleMachine;
             obj.MSConfig = MachineConfig.empty();
             obj.numMachines = 0;
-            obj.timeCheckFunc = @obj.timeCheck;
             obj.curlDir = curlDir;
             obj.auth = auth;
             obj.log = log;
         end
         
-        % --------------
-        % NOT IMPLEMENTED YET !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-%         function result = timeCheck(obj, str) %#ok<INUSD>
-%         % Checks to see if the str is a valid time in the format hh:mm:ss
-%             result = true;
-%         end
-        
-%         % -----------
-%         function terminateCloudInstance(obj, resourceName, machineName)
-%             for i = 1:obj.numMachines
-%                 if (strcmp(obj.MSConfig(i).resourceType, 'CLOUD') && ...
-%                     strcmp(obj.MSConfig(i).resourceName, resourceName) && ...
-%                     strcmp(obj.MSConfig(i).machineName, machineName) && ...
-%                     ~isempty(obj.MSConfig(i).instance))
-%                     obj.log.write(['Terminating instance '...
-%                                    obj.MSConfig(i).machineName]);
-%                     obj.MSConfig(i).instance.terminate();
-%                     obj.log.write(['Instance '...
-%                                    obj.MSConfig(i).machineName ...
-%                                    ' terminated.']);
-%                     return;
-%                 end
-%             end
-%             obj.log.write(['Machine Set Config: Unable to terminate Cloud Instance named '...
-%                            machineName ' on resource ' resourceName ...
-%                            '. It may not exist or perhaps was not used in the config.']);
-%         end
         
         % -----------
         function [type, numSimulators, machineName, config,...
@@ -260,7 +229,6 @@ classdef MachineSetConfig < handle
                 return;
             end
             
-            % ALL THIS UNDER CONSTRUCTION
             switch obj.MSConfig(index).resourceType;
                 case 'STANDALONESERVER'
                     type = MachineType.STANDALONESERVER;
@@ -293,16 +261,12 @@ classdef MachineSetConfig < handle
         function print(obj)
             fprintf('%s\n', 'MachineSetConfig:');
             for i = 1:obj.numMachines
-%                 dataFunc = obj.MSConfig(i).dataFunc;
-%                 md = dataFunc('','');
                 fprintf('%u: %s %s %s\t\t %u %s\n', i,...
                     char(obj.MSConfig(i).getResourceType()),...
                     obj.MSConfig(i).getResourceName(),...
                     obj.MSConfig(i).getMachineName(),...
                     obj.MSConfig(i).getNumSimulators(),...
                     obj.MSConfig(i).getWorkDir());
-%                 ,...
-%                     obj.MSConfig(i).wallClockTime);
             end
             fprintf('%s\n', '--------------------');
         end
@@ -312,8 +276,6 @@ classdef MachineSetConfig < handle
             str = '';
             str = [str sprintf('%s\n', 'MachineSetConfig:')];
             for i = 1:obj.numMachines
-%                 dataFunc = obj.MSConfig(i).dataFunc;
-%                 md = dataFunc('','');
                 str = [str ...
                     sprintf('%u: %s %s %s\t\t %u %s %s\n', i,...
                     char(obj.MSConfig(i).getResourceType()),...
@@ -325,10 +287,6 @@ classdef MachineSetConfig < handle
         end
     end
     methods(Static)
-        function tf = isaFuncHandle(fh)
-            tf = isa(fh,'function_handle');
-        end
-        
         % definition in separate file
         ProcessSimCore(configObject)
     end

@@ -1,3 +1,6 @@
+% Basic implementation of the CloudManager interface except for getToken,
+% which must be supplied by the cloud-specific subclass.
+% Note: this is not a full implementation of an OpenStack API SDK.
 classdef OSCloudManagement < CloudManagement
     properties %(Access=protected)
         name;
@@ -471,7 +474,7 @@ classdef OSCloudManagement < CloudManagement
             catch ME
                 % Via a race condition seen using Rackspace which I
                 % haven't been able to replicate
-                disp(['ME.identifier ' ME.identifier]);
+                disp(['OSCloudManagement Race condition:  ME.identifier ' ME.identifier]);
             end
             status = info.server.status;
             powerState = info.server.(obj.powerStatePhrase);

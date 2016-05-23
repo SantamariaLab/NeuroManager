@@ -6,7 +6,8 @@ function removeWisps(obj)
             if obj.MSConfig(i).isWisp
                 % Load up the cloud info to determine which constructor to use
                 wispCloudInfo = loadjson(obj.MSConfig(i).cloudInfoFile);
-                wispCloudType = CloudManagementType.(wispCloudInfo.cloudManagementType);
+                wispCloudType = ...
+                    CloudManagementType.(wispCloudInfo.cloudManagementType);
                 cm = wispCloudType.constrFunc(obj.MSConfig(i).cloudInfoFile,...
                                               obj.curlDir, ...
                                               obj.auth.getKeyFile());

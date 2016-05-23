@@ -1,3 +1,7 @@
+% CloudManagement provides the basic interface that subclasses must make
+% happen. NeuroManager uses these methods only.  Note: this is not a
+% general-purpose SDK for clouds; it has only been developed for use in
+% NeuroManager.
 classdef CloudManagement < handle
     methods (Abstract)
         createServerWait(obj)
