@@ -184,7 +184,7 @@ END OF LICENSE
 %}
 
 % SimpleSpike01SimSet
-clear; clear classes; clear java
+clear; clear classes; clear java %#ok<CLJAVA,CLCLS>
 
 myData = '';  % Path to user's ini file
 [nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
@@ -199,13 +199,12 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
                 'notificationsType', 'NONE', 'pollDelay', 25.0,...
                 'useDualKey', true, 'isSingleMachine', true);
 
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01,      2, 'WorkDirOnMYSERVER01');
+simulatorType = SimType.SIM_NEURON_SIMPLESPIKE01;
+nm.addStandaloneServer(simulatorType,  'Server01Info.json', ...
+                           2, 'WorkDirOnMYSERVER01');
 
-nm.testCommunications(config); 
-nm.constructMachineSet(SimType.SIM_NEURON_SIMPLESPIKE01, config);
-
+nm.testCommunications(); 
+nm.constructMachineSet(simulatorType);
 nm.runFromFile('SimpleSpike01SimSpec.txt');
-
 nm.removeMachineSet();
 nm.shutdown();

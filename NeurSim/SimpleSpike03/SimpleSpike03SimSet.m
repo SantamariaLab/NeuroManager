@@ -187,7 +187,7 @@ END OF LICENSE
 % This is also the NeuroML01 example.
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 myData = '';  % Path to user's ini file
 [nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
@@ -208,19 +208,14 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
                 'pollDelay', 15.0,...
                 'useDualKey', true);
 
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01,      2, '/home/username/WorkDirOnMYSERVER01');
-config.addMachine(MachineType.MYSERVER02,      2, '/home/username/WorkDirOnMYSERVER02');
-config.addMachine(MachineType.MYSGECLUS01ALL,  2, '/home/username/WorkDirOnMYSGECLUS01ALL');
-config.addMachine(MachineType.MYSGECLUS01BM,   0, '/home/username/WorkDirOnMYSGECLUS01BM');
-config.addMachine(MachineType.MYSGECLUS01GPU,  0, '/home/username/WorkDirOnMYSGECLUS01GPU');
-config.addMachine(MachineType.MYSGECLUS01IB,   0, '/home/username/WorkDirOnMYSGECLUS01IB');
-config.addMachine(MachineType.STAMPEDEDEV,     0, '/work/xxxxx/username/WorkDirOnStampedeDEV',...
-                                                  'wallClockTime', '00:15:00');
-config.addMachine(MachineType.STAMPEDENORMAL,  0, '/work/xxxxx/username/WorkDirOnStampedeNORM',...
-                                                  'wallClockTime', '00:15:00');
-nm.testCommunications(config);
-nm.constructMachineSet(SimType.SIM_NEURON_SIMPLESPIKE03, config);
+simulatorType = SimType.SIM_NEURON_SIMPLESPIKE03;
+nm.addStandaloneServer(simulatorType,  'Server01Info.json', ...
+                           2, 'WorkDirOnServer01');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'General', ...
+                           4, 'WorkDirOnCluster01');
+nm.printConfig();
+nm.testCommunications();
+nm.constructMachineSet(simulatorType);
 
 result = nm.runFromFile('SimpleSpike03SimSpec.txt');
 

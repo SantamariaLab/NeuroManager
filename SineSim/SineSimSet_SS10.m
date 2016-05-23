@@ -183,63 +183,161 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% SimpleSpike02BSimSet
+% SineSimSet_SS10.m
+% Runs Sine wave "Hello world" simulations.
+% Configuration: Focus on use of cloud servers and wisps
+
+% This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
 clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
+% See the User Guide for discussion of each part.
+% Part I: Define authentication files, static directories, and user
+% notification data such as text number and email address.
 myData = '';  % Path to user's ini file
 [nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
-nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir,...
-                                    'NeurSim', 'SimpleSpike02B');
+% Part II: Define NeuroManager Host directories specific to this script
+nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
-% Same model files as SimpleSpike01.
-nmDirectorySet.modelDir = fullfile(nmDirectorySet.nmMainDir,...
-                                    'NeurSim', 'SimpleSpike01');
 
+% Part III: Create the NeuroManager object and show its version
+% email and text message data for the user is specified in myNMStaticData.m
+% as used above.
+% NotificationsType: 'EMAIL' indicates email only; 'TEXT' indicates text
+% message only; 'BOTH' indicates both.  Upon the completion of a
+% simulation, NeuroManager can attach a file such as a figure; see User
+% Guide for details.
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
-                  'notificationsType', 'NONE', 'useDualKey', true);
+                  'notificationsType', 'NONE',...
+                  'useDualKey', true);
 
-simulatorType = SimType.SIM_NEURON_SIMPLESPIKE02B;
-nm.addStandaloneServer(simulatorType,  'Server01Info.json', ...
-                           2, 'WorkDirOnServer01');
-nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'General', ...
-                           4, 'WorkDirOnCluster01');
-nm.printConfig();
+% Part IV: Create a machine set configuration
+simulatorType = SimType.SIM_SINESIM;
+% The traditional servers and clusters
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       2, 'WorkDirOnServer01');
+nm.addStandaloneServer(simulatorType, 'Server02Info.json', ...
+                       2, 'WorkDirOnServer02');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
+                       2, 'WorkDirForQueue01');
+
+% Add an already-existing cloud server
+nm.addCloudServer(simulatorType, 'CloudServer01Info.json',...
+                  2, 'WorkDir for CloudServer01');
+
+% Add Wisps, or ephemeral servers
+wispNameRoot = 'myWisp';
+% This file will be looked for on the MATLAB path.
+wispInfoFile = 'mySineSimWispInfo.json';
+% Add a single Wisp with two Simulators
+nm.addWisp('singleWisp', wispInfoFile, simulatorType, 2, ...
+           'WorkDir associated with image specified in the wispInfoFile');
+
+% Add a WispSet of 3 wisps, each with three Simulators for a total of 9
+% Simulators due to this set
+numWisps = 3;
+nm.addWispSet(numWisps, wispNameRoot, wispInfoFile, ...
+              simulatorType, 3, ...
+              'WorkDir associated with image specified in the wispInfoFile');
+
+                   
+% Part V: Test Communications
 nm.testCommunications();
+
+% Part VI: Build the Simulators on the machines
 nm.constructMachineSet(simulatorType);
 
-fromFile = false;
-if fromFile
-    result = nm.runFromFile('SimpleSpike02BSimSpec.txt'); %#ok<*UNRCH>
-else
-    sspec = SimSpec();
-    sspec.addTokenSet('SIMSETDEF', 'SimpleSpike02B', {'SIM_NEURON_SIMPLESPIKE02B'});
-    sspec.addTokenSet('SIMDEF', 'SingleRun1',  { '1', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun2',  { '2', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun3',  { '3', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun4',  { '4', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun5',  { '5', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun6',  { '6', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun7',  { '7', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun8',  { '8', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun9',  { '9', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun10', {'10', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun11', {'11', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun12', {'12', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun13', {'13', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun14', {'14', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun15', {'15', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun16', {'16', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun17', {'17', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun18', {'18', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun19', {'19', '1e-4', '1000'});                   
-    sspec.addTokenSet('SIMDEF', 'SingleRun20', {'20', '1e-4', '1000'});                   
-
-    result = nm.runFromSimSpec(sspec);
+% Part VII: Create the SimSets in one of two ways: 1) Create a text file
+% just like previous examples (FromFile = true); 2) Create a SimSpec and
+% use it without creating a text file first (FromFile = false).
+fromFile = true;     % Create a SimSet text file or not?
+notify = false;      % Bulk flag for notifications for individual simulations
+numSimSets = 2;      % Run separate simsets but keep same machine set
+numSimulations = 25; % Simulations per simset
+rng(1); % Seed the random number generator for tutorial/testing replicability
+% 
+nameRoot = 'SineSimSpec10';
+if fromFile 
+    % Approach 1: Create a text file like the other examples
+    % Because we want to preserve all the input files for provenance, we
+    % create a special directory in the results area to hold them
+    autoSpecDir = fullfile(nm.getSimResultsDir(), 'AutoSpecs');
+	mkdir(autoSpecDir);
+    nm.setSimSpecFileDir(autoSpecDir);
+    for j = 1:numSimSets
+        specFilename = [nameRoot '-' num2str(j)  '.txt'];
+        fullSpecfile = fullfile(nm.getSimSpecFileDir(), specFilename);
+        specFileH = fopen(fullSpecfile, 'w');
+        fprintf(specFileH, '%s\n%s\n', ...
+            '% These lines constructed automatically by NeuroManager,', ...
+            ['%  using the ' mfilename('fullpath') ' script.']);
+        fprintf(specFileH, '%s\n', ...
+                '%  Do not edit; they will be overwritten.');
+        fprintf(specFileH, '%s\n', ...
+                ['SIMSETDEF ' [nameRoot '-' num2str(j)] ' SIM_SINESIM']);
+        if notify
+            fprintf(specFileH, '%s\t%s\t%s\n', ...
+                    '%       ID            ', ' Freq', 'Duration');
+        else
+            fprintf(specFileH, '%s\t%s\t%s\n', ...
+                    '%      ID            ', 'Freq', 'Duration');
+        end
+        for i = 1:numSimulations
+            frequency = (0.9*rand()+0.1)*10.0;
+            duration = (0.9*rand()+0.1)*10.0;
+            formatStr = '%s%04.0f-%04.0f\t %4.2f\t%4.2f\n';
+            if notify
+                fprintf(specFileH, formatStr,...
+                        'SIMDEFN SineSimRun', j, i, frequency, duration); %#ok<*UNRCH>
+            else
+                fprintf(specFileH, formatStr,...
+                        'SIMDEF SineSimRun', j, i, frequency, duration);
+            end
+        end
+        fclose(specFileH);
+        
+        % Run the SimSet
+        % expects file in new dir
+        result(j) = nm.runFromFile(specFilename); %#ok<SAGROW> 
+    end
+else 
+    % Approach 2: Create the SimSpec right here without creating a text
+    % file. A copy will be printed to file anyway for provenance.
+    for j = 1:numSimSets
+        frequency = (0.9*rand()+0.1)*10.0;
+        duration = (0.9*rand()+0.1)*10.0;
+        ss = SimSpec();
+        % If you know your simids will be unique within a simset, you
+        % can override the uniqueness check for a little bit of time
+        % savings.  Currently RunFromFile() automatically runs
+        % uniqueness check.
+        uniquenessCheckOverride = true;
+        ss.addTokenSet('SIMSETDEF', [nameRoot '-' num2str(j)], ...
+                       {'SIM_SINESIM'}, uniquenessCheckOverride);
+        for i = 1: numSimulations
+            if notify
+                command = 'SIMDEFN';
+            else
+                command = 'SIMDEF';
+            end
+            cmdParam = sprintf('%s%04.0f-%04.0f', 'SineSimRun', j, i);
+            freqStr = sprintf('%4.2f', frequency);
+            durStr = sprintf('%4.2f', duration);
+            params = {freqStr, durStr};
+            ss.addTokenSet(command, cmdParam, params, uniquenessCheckOverride);
+        end
+        a(j) = nm.runFromSimSpec(ss); 
+    end
 end
 
+% Part VIII: Dismantle the Machine Set
 nm.removeMachineSet();
+
+% Remove ephemeral cloud servers
+nm.removeWisps();
+
+% Part IX: Clean up and Shutdown
 nm.shutdown();
