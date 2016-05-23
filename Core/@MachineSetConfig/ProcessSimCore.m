@@ -1,5 +1,4 @@
 function ProcessSimCore(configObject)
-    
 % Now that we have assigned a SimCore, we must add its
     % properties to this object:
     % -- get the type
@@ -12,7 +11,10 @@ function ProcessSimCore(configObject)
     end
     if isempty(simCore)
         % Deal with errors here and in the rest of the file 
-        % (not implemented yet)
+        error(['simCore ' configObject.assignedSimCoreName ...
+               ' not found in information file for ' ...
+               configObject.machineName  ' on resource ' ...
+               configObject.resourceName '.']);
     end
 
     % -- get the defined properties for that type
@@ -33,8 +35,8 @@ function ProcessSimCore(configObject)
         end
     end
     if isempty(simCoreType)
-        % Deal with errors here and in the rest of the file 
-        % (not implemented yet)
+        error(['simCore type ' simCore.type ...
+               ' not found in SimCore type file ' typeFile '.']);
     end
 
     % -- add the type's properties to this object
