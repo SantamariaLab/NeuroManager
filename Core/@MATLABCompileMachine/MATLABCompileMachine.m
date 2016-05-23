@@ -216,17 +216,22 @@ classdef MATLABCompileMachine < FileTransferMachine
     end
     
     methods
-        function obj = MATLABCompileMachine(md,...
+        function obj = MATLABCompileMachine(config,...
                                             xcmpMach, xcmpDir,...
                                             hostID, hostOs, auth)
-            obj = obj@FileTransferMachine(md, hostID, hostOs, auth);
+            obj = obj@FileTransferMachine(config, hostID, hostOs, auth);
             % These are for this machine
-            obj.matlabCompilerDir = md.getSetting('matlabCompilerDir'); 
-            obj.matlabCompiler = md.getSetting('matlabCompiler'); 
-            obj.matlabExecutable = md.getSetting('matlabExecutable'); 
+%             obj.matlabCompilerDir = md.getSetting('matlabCompilerDir'); 
+            obj.matlabCompilerDir = config.getCompilerDir();
+%             obj.matlabCompiler = md.getSetting('matlabCompiler'); 
+            obj.matlabCompiler = config.getCompiler();
+%             obj.matlabExecutable = md.getSetting('matlabExecutable'); 
+            obj.matlabExecutable = config.getExecutable();
 
-            obj.mcrDir = md.getSetting('mcrDir');
+%             obj.mcrDir = md.getSetting('mcrDir');
+            obj.mcrDir = config.getMcrDir();
             obj.xCompilationMachine = xcmpMach;
+            
             % Create a subdirectory for this machine (so that we
             % don't have collisions from multiple parallel xcompiles on
             % the same machine)
@@ -238,6 +243,7 @@ classdef MATLABCompileMachine < FileTransferMachine
                 obj.xCompilationMachine.issueMachineCommand(command,...
                                                 CommandType.FILESYSTEM);
                 % Ensure the xcompilation scratch directory is empty
+                % NEED TO ENSURE MORE SAFEGUARDS HERE TOO
                  command = ['cd '...
                      path2UNIX(obj.xCompilationScratchDir)...
                      '; rm -f *.m; rm -f *.log; rm -f * txt;'...
@@ -252,6 +258,11 @@ classdef MATLABCompileMachine < FileTransferMachine
                             {'runSimulation', 'run_runSimulation.sh'};
         end
         
+        % ----------
+        function dir = getXCompilationScratchDir(obj)
+            dir = obj.xCompilationScratchDir;
+        end
+
         % ----------
         function uploadStdSimulatorFiles(obj, fileList, destDir)
             if(obj.xCompilationMachine == 0)

@@ -226,6 +226,11 @@ classdef SimulatorStats < handle
         end
         
         function addData(obj, TP, TW, TR, TF)
+            % If any of the data is bad, don't use it
+            % REEXAMINE THIS APPROACH
+            if ((TP < 0) || (TW < 0) || (TR < 0) || (TF < 0))
+                return;
+            end
             obj.numSims = obj.numSims + 1;
             obj.prepTimes(obj.numSims) = TP;
             obj.waitTimes(obj.numSims) = TW;

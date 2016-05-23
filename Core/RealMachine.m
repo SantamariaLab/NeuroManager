@@ -209,6 +209,7 @@ classdef RealMachine < handle
         jsUseDualKey;   % Use dual key authentication instead of password
 
         simAuth;        % Dual key data
+        hostKeyFingerprint; % For cloud hosts
         
         machineDataFilename;
 
@@ -225,22 +226,31 @@ classdef RealMachine < handle
     methods
         % ----------
         % Constructor
-        function obj = RealMachine(md, hostID, auth)
-            obj.id           = md.getSetting('id');
-            obj.commsID      = md.getSetting('commsID');
-            obj.fsUserName   = md.getSetting('fsUserName');
-            obj.fsPassword   = md.getSetting('fsPassword');
-            obj.fsIPAddress  = md.getSetting('fsIPAddress');
-            obj.jsUserName   = md.getSetting('jsUserName');
-            obj.jsPassword   = md.getSetting('jsPassword');
-            obj.jsIPAddress  = md.getSetting('jsIPAddress');
+        function obj = RealMachine(config, hostID, auth)
+            obj.id = config.getMachineName();
+            obj.commsID      = config.getCommsID();
+            obj.fsUserName   = config.getFsUserName();
+            obj.fsPassword   = config.getFsPassword();
+            obj.fsIPAddress  = config.getFsIpAddress();
+            
+            obj.jsUserName   = config.getJsUserName();
+            obj.jsPassword   = config.getJsPassword();
+            obj.jsIPAddress  = config.getJsIpAddress();
+            
             % Basic assumption is that all targets are unix.
             obj.osType       = OSType.UNIX; 
 
             obj.simAuth = auth;
             obj.hostID  = hostID;
-            obj.machineDataFilename = [md.getSetting('id') 'Data.dat'];
-            
+            obj.machineDataFilename = [obj.id 'Data.dat'];
+        end
+        
+        % -----
+        % Critique: for machines without a fs/js difference, this sets up
+        % twice as many connections as necessary.
+        function configureDualKey(obj, config)
+            obj.hostKeyFingerprint = config.getHostKeyFingerprint();
+
             % Unless is a single machine setup, we check validity of
             % password/dual key settings and set up connections to the fs
             % and js machines
@@ -304,8 +314,10 @@ classdef RealMachine < handle
                 % Don't ignore responses is the NeuroManager default
                 obj.jsConnection.command_ignore_response = 0;
                 obj.jsConnection.autoreconnect = 1;  % TRIAL ONLY
+
             end
         end
+        
         
         % ----------------
         % We store the connection in the class properties; there seems to

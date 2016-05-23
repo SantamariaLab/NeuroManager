@@ -194,6 +194,11 @@ classdef Simulator < handle
         
         type; % From SimType class
         
+        % A cell array of compatible SimCores. Empty means nothing is
+        % compatible, so subclasses have to set this list according to
+        % their SimCore requirements. MOVED TO SIMTYPE
+%         simCoreCompatibilityList = {}; 
+        
         % The list of files to be uploaded as part of the simulator;
         % dependent on simtype and machine. A cell array of strings.
         % Filenames only
@@ -261,11 +266,18 @@ classdef Simulator < handle
                                  log, notificationSet)
             obj.id = id;
             obj.type = SimType.UNASSIGNED; 
+            
+            % List defined in SimType.m
+%     	    obj.simCoreCompatibilityList = type.simCoreList;
+            
             % This file list is true for all simulators; located in the
             % core directory
             obj.stdUploadFiles = {'runSimulation.m',...
                                   'SimulationState.m',...
-                                  'RMD.m',...
+                                  'StandaloneConfig.m',...
+                                  'ClusterConfig.m',...
+                                  'CloudConfig.m',...
+                                  'MachineConfig.m',...
                                   'OSType.m'};
             % Simulators can add additional std files that are located
             % in std directory with the rest of the NeuroManager core files
@@ -337,6 +349,11 @@ classdef Simulator < handle
         function str = getVersion(obj)
             str = obj.version;
         end
+        
+        % --------------
+%         function tf = checkSimCoreCompatibility(testName)
+%             tf = any(strcmp(testName, obj.simCoreCompatibilityList));
+%         end
         
         % --------------
         function uploadStdFiles(obj)
@@ -590,13 +607,33 @@ classdef Simulator < handle
                                         obj.currentSimulation.getStats();
                 % Put the newly gathered simulation stats into the
                 % Simulator performance stats
-                obj.stats.addData(seconds(submissionTime-handoffTime),...
-                                  seconds(runStartTime-submissionTime),...
-                                  seconds(runCompleteTime-runStartTime),...
-                                  seconds(simFullProcTime-runCompleteTime));
+                % THIS IS NOT NECESSARILY THE CORRECT THING TO DO (the -1
+                % thing) but having a spurious problem with datetime array
+                % minus a double array giving an error
+                if (isdatetime(submissionTime) && isdatetime(handoffTime))
+                    a = seconds(submissionTime-handoffTime);
+                else
+                    a = -1;
+                end
+                if (isdatetime(runStartTime) && isdatetime(submissionTime))
+                    b = seconds(runStartTime-submissionTime);
+                else
+                    b = -1;
+                end
+                if (isdatetime(runCompleteTime) && isdatetime(runStartTime))
+                    c = seconds(runCompleteTime-runStartTime);
+                else
+                    c = -1;
+                end
+                if (isdatetime(simFullProcTime) && isdatetime(runCompleteTime))
+                    d = seconds(simFullProcTime-runCompleteTime);
+                else
+                    d = -1;
+                end
+                obj.stats.addData(a, b, c, d);
                 if 0 % just for ease of debug
                     [mPR, sPT, mWT, sWT, mRT, sRT, mFT, sFT] =...
-                                                    obj.stats.getStats(); %#ok<UNRCH,ASGLU>
+                                                    obj.stats.getStats(); %#ok<UNRCH>
 %                     fprintf(['%s:  mPR %f, sPT %f | mWT %f, sWT %f '...
 %                              '| mRT %f, sRT %f | mFT %f, sFT %f'],...
 %                             obj.getID(), mPR, sPT, mWT, sWT,...

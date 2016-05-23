@@ -283,11 +283,11 @@ classdef Simulation < handle
                 obj.signalFileRUNNING   = '';
                 obj.signalFileCOMPLETE  = '';
                 obj.signalFileFAILED    = '';
-                obj.handoffTime      = 0;
-                obj.submissionTime   = 0;
-                obj.runStartTime     = 0;
-                obj.runCompleteTime  = 0;
-                obj.simFullProcTime  = 0;
+                obj.handoffTime      = datetime(0,0,0,0,0,0);
+                obj.submissionTime   = datetime(0,0,0,0,0,0);
+                obj.runStartTime     = datetime(0,0,0,0,0,0);
+                obj.runCompleteTime  = datetime(0,0,0,0,0,0);
+                obj.simFullProcTime  = datetime(0,0,0,0,0,0);
                 obj.ETS = 0.0;
                 obj.resultsFile         = '';
                 obj.result = '';
@@ -321,8 +321,8 @@ classdef Simulation < handle
                 obj.signalFileRUNNING = '';     % Target side; set by SetTargetDirs()
                 obj.signalFileCOMPLETE = '';    % Target side; set by SetTargetDirs()
                 obj.signalFileFAILED = '';      % Target side; set by SetTargetDirs()
-                obj.submissionTime = 0;
-                obj.runStartTime   = 0;
+                obj.submissionTime = datetime(0,0,0,0,0,0);
+                obj.runStartTime   = datetime(0,0,0,0,0,0);
                 obj.resultsFile = '';
                 obj.result = ''; 
                 obj.executionTime = NaN;
@@ -335,11 +335,11 @@ classdef Simulation < handle
         function clearForResubmit(obj)
                 obj.jobID = 0;
                 obj.errmsg = '';
-                obj.handoffTime      = 0;
-                obj.submissionTime   = 0;
-                obj.runStartTime     = 0;
-                obj.runCompleteTime  = 0;
-                obj.simFullProcTime  = 0;
+                obj.handoffTime      = datetime(0,0,0,0,0,0);
+                obj.submissionTime   = datetime(0,0,0,0,0,0);
+                obj.runStartTime     = datetime(0,0,0,0,0,0);
+                obj.runCompleteTime  = datetime(0,0,0,0,0,0);
+                obj.simFullProcTime  = datetime(0,0,0,0,0,0);
                 obj.ETS = 0.0;
                 obj.executionTime = NaN;
                 obj.resultsFile         = '';

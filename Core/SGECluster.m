@@ -188,6 +188,7 @@ END OF LICENSE
 % Sun Grid Engine (qsub command).
 classdef SGECluster < SimMachine & Cluster
     properties 
+        wallClockTime;
         parEnvStr;
         
         % String to use in the queue line to identify the queue to be
@@ -199,44 +200,43 @@ classdef SGECluster < SimMachine & Cluster
     
     methods
         function obj = SGECluster(~,...
-                            hostID, hostOS, ~, ~, baseDir, scratchDir, ...
+                            hostID, hostOS, ~, ~, ~, scratchDir, ...
                             simFileSourceDir, custFileSourceDir,...
                             modelFileSourceDir,...
-                            simType, numSims,...
+                            simType, ~,...
                             xCompilationMachine,...
                             xCompilationScratchDir,...
-                            auth, log, notificationSet, dataFunc,...
-                            queueData, parEnvStr, resourceStr, ~) %#ok<INUSL>
-            md = dataFunc();
+                            auth, log, notificationSet, config,...
+                            ~, ~, ~, ~) %#ok<INUSL>
 
-            % Use cross-compilation on Dendrite (just to test the
+            % Use cross-compilation on CBI (just to test the
             % cross-compilation code)
-            useCrossCompilation = false;
+            useCrossCompilation = true;
             if useCrossCompilation
                 xCompilationMachine =...
-                            xCompileDendrite(hostID, hostOS,...
+                            xCompileCBICluster(hostID, hostOS,...
                                               'XCOMPILE', auth); %#ok<*UNRCH>
-                mdx = createDendriteData();
-                xCompilationScratchDir =...
-                            mdx.getSetting('xCompDir');
+                xCompilationScratchDir = ...
+                    xCompilationMachine.getXCompilationScratchDir();
+                        
             else
                 xCompilationMachine = 0; 
                 xCompilationScratchDir = ''; 
             end
-            
-            obj = obj@Cluster(md, xCompilationMachine,...
+            obj = obj@Cluster(config, xCompilationMachine,...
                               xCompilationScratchDir,...
                               hostID, hostOS,...
-                              queueData.extension, auth);
-            obj = obj@SimMachine(md, ...
-                           hostID, baseDir, scratchDir, ...
+                              '', auth);
+            obj = obj@SimMachine(config, ...
+                           hostID, '', scratchDir, ...
                            simFileSourceDir, custFileSourceDir,...
                            modelFileSourceDir,...
-                           simType, numSims,...
+                           simType, '',...
                            auth, log, notificationSet);
-            obj.parEnvStr = parEnvStr;
-            obj.queueStr = queueData.jobString;
-            obj.resourceStr = resourceStr;
+            obj.wallClockTime = config.wallClockTime;
+            obj.parEnvStr = config.parEnvStr;
+            obj.queueStr = config.queueString;
+            obj.resourceStr = config.resourceStr;
         end
         
         % ----------------
@@ -278,19 +278,23 @@ classdef SGECluster < SimMachine & Cluster
             job = fopen(jobFileFullLocalPath, 'w');
             fprintf(job, '%s\n', ['#!/bin/bash']);
             fprintf(job, '%s\n', ['#! -N ' jobRoot]);
-            if (obj.parEnvStr)
-                fprintf(job, '%s\n', ['#$ -pe ' obj.parEnvStr]);
-            end
-            if (obj.queueStr)
-                fprintf(job, '%s\n', ['#$ -q ' obj.queueStr]);
-            end
-            if (obj.resourceStr)
-                fprintf(job, '%s\n', ['#$ -l ' obj.resourceStr]);
-            end
+            fprintf(job, '%s\n', ['#$ -q ' obj.queueStr]);
             fprintf(job, '%s\n', ['#! -j y']);
             fprintf(job, '%s\n', ['#! -o ' jobRoot '.log']);
             fprintf(job, '%s\n', ['#$ -wd ' ...
                                   path2UNIX(remoteRunDir)]);
+            
+            % Other parameters can be added to these
+            if ~strcmp(obj.wallClockTime, '00:00:00')
+                fprintf(job, '%s\n', ['#$ -l h_rt=' obj.wallClockTime]);
+            end
+            if (obj.parEnvStr)
+                fprintf(job, '%s\n', ['#$ -pe ' obj.parEnvStr]);
+            end
+            if (obj.resourceStr)
+                fprintf(job, '%s\n', ['#$ -l ' obj.resourceStr]);
+            end
+            
             fprintf(job, '%s\n', runCommand);
             fprintf(job, '%s\n', 'exit 0');
             fclose(job);

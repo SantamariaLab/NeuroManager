@@ -188,10 +188,11 @@ END OF LICENSE
 % files.
 classdef Cloud < RunJobMachine
     methods
-        function obj = Cloud(machineData, xCmpMach, xCmpDir,...
+        function obj = Cloud(config, xCmpMach, xCmpDir,...
                                     hostID, hostOS, auth)
-            obj = obj@RunJobMachine(machineData, xCmpMach, xCmpDir,...
+            obj = obj@RunJobMachine(config, xCmpMach, xCmpDir,...
                                      hostID, hostOS, auth);
+            obj.configureDualKey(config);
         end
     end
 end

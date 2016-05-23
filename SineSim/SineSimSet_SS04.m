@@ -212,15 +212,15 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 % the same as other machines from this file's perspective; the differences
 % are handled in the machine classes via the workflow stages. Each queue on
 % the cluster is treated like a separate machine.
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSGECLUSTERQUEUE01, 6,...
-                  'myWorkingDirectory/QUEUE01');
+simulatorType = SimType.SIM_SINESIM;
+nm.addClusterQueue(simulatorType, 'ClusterInfo.json', 'Queue01Name', ...
+                   6, 'myWorkingDirectory/QUEUE01');
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file,
 % located in the simSpec Directory.

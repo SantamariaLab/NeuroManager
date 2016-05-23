@@ -189,6 +189,8 @@ END OF LICENSE
 % Generic machine stuff like IPaddress is handled by other classes.
 classdef SimMachine < RealMachine
     properties
+        config; % Holds customizing details from the SimCore specification
+        
         state; % State of machine from MachineState class
         
         % Existing location on remote where simulator dirs will be built.
@@ -240,20 +242,22 @@ classdef SimMachine < RealMachine
     
     methods (Access = public)
         % ----------------
-        function obj = SimMachine(md, hostID, baseDir, scratchDir,...
+        function obj = SimMachine(config, hostID, ~, scratchDir,...
                                   simFileSourceDir, custFileSourceDir,...
                                   modelFileSourceDir,...
-                                  simType, numSims,...
+                                  simType, ~,...
                                   auth, log, notificationSet)
-            obj = obj@RealMachine(md, hostID, auth); % Not sure why this was necessary
+            obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
+            obj.config = config;
             obj.state = MachineState.COMPILING;
-            obj.baseDir = baseDir;          % on the target
+%             obj.baseDir = baseDir;          % on the target
+            obj.baseDir = config.getWorkDir();          % on the target
             obj.scratchDir = scratchDir;    % on the host
             obj.simFileSourceDir = simFileSourceDir;
             obj.custFileSourceDir = custFileSourceDir;
             obj.modelFileSourceDir = modelFileSourceDir;
 
-            obj.numSimulators = numSims;
+            obj.numSimulators = config.numSimulators;
             obj.log = log;
             obj.notificationSet = notificationSet;
 
@@ -264,8 +268,12 @@ classdef SimMachine < RealMachine
             obj.sType = simType;  
 
             % Save this machine's data in scratch dir for later upload
-            sourceFile = fullfile(scratchDir, obj.machineDataFilename);
-            save(sourceFile, 'md', '-mat', '-v7.3');
+            dataFile = fullfile(scratchDir, obj.machineDataFilename);
+            
+%             disp('!!!!!!!!!!!!!!!!!')
+%             uploadMachineConfig = config.uploadMachineConfig
+%             save(sourceFile, 'uploadMachineConfig', '-mat', '-v7.3');
+            save(dataFile, 'config', '-mat', '-v7.3');
 
             % Get the first simulator construction started and return;
             % The FinishSimulators method makes the others. This
@@ -279,6 +287,7 @@ classdef SimMachine < RealMachine
                 obj.makeSimulator(obj.sType, simulatorID,...
                                   obj.log, obj.notificationSet);
         end
+        
         
         % -----------
         function preUploadFiles(obj)
@@ -444,10 +453,10 @@ classdef SimMachine < RealMachine
         function result = machineBasePrep(obj)
             % Check for existence of base dir
             result = obj.checkForDirectory(obj.baseDir);
-            if ~result
+            if ~result || isempty(obj.baseDir)
                  error(['Machine Base Directory ' obj.baseDir ...
                      ' does not exist on machine '...
-                     obj.id '. Directory must be created by user'...
+                     obj.id ' or is empty. Directory must be created by user'...
                      ' before use of NeuroManager with that machine.']);
             end
             obj.log.write(['Target Base Directory ' obj.baseDir ...

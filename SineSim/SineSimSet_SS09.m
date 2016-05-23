@@ -192,7 +192,7 @@ END OF LICENSE
 % This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 % See the User Guide for discussion of each part.
 % Part I: Define authentication files, static directories, and user
@@ -217,55 +217,51 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
                   'useDualKey', true);
 
 % Part IV: Create a machine set configuration
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01, ...
-                                    1, 'Working Directory on MyServer01');
-config.addMachine(MachineType.MYSERVER02, ...
-                                    1, 'Working Directory on MyServer02');
-config.addMachine(MachineType.MYSGECLUSTER01QUEUE01, ...
-                        1, 'Working Directory on MySGECluster01 Queue01');
-config.addMachine(MachineType.STAMPEDENORMAL, ...
-                        1, 'Working Directory on STAMPEDE NORMAL queue',...
-                           'wallClockTime', '00:15:00');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       2, 'WorkDirOnServer01');
+nm.addStandaloneServer(simulatorType, 'Server02Info.json', ...
+                       2, 'WorkDirOnServer02');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
+                       2, 'WorkDirForQueue01');
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Create the SimSet in one of two ways: 1) Create a text file
 % just like previous examples (FromFile = true); 2) Create a SimSpec and
 % use it without creating a text file first (FromFile = false).
-fromFile = false;   % Create a SimSet text file or not?
+fromFile = true;     % Create a SimSet text file or not?
 notify = false;      % Bulk flag for notifications for individual simulations
-numSimSets = 2;     % Run separate simsets but keep same machine set
+numSimSets = 2;      % Run separate simsets but keep same machine set
 numSimulations = 18; % Simulations per simset
 rng(1); % Seed the random number generator for tutorial/testing replicability
 if fromFile % Create a text file like the other examples
+    % Because we want to preserve all the input files for provenance, we
+    % create a special directory in the results area to hold them
+    autoSpecDir = fullfile(nm.getSimResultsDir(), 'AutoSpecs');
+	mkdir(autoSpecDir);
+    nm.setSimSpecFileDir(autoSpecDir);
     for j = 1:numSimSets
-        % Create the spec file in the simSpec directory.
-        path = nmDirectorySet.customDir;
         specFilename = ['SineSimSpec09-' num2str(j)  '.txt'];
-        fullSpecfile = fullfile(path, specFilename);
-        if exist(fullSpecfile, 'file')
-            try
-                delete(fullSpecfile);
-            catch
-                ME = MException('dbsSineSimSet_SS09:FileFailure',...
-                ['dbsSineSimSet_SS09: Could not delete file: <'...
-                fullSpecfile '>.']);
-                throw(ME);
-            end
-        end
+        fullSpecfile = fullfile(nm.getSimSpecFileDir(), specFilename);
         specFileH = fopen(fullSpecfile, 'w');
-        fprintf(specFileH, '%s\n', '% These lines constructed automatically by NeuroManager.');
-        fprintf(specFileH, '%s\n', '%   Do not edit; they will be overwritten.');
-        fprintf(specFileH, '%s\n', ['SIMSETDEF SineSimSpec09-' num2str(j) ' SIM_SINESIM']);
+        fprintf(specFileH, '%s\n%s\n', ...
+            '% These lines constructed automatically by NeuroManager,', ...
+            ['%  using the ' mfilename('fullpath') ' script.']);
+        fprintf(specFileH, '%s\n', ...
+                '%  Do not edit; they will be overwritten.');
+        fprintf(specFileH, '%s\n', ...
+                ['SIMSETDEF SineSimSpec09-' num2str(j) ' SIM_SINESIM']);
         if notify
-            fprintf(specFileH, '%s\t%s\t%s\n', '%       ID            ', ' Freq', 'Duration');
+            fprintf(specFileH, '%s\t%s\t%s\n', ...
+                    '%       ID            ', ' Freq', 'Duration');
         else
-            fprintf(specFileH, '%s\t%s\t%s\n', '%      ID            ', 'Freq', 'Duration');
+            fprintf(specFileH, '%s\t%s\t%s\n', ...
+                    '%      ID            ', 'Freq', 'Duration');
         end
         for i = 1:numSimulations
             frequency = (0.9*rand()+0.1)*10.0;
@@ -282,7 +278,8 @@ if fromFile % Create a text file like the other examples
         fclose(specFileH);
         
         % Run the SimSet
-        result(j) = nm.runFromFile(specFilename) % expects file in custom dir
+        % expects file in new dir
+        result(j) = nm.runFromFile(specFilename); %#ok<SAGROW> 
     end
 % Create the SimSpec right here without creating a text file
 % A copy will be printed to file anyway for provenance.
@@ -310,11 +307,9 @@ else
             params = {freqStr, durStr};
             ss.addTokenSet(command, cmdParam, params, uniquenessCheckOverride);
         end
-        a(j) = nm.runFromSimSpec(ss);
-        %a(1) = result
+        a(j) = nm.runFromSimSpec(ss); 
     end
 end
-
 
 % Part VIII: Dismantle the Machine Set
 nm.removeMachineSet();

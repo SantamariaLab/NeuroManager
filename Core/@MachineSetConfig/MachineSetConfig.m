@@ -183,108 +183,111 @@ subsequent default or breach of the same or a different kind.
 END OF LICENSE
 %}
 
-% StandaloneServer
-% Defines the machine class for standalone servers.  Job submissions are
-% basically launch-with-ampersand.  There may be more sophisticated things
-% that can be done, but this is most bang-for-buck.
-classdef NEURONCCServer <  ChameleonCloud
+% MachineSetConfig class
+% Works with configuration information for a NeuroManager MachineSet.
+% Part of the input to the ConstructMachineSet method of the NeuroManager
+% class. 
+classdef MachineSetConfig < handle
     properties
-        % Machine data specific to the machine; will be passed up to target
-        % via a data file called MachineData.dat.
-        md;  
+        singleMachine; % t/f
+        MSConfig;
+        numMachines;
+        auth; % used for automated construction of cloud instances
+        curlDir;
+        log;
     end
+    
     methods
-        function obj = NEURONCCServer(md, hostID, hostOS, baseDir,...
-                            scratchDir, ...
-                            simFileSourceDir, custFileSourceDir,... 
-                            modelFileSourceDir,... 
-                            simType, numSims,...
-                            xCompilationMachine,...
-                            xCompilationScratchDir,...
-                            auth, log, notificationSet)
-            obj = obj@OpenStackCloud(md, xCompilationMachine,...
-                             xCompilationScratchDir,...
-                             hostID, hostOS, '', auth);
-            obj = obj@SimMachine(md, '', hostID, baseDir, scratchDir,...
-                           simFileSourceDir, custFileSourceDir,...
-                           modelFileSourceDir,...
-                           simType, numSims,...
-                           auth, log, notificationSet);
-            obj.md = md;
+        function obj = MachineSetConfig(singleMachine, curlDir, auth, log)
+            obj.singleMachine = singleMachine;
+            obj.MSConfig = MachineConfig.empty();
+            obj.numMachines = 0;
+            obj.curlDir = curlDir;
+            obj.auth = auth;
+            obj.log = log;
         end
         
-        % ----------
-        function preUploadFiles(obj)
-            preUploadFiles@SimMachine(obj);
-            % Nothing specific to do for this machine; see StagingSequence.xlsx
-        end
         
-                % Concrete version for this machine type (see RunJobMachine for abstract)
-        function jobID = runNoWait(obj, jobRoot, jfn, remoteRundir)
-            command = ['cd ' path2UNIX(remoteRundir)...
-                       '; ./' jfn ...
-                       ' 1> stdout' jobRoot '.txt'...
-                       ' 2> stderr' jobRoot '.txt &'];
-            obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+        % -----------
+        function [type, numSimulators, machineName, config,...
+                  queueData, parEnvStr, resourceStr, numNodes, workDir,...
+                  wallClockTime, ipAddr, deleteInstanceWhenDone] =...
+                                                    getMachine(obj, index)
+            if ((index > obj.numMachines) || (index < 1))
+                type = MachineType.UNASSIGNED;
+                numSimulators = 0;
+                machineName = '';
+                config = 0;
+                queueData = 0;
+                parEnvStr = '';
+                resourceStr = '';
+                numNodes = 1;
+                workDir = '';
+                wallClockTime = '';
+                ipAddr = '';
+                deleteInstanceWhenDone = false;
+                return;
+            end
             
-            % This machine type has no job id and the process id is buried
-            % in layer upon layer of scripting.  So instead of getting it
-            % here we get it later from the running target MATLAB. See
-            % Simulator.UpdateState().
-            jobID = obj.getJobID(remoteRundir, jobRoot); 
+            switch obj.MSConfig(index).resourceType;
+                case 'STANDALONESERVER'
+                    type = MachineType.STANDALONESERVER;
+                case 'CLOUDSERVER'
+                    type = MachineType.CLOUDSERVER;
+                case 'SGECLUSTER'
+                    type = MachineType.SGECLUSTER;
+                case 'SLURMCLUSTER'
+                    type = MachineType.SLURMCLUSTER;
+            end
+            numSimulators = obj.MSConfig(index).getNumSimulators();
+            machineName = obj.MSConfig(index).getMachineName();
+            config = obj.MSConfig(index);
+            queueData = '';
+            parEnvStr = '';
+            resourceStr = '';
+            numNodes = 0;
+            workDir = obj.MSConfig(index).getWorkDir();
+            wallClockTime = 0;
+            ipAddr = obj.MSConfig(index).getIpAddress();
+            deleteInstanceWhenDone = false;
         end
         
-        % ---------------
-        % A no-op because this machine type gets process id from the
-        % RUNNING file. Abstract version is in RunJobMachine.
-        % Not made static to match other machine types
-        function jobid = getJobID(obj, remoteRundir, jobRoot) %#ok<INUSD>
-            jobid = 0;
+        % -----------
+        function num = getNumMachines(obj)
+            num = obj.numMachines;
+        end
+        
+        % -----------
+        function print(obj)
+            fprintf('%s\n', 'MachineSetConfig:');
+            for i = 1:obj.numMachines
+                fprintf('%u: %s %s %s\t\t %u %s\n', i,...
+                    char(obj.MSConfig(i).getResourceType()),...
+                    obj.MSConfig(i).getResourceName(),...
+                    obj.MSConfig(i).getMachineName(),...
+                    obj.MSConfig(i).getNumSimulators(),...
+                    obj.MSConfig(i).getWorkDir());
+            end
+            fprintf('%s\n', '--------------------');
         end
 
-        % ----------
-        % NoSub doesn't have a job file but we still need to create the
-        % equivalent shellfile since PreRunModelProcPhaseD is buried in
-        % runcommand 
-        function jobFilename = ...
-                        preRunCreateJobFile(obj, scratchDir, jobRoot,...
-                                                 remoteRunDir, runCommand)
-            jobFilename = [jobRoot '.sh'];
-            jobFileFullLocalPath = fullfile(scratchDir, jobFilename);
-            job = fopen(jobFileFullLocalPath, 'w');
-            fprintf(job, '%s\n', ['#!/bin/bash']);
-            fprintf(job, '%s\n',...
-                         ['cd ' path2UNIX(remoteRunDir)]);
-            fprintf(job, '%s\n', runCommand);
-            fclose(job);
-            
-            % Upload the job file and make it executable
-            obj.fileToMachine(jobFileFullLocalPath,...
-                              fullfile(remoteRunDir, jobFilename));
-            command = ['chmod +x '...
-                path2UNIX(fullfile(remoteRunDir, jobFilename))];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+        % -----------
+        function str = printToStr(obj)
+            str = '';
+            str = [str sprintf('%s\n', 'MachineSetConfig:')];
+            for i = 1:obj.numMachines
+                str = [str ...
+                    sprintf('%u: %s %s %s\t\t %u %s %s\n', i,...
+                    char(obj.MSConfig(i).getResourceType()),...
+                    obj.MSConfig(i).getResourceName(),...
+                    obj.MSConfig(i).getMachineName(),...
+                    obj.MSConfig(i).getNumSimulators(),...
+                    obj.MSConfig(i).getWorkDir())]; %#ok<AGROW>
+            end
         end
-
-        % ----------
-        function postRunJobProc(obj, simulation)
-            % See NeuroManagerStaging.xlsx
-            simulatorBasedir = simulation.simulator.getTargetBaseDir();
-            simulationOutputdir = simulation.getTargetOutputDir();
-            command = ['mv ' path2UNIX(fullfile(simulatorBasedir, 'std*.txt '))...
-                       path2UNIX(simulationOutputdir)];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-        end
-        
-        % ----------
-        % Concrete version for this machine type (see RunJobMachine for abstract)
-        function runJobCleanup(obj, simBasedir)
-        % Clean up target-side files related to running jobs on qsub machine
-            command = ['cd '...
-                        path2UNIX(simBasedir)...
-                        '; rm ' path2UNIX(fullfile(simBasedir, 'std*.txt'))...
-                        ];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-        end
+    end
+    methods(Static)
+        % definition in separate file
+        ProcessSimCore(configObject)
     end
 end

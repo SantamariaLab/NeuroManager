@@ -204,7 +204,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
     userData = ini2struct(dataFile);
 
     % Ensure all the required sections are there and catch misspellings
-    validsectionnames = {'localmachine', 'authentication', 'notifications'};
+    validsectionnames = {'localmachine', 'cURL', 'authentication', 'notifications'};
     for sname = validsectionnames
         if ~isfield(userData, sname{1})
             error('iniFile:missingSection', ...
@@ -226,6 +226,20 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
     if ~(exist(userLocalMachineDir, 'file')==7)
         error(['NeuroManager error: local machine directory <' userLocalMachineDir '> not found.']);
     end
+    
+    % cURL directory ---
+    if isempty(userData.cURL.curlDir)
+        curlDir = '';
+    else
+        curlDir = userData.cURL.curlDir;
+    end
+    
+    % If is empty we assume the user is not using a cloud machine and hence
+    % doesn't need RESTful API communications, and hence, not cURL.
+    if ~isempty(curlDir) && ~(exist(curlDir, 'file')==7)
+        error(['NeuroManager error: cURL directory <' curlDir '> not found.']);
+    end
+    
     
     % Authentication ---
     % Location of the user's possibly NeuroManager-specific private keys
@@ -273,6 +287,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
 	DirStruct.coreDir = fullfile(installPath, 'Core');
 	DirStruct.sshLibDir = fullfile(installPath, 'SSHLib');
 	DirStruct.localMachineDir = userLocalMachineDir;
+    DirStruct.curlDir = curlDir;
     if ispc
         if ~isempty(userWINDOWSKeyFile)
             AuthStruct.authFile = fullfile(userKeyfileDir, userWINDOWSKeyFile);
