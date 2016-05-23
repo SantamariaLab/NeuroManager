@@ -1,0 +1,78 @@
+{
+"resourceName":"CloudNameHere",
+"resourceType":"CLOUD",
+"cloudManagementType":"SpecificCloudNameHere",
+"OS_TENANT_NAME":"TenantNameHere",
+"OS_ComputeEndpoint":"ComputeEndpointURLHere",
+"OS_IdentityEndpoint":"IdentityEndpointURLHere",
+"OS_NetworkEndpoint":"NetworkEndpointURLHere",
+"OS_USERNAME":"CloudUsernameHere",
+"OS_PASSWORD":"CloudPasswordHere",
+"OS_KEY_NAME":"NameOfKeyAsKnownByCloud",
+"network":"CH_0x2D_817259_0x2D_net or similar; corresponds to CH-817259-net",
+"powerStatePhrase":"OS_0x2D_EXT_0x2D_STS_0x3A_power_state  or similar",
+"extAddressRoot":"OS_0x2D_EXT_0x2D_IPS or similar",
+"networks":[
+	{"name":"CH-817259-net",
+	 "id":"f9e5c28a-e97d-4c07-87b2-80a41f14358c"},
+	{"name":"TempNet",
+	 "id":"3e304b3a-711b-42b1-acb2-7972281c575a"},
+	{"name":"ext-net",
+	 "id":"dbf29083-ff90-406e-b69a-b1d93b8f0a2d"}
+],
+"flavors":[
+	{"name":"Flavor01NameHere",
+	 "reference":"Flavor01URLHere",
+	 "numProcessors":1,
+	 "coresPerProcessor":1,
+  	 "RAM":0.5,
+	 "storage":"1"
+	 },
+	{"name":"Flavor02NameHere",
+	 "reference":"Flavor02URLHere",
+	 "numProcessors":1,
+	 "coresPerProcessor":1,
+  	 "RAM":0.5,
+	 "storage":"1"
+	 }
+],
+"images":[
+	{
+	"name":"imageNameHere",
+	"id":"imageIDHere",
+	"OS":"OS ID Here",
+	"user":"UsernameForInstanceHere",
+	"password":"EMPTY because using dualkey",
+	"workDir":"/home/MyWorkDir",
+	"hostKeyFingerprint":"xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx",
+	"thisImageRef":"imageURLHere",
+	"originalImageRef":"URLofImageUsedToCreateImage",
+	"matlab":
+		{"compilerDir":"EMPTY since not compiling on cloud",
+		 "compiler":"EMPTY since not compiling on cloud",
+		 "executable":"EMPTY since not compiling on cloud",
+		 "mcrDir":"/usr/local/MATLAB/MATLAB_Compiler_Runtime/v81   or whatever you set up image with",
+		 "xCompDir":""},
+	"simCores":[
+		{"name":"MATLAB_ONLY_2013a",
+		 "type":"MATLAB_ONLY",
+		 "config":{"version":"2013a"}},
+		{"name":"NEURON_74_PYTHON",
+		 "type":"NEURON_PYTHON",
+		 "config":{"neuronVersion":"7.4",
+				   "neuronDir":"/home/cc/neuron/nrn",
+				   "homeExt":"/share/nrn",
+				   "binExt":"/x86_64/bin",
+				   "libExt":"/x86_64/lib",
+				   "pythonLibExt":"",
+				   "modFileCompileLocation":"D",
+				   "compModLibExt":"/x86_64/.libs",
+				   "envAddlLibLines":"",
+				   "pythonVersion":"2.7.5",
+				   "pythonPath":"/usr/bin/python",
+				   "pythonEnvAddlLines":""
+					}}
+		]
+	}
+]
+}

@@ -1,0 +1,45 @@
+{
+"resourceName":"synapse",
+"resourceType":"STANDALONESERVER",
+"images":
+	{
+	"name":"synapse",
+	"OS":"CentOS-5",
+	"user":"David.Stockton",
+	"password":"Pa5st3a",
+	"ipAddress":"10.19.0.23",
+	"hostKeyFingerprint":"",
+	"matlab":
+		{"compilerDir":"/usr/local/MATLAB/R2012b/bin",
+		 "compiler":"mcc",
+		 "executable":"matlab",
+		 "mcrDir":"/usr/local/MATLAB/MATLAB_Compiler_Runtime/v80",
+		 "xCompDir":""},
+	"simCores":
+		[
+		{"name":"MATLAB_ONLY_2012b",
+		 "type":"MATLAB_ONLY",
+		 "config":{"version":"2012b"}},
+		{"name":"NEURON_73_PYTHON",
+		 "type":"NEURON_PYTHON",
+		 "config":{"neuronVersion":"7.3",
+				   "neuronDir":"/opt/neuron73",
+				   "homeExt":"/nrn/share/nrn",
+				   "binExt":"/nrn/x86_64/bin",
+				   "libExt":"/nrn/x86_64/lib",
+				   "pythonLibExt":"",
+				   "modFileCompileLocation":"P",
+				   "compModLibExt":"/x86_64/.libs",
+				   "envAddlLibLines":"",
+				   "pythonVersion":"2.4.3",
+				   "pythonPath":"/usr/bin/python",
+				   "pythonEnvAddlLines":""
+					}}
+		]
+	},
+"flavor":
+	{"numProcessors":2,
+	 "coresPerProcessor":6,
+  	 "RAM":64,
+	 "storage":20}
+}

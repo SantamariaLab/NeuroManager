@@ -1,0 +1,8 @@
+{
+"name":"RSSineSimWispInfo",
+"resourceType":"CLOUDSERVER",
+"cloudInfoFile":"RackspaceCloudInfo.json",
+"imageName":"RS-CentOS6-MCR2013a-NEURON74-Python27",
+"flavorName":"4 GB General Purpose v1",
+"networkName":""
+}
