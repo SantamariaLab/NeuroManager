@@ -270,7 +270,7 @@ function actionsList = Scheduler2p0(simulatorData,...
             % available simulators come first.
             sortedSchedule = sortrows(schedule', [5 -6])';
             
-            if 1  % just for monitor/debug
+            if 0  % just for monitor/debug
                 fprintf('\n -----\nAverage Cycle Period: %f\n', avgCyclePeriod); %#ok<UNRCH>
                 for i = 1:6
                     fprintf([repmat('% 5.0f ', 1, numSimulators) '\n'],...

@@ -206,7 +206,7 @@ function tfResult = testCommunications(obj)
     obj.log.write(configStr);
     for i = 1:obj.machineSetConfig.getNumMachines()
         [type, numSimulators, name, config, queueData, ~, ~, ~,...
-            baseDir, ~, ipAddr, ~] = obj.machineSetConfig.getMachine(i)
+            baseDir, ~, ipAddr, ~] = obj.machineSetConfig.getMachine(i);
         
         % Skip machine if no simulators 
         if ~numSimulators continue; end %#ok<SEPEX>
@@ -224,8 +224,8 @@ function tfResult = testCommunications(obj)
                                     baseDir, obj.auth, obj.log,...
                                     queueData);
         % ...only if that resource hasn't yet been tested
-        ID = testMachine.getID()
-        commsID = testMachine.getCommsID()
+        ID = testMachine.getID();
+        commsID = testMachine.getCommsID();
         if isempty(find(strcmp(testedMachines, commsID))) %#ok<EFIND>
             obj.log.write(['Testing machine communications for '...
                            ID '.']);
