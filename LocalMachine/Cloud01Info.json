@@ -1,7 +1,7 @@
 {
 "resourceName":"myCloud01",
 "resourceType":"CLOUD",
-"cloudManagementType":"XYZCloud",
+"cloudManagementType":"XYZCloud or whatever, must match a type found in CloudManagementType.m",
 "OS_TENANT_NAME":"TenantNameHere",
 "OS_ComputeEndpoint":"ComputeEndpointURLHere",
 "OS_IdentityEndpoint":"IdentityEndpointURLHere",
