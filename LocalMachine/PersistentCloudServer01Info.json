@@ -1,0 +1,46 @@
+{
+"instanceName":"myPersistentCloudServer01",
+"resourceName":"myCloud01",
+"resourceType":"CLOUDSERVER",
+"cloudInfoFile":"Cloud01Info.json",
+"images":
+	{
+	"name":"myPersistentCloudServer01    Only one image since this is a persistent server",
+	"OS":"CentOS-7",
+	"user":"myInstanceUserName",
+	"password":"",
+	"ipAddress":"XXX.XXX.XXX.XXX",
+	"hostKeyFingerprint":"EMPTY because you have already established dual key communications",
+	"matlab":
+		{"compilerDir":"EMPTY since not compiling on cloud",
+		 "compiler":"",
+		 "executable":"",
+		 "mcrDir":"/usr/local/MATLAB/MATLAB_Compiler_Runtime/v81   or whatever you set up server with",
+		 "xCompDir":""},
+	"simCores":[
+		{"name":"MATLAB_ONLY_2013a  or whatever version you have",
+		 "type":"MATLAB_ONLY",
+		 "config":{"version":"2013a"}},
+		{"name":"NEURON_74_PYTHON",
+		 "type":"NEURON_PYTHON",
+		 "config":{"neuronVersion":"7.4",
+				   "neuronDir":"/home/cc/neuron/nrn    All these paths are up to your installation",
+				   "homeExt":"/share/nrn",
+				   "binExt":"/x86_64/bin",
+				   "libExt":"/x86_64/lib",
+				   "pythonLibExt":"",
+				   "modFileCompileLocation":"D",
+				   "compModLibExt":"/x86_64/.libs",
+				   "envAddlLibLines":"",
+				   "pythonVersion":"2.7.5",
+				   "pythonPath":"/usr/bin/python",
+				   "pythonEnvAddlLines":""
+					}}
+		]
+	},
+"flavor":
+	{"numProcessors":2,
+	 "coresPerProcessor":1,
+  	 "RAM":4,
+	 "storage":"40"}
+}

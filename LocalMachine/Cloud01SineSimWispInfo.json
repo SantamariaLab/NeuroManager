@@ -1,0 +1,8 @@
+{
+"name":"Cloud01SineSimWispInfo",
+"resourceType":"CLOUDSERVER",
+"cloudInfoFile":"Cloud01Info.json",
+"imageName":"The name of the image from Cloud01Info.json that you want to use to create the wisp",
+"flavorName":"The name of the flavor from Cloud01Info.json that you want to use to create the wisp",
+"networkName":"The name of the network from Cloud01Info.json that you want to use to create the wisp; or empty if there is none"
+}

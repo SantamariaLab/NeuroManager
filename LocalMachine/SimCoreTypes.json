@@ -1,0 +1,21 @@
+{"SimCoreTypes":
+	[
+	{"name":"MATLAB_ONLY",
+	 "properties":["version"]},
+	{"name":"NEURON_PYTHON",
+	 "properties":[
+		"neuronVersion",
+		"neuronDir",
+		"homeExt",
+		"binExt",
+		"libExt",
+		"pythonLibExt",
+		"modFileCompileLocation",
+		"compModLibExt",
+		"envAddlLibLines",
+		"pythonVersion",
+		"pythonPath",
+		"pythonEnvAddlLines"]}
+	]
+}
+	
