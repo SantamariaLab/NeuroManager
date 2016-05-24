@@ -1,8 +1,0 @@
-{
-"name":"CCKhStudyWispInfo",
-"resourceType":"CLOUDSERVER",
-"cloudInfoFile":"ChameleonCloudInfo.json",
-"imageName":"CC-CentOS7-MCR2013a-NEURON74-Python27",
-"flavorName":"m1.medium",
-"networkName":"TempNet"
-}

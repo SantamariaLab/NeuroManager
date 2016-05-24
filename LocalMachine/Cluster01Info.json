@@ -1,29 +1,29 @@
 {
-"resourceName":"Cheetah",
+"resourceName":"ClusterNameHere",
 "resourceType":"SGECLUSTER",
 "images":
 	{
-	"name":"cheetah",
+	"name":"ClusterNameHere",
 	"OS":"GNU-LINUX",
-	"user":"david.stockton",
-	"fsUserName":"david.stockton",
+	"user":"ClusterUserNameHere",
+	"fsUserName":"ClusterUserNameHere for machine with which you do filesystem operations",
 	"password":"",
 	"fsPassword":"",
-	"jsUserName":"david.stockton",
+	"jsUserName":"ClusterUserNameHere for machine with which you do job submission",
 	"jsPassword":"",
-	"ipAddress":"10.242.128.19",
-	"fsIpAddress":"10.242.128.14",
-	"jsIpAddress":"10.242.128.19",
-	"hostKeyFingerprint":"",
+	"ipAddress":"IPAddress for job submission machine",
+	"fsIpAddress":"IPAddress for FileSystem machine",
+	"jsIpAddress":"IPAddress for JobSubmission machine",
+	"hostKeyFingerprint":"EMPTY because we assume you have already established dual key with both machines",
 	"matlab":
-		{"compilerDir":"/share/apps/MATLAB/R2013a/bin",
-		 "compiler":"mcc",
-		 "executable":"matlab",
-		 "mcrDir":"/share/apps/MATLAB/MATLAB_Compiler_Runtime/v81",
-		 "xCompDir":"/home/david.stockton/SMComp"},
+		{"compilerDir":"/share/apps/MATLAB/R2013a/bin  Whatever your MATLAB compiler executable is in",
+		 "compiler":"mcc    or whatever the cluster MATLAB compiler executable is called",
+		 "executable":"matlab    or whatever the cluster MATLAB executable is called ",
+		 "mcrDir":"/share/apps/MATLAB/MATLAB_Compiler_Runtime/v81    or wherever your MCR is located",
+		 "xCompDir":"/home/david.stockton/SMComp     A dedicated directory on this cluster if you are compiling on this cluster"},
 	"simCores":
 		[
-		{"name":"MATLAB_ONLY_2013a",
+		{"name":"MATLAB_ONLY_2013a     These are the SimCores that this cluster supports",
 		 "type":"MATLAB_ONLY",
 		 "config":{"version":"2013a"}},
 		{"name":"NEURON_73_PYTHON",
@@ -43,11 +43,6 @@
 					}}
 		]
 	},
-"flavor":
-	{"numProcessors":2,
-	 "coresPerProcessor":8,
-  	 "RAM":128,
-	 "storage":256},
 "queues":[
 	{"name":"General",
 	 "queueString":"all.q",

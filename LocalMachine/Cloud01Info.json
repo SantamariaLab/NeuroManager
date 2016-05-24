@@ -1,7 +1,7 @@
 {
-"resourceName":"CloudNameHere",
+"resourceName":"myCloud01",
 "resourceType":"CLOUD",
-"cloudManagementType":"SpecificCloudNameHere",
+"cloudManagementType":"XYZCloud",
 "OS_TENANT_NAME":"TenantNameHere",
 "OS_ComputeEndpoint":"ComputeEndpointURLHere",
 "OS_IdentityEndpoint":"IdentityEndpointURLHere",
@@ -52,25 +52,25 @@
 		 "compiler":"EMPTY since not compiling on cloud",
 		 "executable":"EMPTY since not compiling on cloud",
 		 "mcrDir":"/usr/local/MATLAB/MATLAB_Compiler_Runtime/v81   or whatever you set up image with",
-		 "xCompDir":""},
+		 "xCompDir":"EMPTY since not compiling on cloud"},
 	"simCores":[
-		{"name":"MATLAB_ONLY_2013a",
+		{"name":"MATLAB_ONLY_2013a  or whatever version you have",
 		 "type":"MATLAB_ONLY",
 		 "config":{"version":"2013a"}},
-		{"name":"NEURON_74_PYTHON",
+		{"name":"NEURON_74_PYTHON   or however you construct your SimCore",
 		 "type":"NEURON_PYTHON",
 		 "config":{"neuronVersion":"7.4",
-				   "neuronDir":"/home/cc/neuron/nrn",
+				   "neuronDir":"/home/cc/neuron/nrn    All these paths are up to your installation",
 				   "homeExt":"/share/nrn",
 				   "binExt":"/x86_64/bin",
 				   "libExt":"/x86_64/lib",
 				   "pythonLibExt":"",
 				   "modFileCompileLocation":"D",
 				   "compModLibExt":"/x86_64/.libs",
-				   "envAddlLibLines":"",
+				   "envAddlLibLines":"EMPTY or anything your environment needs",
 				   "pythonVersion":"2.7.5",
 				   "pythonPath":"/usr/bin/python",
-				   "pythonEnvAddlLines":""
+				   "pythonEnvAddlLines":"EMPTY or anything your environment needs"
 					}}
 		]
 	}
