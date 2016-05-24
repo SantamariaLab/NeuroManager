@@ -187,13 +187,17 @@ END OF LICENSE
 % Runs the NMSessionML02 example.
 clc
 
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = fullfile(installDir, 'userStaticData.ini');
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 installDir = nmDirectorySet.nmMainDir;
-
-xmlFile = fullfile(installDir, 'NeurSim/SimpleSpike02A/NMSessionML02.xml');
-schemaFile = fullfile(installDir, 'NMSessionML/NMSessMLMATLAB.xsd');
-styleFile = fullfile(installDir, 'NMSessionML/NMSess2MLScript.xslt');
 addpath(fullfile(installDir, 'NMSessionML'));
 
-nmSessionMLParserFunc(installDir, xmlfile, schemafile, stylefile);
+xmlDir = fullfile(installDir, 'NMSessionML');
+schemaFile = fullfile(xmlDir, 'NMSessMLMATLAB.xsd');
+styleFile = fullfile(xmlDir, 'NMSess2MLScript.xslt');
+
+scriptDir = fullfile(installDir, 'NeurSim', 'SimpleSpike2A');
+xmlFile = fullfile(scriptDir, 'NMSessionML02.xml');
+
+nmSessionMLParserFunc(scriptDir, xmlFile, schemaFile, styleFile);
 NMSessionML02SimSet();

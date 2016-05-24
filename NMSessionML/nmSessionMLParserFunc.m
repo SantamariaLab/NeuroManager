@@ -185,14 +185,14 @@ END OF LICENSE
 
 % nmSessionMLParserFunc
 % Validates and transforms the xmlfile.
-function result = nmSessionMLParserFunc(installDir, xmlfile, schemafile, stylefile)
+function result = nmSessionMLParserFunc(scriptDir, xmlfile, schemafile, stylefile)
     schemaValidation(xmlfile, schemafile)
     disp(['Validation complete'])
 
     % Saxon transformation
     javaaddpath('C:/Saxon');
     transformString = ['java -jar c:/Saxon/saxon9he.jar ' xmlfile ' ' stylefile ...
-                       ' installDir=' installDir];
+                       ' scriptDir=' scriptDir];
     system(transformString);
     disp(['Transform complete'])
     result = true;

@@ -206,6 +206,7 @@ function simspec = importSimSpec(obj, filename)
         inputLines{1,i} = x;
         i = i+1;
     end
+    fclose(fid);
     
     % Parse them into tokens and put them into a simspec
     simspec = SimSpec();

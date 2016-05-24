@@ -246,7 +246,7 @@ classdef SimAuthenticate < handle
                         % THERE IS NO FUNCTION TO CLEAR COMMAND HISTORY
                         beep;
                         prompt = ['Passphrase for PuTTy keyfile ' ...
-                                  obj.puttyKeyFile];
+                                  strrep(obj.puttyKeyFile, '\', '/')];
                         obj.keyPassphrase = input([prompt ': '],'s');
                     end
 

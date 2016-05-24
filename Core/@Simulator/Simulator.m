@@ -194,6 +194,11 @@ classdef Simulator < handle
         
         type; % From SimType class
         
+        % A cell array of compatible SimCores. Empty means nothing is
+        % compatible, so subclasses have to set this list according to
+        % their SimCore requirements. MOVED TO SIMTYPE
+%         simCoreCompatibilityList = {}; 
+        
         % The list of files to be uploaded as part of the simulator;
         % dependent on simtype and machine. A cell array of strings.
         % Filenames only
@@ -223,6 +228,11 @@ classdef Simulator < handle
         % doing things as part of the simulation submission before the
         % simulation itself is run.
         preRunModelProcDStr;
+        
+        % Statistics object
+        % The timings obtained by Simulations that have run previously;
+        % used by the Scheduler (2.0). See SimStats.m.
+        stats;
 
         % The SimMachine on which the simulator is running
         machine;
@@ -256,11 +266,18 @@ classdef Simulator < handle
                                  log, notificationSet)
             obj.id = id;
             obj.type = SimType.UNASSIGNED; 
+            
+            % List defined in SimType.m
+%     	    obj.simCoreCompatibilityList = type.simCoreList;
+            
             % This file list is true for all simulators; located in the
             % core directory
             obj.stdUploadFiles = {'runSimulation.m',...
                                   'SimulationState.m',...
-                                  'RMD.m',...
+                                  'StandaloneConfig.m',...
+                                  'ClusterConfig.m',...
+                                  'CloudConfig.m',...
+                                  'MachineConfig.m',...
                                   'OSType.m'};
             % Simulators can add additional std files that are located
             % in std directory with the rest of the NeuroManager core files
@@ -274,6 +291,7 @@ classdef Simulator < handle
             obj.state = SimulatorState.INPREPARATION;
             obj.currentSimulation = Simulation(); % I.e. no simulation to begin with
             obj.preRunModelProcDStr = '';
+            obj.stats = SimulatorStats();
             obj.machine = machine; 
             obj.log = log;
             obj.notificationSet = notificationSet;
@@ -331,6 +349,11 @@ classdef Simulator < handle
         function str = getVersion(obj)
             str = obj.version;
         end
+        
+        % --------------
+%         function tf = checkSimCoreCompatibility(testName)
+%             tf = any(strcmp(testName, obj.simCoreCompatibilityList));
+%         end
         
         % --------------
         function uploadStdFiles(obj)
@@ -405,7 +428,12 @@ classdef Simulator < handle
             obj.state = SimulatorState.BUSY;
             obj.processedSimulationRUNNINGTransition = false;
             obj.currentSimulation = simulation;
-            obj.currentSimulation.setHandoffTimeStr(datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF'));
+            time = obj.machine.getMachineTime();
+            obj.currentSimulation.setHandoffTime(time);
+            % Store the ETS in the Simulation for downstream scheduling
+            [mPT, ~, mWT, ~, mRT, ~, mFT, ~] = obj.stats.getStats();
+            ets = mPT + mWT + mRT + mFT;
+            obj.currentSimulation.setETS(ets);
             
             % Notify log+ 
             notificationSubject = ['Re: NeuroManager Notice'];
@@ -495,7 +523,8 @@ classdef Simulator < handle
             obj.currentSimulation.setJobID(jobID);
             % Setting this time here rather than in the simulation's
             % UpdateState() gives better time precision
-            obj.currentSimulation.setSubmissionTimeStr(datestr(now,'dd-mmm-yyyy HH:MM:SS.FFF'));
+            time = obj.machine.getMachineTime();
+            obj.currentSimulation.setSubmissionTime(time);
         end
 
         % --------
@@ -558,6 +587,7 @@ classdef Simulator < handle
 
             % Tell log+
             [result, simtime, errMsg, ~] = obj.currentSimulation.getResults(); 
+
             if strcmp(result, 'FAILED')
                 notificationSubject = ['NeuroManager Error'];
                 if isempty(errMsg)
@@ -571,12 +601,56 @@ classdef Simulator < handle
                                ' on host.'];
                 end
             else   % Later add TIMEOUT and CHECKPOINT results here
+                % Only add stats if the simulation is successful
+                [handoffTime, submissionTime, runStartTime,...
+                 runCompleteTime, simFullProcTime] =...
+                                        obj.currentSimulation.getStats();
+                % Put the newly gathered simulation stats into the
+                % Simulator performance stats
+                % THIS IS NOT NECESSARILY THE CORRECT THING TO DO (the -1
+                % thing) but having a spurious problem with datetime array
+                % minus a double array giving an error
+                if (isdatetime(submissionTime) && isdatetime(handoffTime))
+                    a = seconds(submissionTime-handoffTime);
+                else
+                    a = -1;
+                end
+                if (isdatetime(runStartTime) && isdatetime(submissionTime))
+                    b = seconds(runStartTime-submissionTime);
+                else
+                    b = -1;
+                end
+                if (isdatetime(runCompleteTime) && isdatetime(runStartTime))
+                    c = seconds(runCompleteTime-runStartTime);
+                else
+                    c = -1;
+                end
+                if (isdatetime(simFullProcTime) && isdatetime(runCompleteTime))
+                    d = seconds(simFullProcTime-runCompleteTime);
+                else
+                    d = -1;
+                end
+                obj.stats.addData(a, b, c, d);
+                if 0 % just for ease of debug
+                    [mPR, sPT, mWT, sWT, mRT, sRT, mFT, sFT] =...
+                                                    obj.stats.getStats(); %#ok<UNRCH>
+%                     fprintf(['%s:  mPR %f, sPT %f | mWT %f, sWT %f '...
+%                              '| mRT %f, sRT %f | mFT %f, sFT %f'],...
+%                             obj.getID(), mPR, sPT, mWT, sWT,...
+%                             mRT, sRT, mFT, sFT);
+%                     fprintf(['%s:  mPR %f | mWT %f | mRT %f | mFT %f |||||'...
+%                                  ' sPT %f | sWT %f | sRT %f | sFT %f\n'],...
+%                             obj.getID(), mPR, mWT, mRT, mFT, sPT, sWT, sRT, sFT);
+%                     fprintf(['%s:  mPR %f | mWT %f '...
+%                              '| mRT %f | mFT %f\n'],...
+%                             obj.getID(), mPR, mWT, mRT, mFT);
+                end
                 notificationSubject = ['Re: NeuroManager Notice'];
                 message = ['Simulation ' obj.currentSimulation.getID()...
                            ' finished successfully on ' obj.machine.getID() ...
                            '; results downloaded to host. '...
                            'runtime: ' ...
-                           datestr(simtime/24/3600, 'HH:MM:SS.FFF')];
+                           datestr(simtime/24/3600, 'HH:MM:SS')];
             end
             obj.log.write(message);
             if obj.currentSimulation.notify()
@@ -596,8 +670,35 @@ classdef Simulator < handle
                 obj.log.write(['Notifications not requested for simulation ' ...
                                obj.currentSimulation.getID() '.']);
             end
-        end
+        end 
 
+        % --------------
+        % Used for cluster-hosted Simulations that are stuck in a long
+        % waiting queue and need to be moved to another Simulator
+        function tf = pullbackSimulation(obj)
+            simulation = obj.currentSimulation;
+            if simulation.getState == SimulationState.SUBMITTED
+                obj.machine.cancelJob(simulation.getJobID());
+                simulation.clearForResubmit();
+                tf = true;
+            else
+                tf = false;
+            end
+        end
+        
+        % ------------
+        % User must ensure there is no current simulation on the simulator.
+        % The RETIRED state means that no simulations will be
+        % scheduled on the simulator.
+        function retire(obj)
+            obj.state = SimulatorState.RETIRED;
+        end
+        
+        % -------------
+        function tf = usesClusterManager(obj)
+            tf = obj.machine.usesClusterManager();
+        end
+        
         % -------------
         function postDownloadProcessingSimulatorSpecific(obj, simulation) %#ok<INUSD>
             % Override in subclasses if you need to
@@ -642,6 +743,26 @@ classdef Simulator < handle
         % -------------
         function dir = getTargetCommonDir(obj)
             dir = obj.targetCommonDir;
+        end
+        
+        % -------------
+        function time = getCurrentTime(obj)
+            time = obj.machine.getMachineTime();
+        end
+        
+        % -------------
+        function [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = getStats(obj)
+            [mPT, sPT, mWT, sWT, mRT, sRT, mFT, sFT] = obj.stats.getStats();
+        end
+        
+        % -------------
+        function resetStats(obj)
+            obj.stats.resetStats();
+        end
+        
+        % -------------
+        function saveStatsHistory(obj, directory)
+            obj.stats.saveStatsHistory(obj.getID(), directory);
         end
         
         % -------------

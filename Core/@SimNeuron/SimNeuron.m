@@ -215,6 +215,15 @@ classdef SimNeuron < ModelFileSim
         preRunModelProcPhaseHHocFileModification(obj)
     end
     
+    methods (Static)
+        function str = getModelFileCompileStr(simulation)
+            str = ['cd ' path2UNIX(simulation.getTargetInputDir())...
+                   '; cp nrnivmodlsh.sh '...
+                   path2UNIX(simulation.getTargetOutputDir())...
+                   '; ./nrnivmodlsh.sh; '];
+        end
+    end
+    
     methods
         function obj = SimNeuron(id, addlCustFileList,...
                                   modFileList, hocFileList,...
@@ -246,8 +255,9 @@ classdef SimNeuron < ModelFileSim
         function preUploadFiles(obj) 
         % Simulator aspect to preUploadFiles
             % Neuron version
-            command = [path2UNIX(fullfile(obj.machine.neuronDir,...
-                                 obj.machine.neuronBinExt, 'nrniv')) ' --version'];
+            
+            command = [path2UNIX(fullfile(obj.machine.config.neuronDir,...
+                                 obj.machine.config.binExt, 'nrniv')) ' --version'];
             result = obj.machine.issueMachineCommand(command,...
                                             CommandType.JOBSUBMISSION);
             versionStr = result{1};
@@ -255,7 +265,7 @@ classdef SimNeuron < ModelFileSim
                            obj.getID() ': ' versionStr]);
 
             % Python version
-            command = [obj.machine.getPythonPath()...
+            command = [obj.machine.config.pythonPath ...
                        ' -c "import sys; print sys.version"'];
             result = obj.machine.issueMachineCommand(command,...
                                             CommandType.JOBSUBMISSION);
@@ -282,7 +292,13 @@ classdef SimNeuron < ModelFileSim
         % Compile the mod files here if appropriate.
         % See NeuroManagerStaging.xlsx  
             simulation = obj.getSimulation();
-            preRunModelProcPStr = obj.machine.getCompileNeuronModelFilesStrPhaseP(simulation);
+            if strcmp(obj.machine.config.modFileCompileLocation, 'P')
+%             preRunModelProcPStr = obj.machine.getCompileNeuronModelFilesStrPhaseP(simulation);
+                preRunModelProcPStr = SimNeuron.getModelFileCompileStr(simulation);
+%                 preRunModelProcPStr = getModelFileCompileStr(simulation);
+            else
+                preRunModelProcPStr = '';
+            end
             if ~isempty(preRunModelProcPStr)
                 obj.machine.issueMachineCommand(preRunModelProcPStr, CommandType.JOBSUBMISSION);
             end
@@ -295,7 +311,13 @@ classdef SimNeuron < ModelFileSim
         % compile will use the GetModelFileCompileStr function below.
         % See NeuroManagerStaging.xlsx  
             simulation = obj.getSimulation();
-            str = obj.machine.getCompileNeuronModelFilesStrPhaseD(simulation);
+            if strcmp(obj.machine.config.modFileCompileLocation, 'D')
+                str = SimNeuron.getModelFileCompileStr(simulation);
+            else
+                str = '';
+            end
+%             str = obj.machine.getCompileNeuronModelFilesStrPhaseD(simulation);
+            
         end
         
         %---------------
@@ -311,5 +333,40 @@ classdef SimNeuron < ModelFileSim
                         ];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
+        
+        % ----------------
+        function dir = getNeuronDir(obj)
+            dir = obj.machine.config.neuronDir;
+        end
+        
+        % ----------
+        function path = getNeuronBinPath(obj)
+            path = fullfile(obj.machine.config.neuronDir, ...
+                            obj.machine.config.binExt);
+        end
+        
+        % ----------
+        function path = getNeuronLibPath(obj)
+            path = fullfile(obj.machine.config.neuronDir, ...
+                            obj.machine.config.libExt);
+        end
+        
+        % ----------
+        function path = getNeuronHomePath(obj)
+            path = fullfile(obj.machine.config.neuronDir, ...
+                            obj.machine.config.homeExt);
+        end
+
+        % ----------
+        function path = getNeuronPythonLibPath(obj)
+            path = fullfile(obj.machine.config.neuronDir, ...
+                            obj.machine.config.pythonLibExt);
+        end
+
+        % ----------
+        function path = getPythonPath(obj)
+            path = obj.machine.config.pythonPath;
+        end
+        
     end
 end

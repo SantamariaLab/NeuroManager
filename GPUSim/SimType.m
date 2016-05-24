@@ -1,0 +1,33 @@
+classdef SimType
+    properties
+        constrFunc;
+        simCoreList;
+        flavorMin;
+    end
+    methods
+        function t = SimType(func, list, flav)
+            t.constrFunc = func;
+            t.simCoreList = list;
+            t.flavorMin = flav;
+        end
+    end
+    enumeration
+        % Type name                         (@ConstructorName)
+        
+        % Mostly for constructor-ish stuff; must be present!
+        UNASSIGNED                          (0,{},struct)
+            
+        % A MATLAB-only GPU simulator that plots sine waves and does an FFT
+        SIM_GPUSIM                          (@SimGPUSim, ...
+                                              {'MATLAB_ONLY_2016a', ...
+                                               'MATLAB_ONLY_2015b', ...
+                                               'MATLAB_ONLY_2015a', ...
+                                               'MATLAB_ONLY_2014b', ...
+                                               'MATLAB_ONLY_2014a', ...
+                                               'MATLAB_ONLY_2013b', ...
+                                               'MATLAB_ONLY_2013a', ...
+                                               'MATLAB_ONLY_2012b'}, ...
+                                              struct('numCores', 1,...
+                                                     'RAM', 2))
+    end
+end

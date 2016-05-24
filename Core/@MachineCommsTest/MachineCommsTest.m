@@ -189,16 +189,18 @@ classdef MachineCommsTest < FileTransferMachine
     properties
         machineScratchDir;
         targetBaseDir;
-        machineData;
+        config;
         log;
     end
     
     methods
-        function obj = MachineCommsTest(md, hostID, hostOs,...
+        function obj = MachineCommsTest(config, hostID, hostOs,...
                                          machineScratchDir,...
                                          targetBaseDir, auth, log)
-            obj = obj@FileTransferMachine(md, hostID, hostOs, '', auth);
-            obj.machineData = md;
+            
+            obj = obj@FileTransferMachine(config, hostID, hostOs, auth);
+            obj.configureDualKey(config);
+            obj.config = config;
             obj.machineScratchDir = machineScratchDir;
             obj.targetBaseDir = targetBaseDir;
             obj.log = log;
@@ -210,7 +212,9 @@ classdef MachineCommsTest < FileTransferMachine
             % singlemachine configuration
             if obj.simAuth.isSingleMachine()
                 if ~strcmp(obj.getID(), obj.hostID)
-                    error('TestCommunications Error: SingleMachine Configuration requires host and remote to be the same machine.');
+                    error(['TestCommunications Error:'...
+                          'SingleMachine Configuration '...
+                          'requires host and remote to be the same machine.']);
                 end
             end
             if communicationsOK(obj) && baseDirExist(obj) && fileTransferOK(obj)
@@ -218,6 +222,14 @@ classdef MachineCommsTest < FileTransferMachine
             else 
                 tfResult = false;
             end
+        end
+        
+        function id = getID(obj)
+            id = obj.config.getMachineName();
+        end
+        
+        function commsID = getCommsID(obj)
+            commsID = obj.config.getCommsID();
         end
        
     end

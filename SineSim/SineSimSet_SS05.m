@@ -191,15 +191,17 @@ END OF LICENSE
 % This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 % See the User Guide for some discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % Part III: Create the NeuroManager object and show its version
@@ -208,33 +210,34 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 % Part IV: Create a machine set configuration to create the Virtual Machine.
 % All machines are treated the same here; all differences are handled in
 % the machine class hierarchy.
-% Change the order here with experience to put the fastest machines
-% first; balance that with the number of simulators per machine so that
-% one machine isn't always full while the others are idle.
 % Zero for the number of simulators means that the machine will not be used.
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01,             1, 'WorkDirOnmyServer01');
-config.addMachine(MachineType.MYSERVER02,             1, 'WorkDirOnmyServer02');
-config.addMachine(MachineType.MYSGECLUSTER01QUEUE01,  1, 'WorkDirOnmySGECluster01/SMDev/QUEUE01');
-config.addMachine(MachineType.MYSGECLUSTER01ALL,      0, 'WorkDirOnmySGECluster01/SMDev/ALL');
-config.addMachine(MachineType.MYSGECLUSTER01BM,       0, 'WorkDirOnmySGECluster01/SMDev/BM');
-config.addMachine(MachineType.MYSGECLUSTER01GPU,      0, 'WorkDirOnmySGECluster01/SMDev/GPU');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       2, 'WorkDirOnServer01');
+nm.addStandaloneServer(simulatorType, 'Server02Info.json', ...
+                       2, 'WorkDirOnServer02');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
+                       2, 'WorkDirForQueue01');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue02', ...
+                       2, 'WorkDirForQueue01');
 % Stampede requires a time limit in the job submission file, and here's
 % where to specify the time.  Creation of the job submission file is
 % handled internally through the machine class hierarchy.
-config.addMachine(MachineType.STAMPEDEDEV,    1, 'WorkDirOnStampede/DEV',...
-                                                  'wallClockTime', '00:15:00');
-config.addMachine(MachineType.STAMPEDENORMAL, 1, 'WorkDirOnStampede/NORM',...
-                                                  'wallClockTime', '00:15:00');
+nm.addClusterQueue(simulatorType, 'StampedeInfo.json', 'Dev', ...
+                  1, 'WorkDirForDevQueueOnStampede',...
+                  'wallClockTime', '00:15:00');
+nm.addClusterQueue(simulatorType, 'StampedeInfo.json', 'Normal', ...
+                  2, 'WorkDirForNormalQueueOnStampede',...
+                  'wallClockTime', '00:15:00');
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file,
-% located in the Custom Directory.
+% located in the simSpec Directory.
 result = nm.runFromFile('SineSimSpec.txt');
 
 % Part VIII: Dismantle the Machine Set

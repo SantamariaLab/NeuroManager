@@ -187,7 +187,6 @@ END OF LICENSE
 % http://www.mathworks.com/matlabcentral/newsreader/view_thread/156764
 function schemaValidation(xmlFile, schemaFile)
 % Use Schema validation for the XML file
-
 import java.io.*;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;

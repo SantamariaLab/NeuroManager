@@ -198,5 +198,8 @@ classdef SimulatorState
 
         % Simulator is running a simulation
         BUSY            = 3;
+        
+        % Simulator has been retired due to delay or other pathology
+        RETIRED         = 4;
    end
 end

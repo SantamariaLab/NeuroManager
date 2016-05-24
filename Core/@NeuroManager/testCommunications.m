@@ -186,11 +186,11 @@ END OF LICENSE
 % testCommunications.m
 % Part of the NeuroManager class.
 % Tests communications (and file transfer) with any machine in the
-% inconfig that has nonzero number of simulators. A true result
+% config that has nonzero number of simulators. A true result
 % means pass.
 
 % ----------------
-function tfResult = testCommunications(obj, inConfig)
+function tfResult = testCommunications(obj)
     testedMachines = {};
     obj.log.write(['Testing machine communications for the following configuration:']);
     if obj.simNotificationSet.isEnabled()
@@ -202,41 +202,51 @@ function tfResult = testCommunications(obj, inConfig)
     % Update the webpage
     obj.displayStatusWebPage('testmachine');
             
-    configStr = inConfig.printToStr;
+    configStr = obj.machineSetConfig.printToStr;
     obj.log.write(configStr);
-    for i = 1:inConfig.getNumMachines()
-        [type, numSimulators, baseDir, ~] = inConfig.getMachine(i);
+    for i = 1:obj.machineSetConfig.getNumMachines()
+        [type, numSimulators, name, config, queueData, ~, ~, ~,...
+            baseDir, ~, ipAddr, ~] = obj.machineSetConfig.getMachine(i);
+        
         % Skip machine if no simulators 
         if ~numSimulators continue; end %#ok<SEPEX>
         % Construct the appropriate test machine and run its
-        % communications test method
-        testMachine = type.commsTestFunc(obj.hostMachineData.id,...
+        % communications test method...
+%         testMachine = type.commsTestFunc(obj.hostMachineData.id,...
+%                                     obj.hostMachineData.osType,...
+%                                     obj.machineScratchDir,...
+%                                     baseDir, obj.auth, obj.log,...
+%                                     name, ipAddr,...
+%                                     dataFunc, queueData);
+        testMachine = type.commsTestFunc(config, obj.hostMachineData.id,...
                                     obj.hostMachineData.osType,...
                                     obj.machineScratchDir,...
-                                    baseDir, obj.auth, obj.log);
-        if isempty(find(strcmp(testedMachines,...
-                               testMachine.commsID))) %#ok<EFIND>
+                                    baseDir, obj.auth, obj.log,...
+                                    queueData);
+        % ...only if that resource hasn't yet been tested
+        ID = testMachine.getID();
+        commsID = testMachine.getCommsID();
+        if isempty(find(strcmp(testedMachines, commsID))) %#ok<EFIND>
             obj.log.write(['Testing machine communications for '...
-                       char(type) '.']);
+                           ID '.']);
             tfResult = testMachine.commsTest();
             if tfResult == false
                 obj.log.write(['Machine communications for '...
-                               char(type) ' failed.']);
+                               ID ' failed.']);
                 if obj.simNotificationSet.isEnabled()
                     notificationSubject = ['NeuroManager Error'];
                     obj.simNotificationSet.send(notificationSubject,...
-                     ['Communications Test with ' char(type) ' failed.'], '');
+                     ['Communications Test with ' ID ' failed.'], '');
                 end
                 error('MachineCommsTest:Error',...
-                      ['Communications Test with ' char(type) ' failed.']);
+                      ['Communications Test with ' ID ' failed.']);
             end
-            testedMachines =...
-                [testedMachines testMachine.commsID]; %#ok<AGROW>
+            testedMachines = [testedMachines commsID]; %#ok<AGROW>
             obj.log.write(['Machine communications for '...
-                           char(type) ' passed.']);
+                           ID ' passed.']);
         else
             obj.log.write(['Machine communications for '...
-                       char(type) ' already tested.']);
+                            ID ' already tested.']);
         end
         testMachine.delete();
     end

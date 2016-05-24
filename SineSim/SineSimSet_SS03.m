@@ -191,16 +191,18 @@ END OF LICENSE
 % This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 % See the User Guide for some discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data
 % This configuration makes use of the key files
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 nmDirectorySet.resultsDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 
 % Part III: Create the NeuroManager object 
@@ -209,14 +211,15 @@ nmDirectorySet.resultsDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 
 % Part IV: Create a machine set configuration with the remote server
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER02, 4, 'WorkDirectoryHere');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       4, 'WorkDirectoryHere'); 
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the server
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file.
 result = nm.runFromFile('SineSimSpec.txt');

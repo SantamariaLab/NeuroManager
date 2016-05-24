@@ -187,12 +187,17 @@ END OF LICENSE
 % Runs the NMSessionML01 example.
 clc
 
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = fullfile(installDir, 'userStaticData.ini');
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 installDir = nmDirectorySet.nmMainDir;
-
-xmlFile = fullfile(installDir, 'SineSim/NMSessionML01.xml');
-schemaFile = fullfile(installDir, 'NMSessionML/NMSessMLMATLAB.xsd');
-styleFile = fullfile(installDir, 'NMSessionML/NMSess2MLScript.xslt');
 addpath(fullfile(installDir, 'NMSessionML'));
-nmSessionMLParserFunc(installDir, xmlFile, schemaFile, styleFile);
+
+xmlDir = fullfile(installDir, 'NMSessionML');
+schemaFile = fullfile(xmlDir, 'NMSessMLMATLAB.xsd');
+styleFile = fullfile(xmlDir, 'NMSess2MLScript.xslt');
+
+scriptDir = fullfile(installDir, 'SineSim');
+xmlFile = fullfile(scriptDir, 'NMSessionML01.xml');
+
+nmSessionMLParserFunc(scriptDir, xmlFile, schemaFile, styleFile);
 NMSessionML01SimSet();

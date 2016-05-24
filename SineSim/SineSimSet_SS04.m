@@ -191,15 +191,17 @@ END OF LICENSE
 % This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 % See the User Guide for some discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % Part III: Create the NeuroManager object. In general, dual key
@@ -210,18 +212,18 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 % the same as other machines from this file's perspective; the differences
 % are handled in the machine classes via the workflow stages. Each queue on
 % the cluster is treated like a separate machine.
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSGECLUSTERQUEUE01, 6,...
-                  'myWorkingDirectory/QUEUE01');
+simulatorType = SimType.SIM_SINESIM;
+nm.addClusterQueue(simulatorType, 'ClusterInfo.json', 'Queue01Name', ...
+                   6, 'myWorkingDirectory/QUEUE01');
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file,
-% located in the Custom Directory.
+% located in the simSpec Directory.
 result = nm.runFromFile('SineSimSpec.txt');
 
 % Part VIII: Dismantle the Machine Set

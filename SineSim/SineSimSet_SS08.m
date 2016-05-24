@@ -191,15 +191,17 @@ END OF LICENSE
 % This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 % See the User Guide for discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data such as text number and email address.
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % Part III: Create the NeuroManager object and show its version
@@ -213,20 +215,20 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
                   'notificationsType', 'BOTH', 'useDualKey', true);
 
 % Part IV: Create a machine set configuration
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01,            4,...
-                  'Working Directory on MyServer01');
-config.addMachine(MachineType.MYSGECLUSTER01QUEUE01, 2,...
-                  'Working Directory on Queue01 on MySGECluster01');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       2, 'WorkDirOnServer01');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
+                       2, 'WorkDirForQueue01');
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file,
-% located in the Custom Directory. Note that SIMDEF lines must have the
+% located in the simSpec Directory. Note that SIMDEF lines must have the
 % additional "N" to make "SIMDEFN" for the simulation to be notified
 % specifically.
 result = nm.runFromFile('SineSimSpec.txt');

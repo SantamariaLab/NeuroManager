@@ -188,21 +188,24 @@ END OF LICENSE
 
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir,...
                                     'NeurSim', 'NeuronTutorialA');
 nmDirectorySet.modelDir = nmDirectorySet.customDir;
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
-				  'isSingleMachine', true);
+				  'isSingleMachine', false, 'useDualKey', true);
 
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01, 1, 'WorkDirectoryHere');
-nm.testCommunications(config); 
-nm.constructMachineSet(SimType.SIM_NEURON_NEURONTUTORIALA, config);
+simulatorType = SimType.SIM_NEURON_NEURONTUTORIALA;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ... 
+                       1, 'WorkDirectoryHere');
+nm.testCommunications(); 
+nm.constructMachineSet(simulatorType);
 
 result = nm.runFromFile('NeuronTutorialASimSpec.txt');
 

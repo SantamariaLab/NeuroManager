@@ -190,38 +190,43 @@ END OF LICENSE
 % This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 % See the User Guide for some discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data; also temporarily adds paths for following code
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script and
 % this host machine
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 nmDirectorySet.resultsDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 
 % Part III: Create the NeuroManager object and show its version; specify
 % the SingleMachine version where the host and remote are the same machine;
 % does not use SSH and the host is required to be UNIX-based.
-nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'isSingleMachine', true);
+nm = NeuroManager(nmDirectorySet, nmAuthData, userData, ...
+                  'useDualKey', false, ...
+                  'isSingleMachine', true);
 disp(['NeuroManager Version: ' nm.getVersion()]);
 
-% Part IV: Create a machine set configuration, specifying four simulators,
+% Part IV: Configure the machine set, specifying four simulators,
 % which means that NeuroManager will run up to four simulations in parallel
 % on that machine.
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01, 4, 'YourWorkDirectoryHere');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       4, 'YourWorkDirectoryHere'); 
 
 % Part V: Test Communications and File Transfers
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file,
-% located in the Custom Directory.
+% located in the simSpec Directory.
 result = nm.runFromFile('SineSimSpec.txt');
 
 % Part VIII: Dismantle the Machine Set

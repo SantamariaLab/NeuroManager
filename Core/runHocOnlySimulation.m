@@ -192,11 +192,23 @@ END OF LICENSE
 function result = runHocOnlySimulation(runDir, inputDir,...
                                       outputDir, hocFile, ~)
 
-    load('MachineData.dat', 'md', '-mat');
+    load('MachineData.dat', 'config', '-mat');
     
+	% Get the proper SimCore configuration
+    simCore = {};
+    for i = 1:length(config.simCores)
+        if strcmp(config.simCores{1,i}.name, config.assignedSimCoreName)
+            simCore = config.simCores{1,i};
+        end
+    end
+    if isempty(simCore)
+        % Deal with errors here and in the rest of the file 
+        % (not implemented yet)
+    end
+
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.
-    nrnivShell = createHocOnlyNrnivsh(md, runDir, inputDir, outputDir, hocFile);
+    nrnivShell = createHocOnlyNrnivsh(simCore, runDir, inputDir, outputDir, hocFile);
     copyfile(fullfile(runDir, nrnivShell), outputDir); % for documentation/debug
 
     % Run the simulation using the shell file we created. Simulations run

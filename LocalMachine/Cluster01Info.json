@@ -1,0 +1,79 @@
+{
+"resourceName":"ClusterNameHere",
+"resourceType":"SGECLUSTER",
+"images":
+	{
+	"name":"ClusterNameHere",
+	"OS":"GNU-LINUX",
+	"user":"ClusterUserNameHere",
+	"fsUserName":"ClusterUserNameHere for machine with which you do filesystem operations",
+	"password":"",
+	"fsPassword":"",
+	"jsUserName":"ClusterUserNameHere for machine with which you do job submission",
+	"jsPassword":"",
+	"ipAddress":"IPAddress for job submission machine",
+	"fsIpAddress":"IPAddress for FileSystem machine",
+	"jsIpAddress":"IPAddress for JobSubmission machine",
+	"hostKeyFingerprint":"EMPTY because we assume you have already established dual key with both machines",
+	"matlab":
+		{"compilerDir":"/share/apps/MATLAB/R2013a/bin  Whatever your MATLAB compiler executable is in",
+		 "compiler":"mcc    or whatever the cluster MATLAB compiler executable is called",
+		 "executable":"matlab    or whatever the cluster MATLAB executable is called ",
+		 "mcrDir":"/share/apps/MATLAB/MATLAB_Compiler_Runtime/v81    or wherever your MCR is located",
+		 "xCompDir":"/home/david.stockton/SMComp     A dedicated directory on this cluster if you are compiling on this cluster"},
+	"simCores":
+		[
+		{"name":"MATLAB_ONLY_2013a     These are the SimCores that this cluster supports",
+		 "type":"MATLAB_ONLY",
+		 "config":{"version":"2013a"}},
+		{"name":"NEURON_73_PYTHON",
+		 "type":"NEURON_PYTHON",
+		 "config":{"neuronVersion":"7.3",
+				   "neuronDir":"/share/apps/neuron/7.3",
+				   "homeExt":"/share/nrn",
+				   "binExt":"/x86_64/bin",
+				   "libExt":"/x86_64/lib",
+				   "pythonLibExt":"",
+				   "modFileCompileLocation":"D",
+				   "compModLibExt":"/x86_64/.libs",
+				   "envAddlLibLines":"",
+				   "pythonVersion":"2.6.6",
+				   "pythonPath":"/usr/bin/python",
+				   "pythonEnvAddlLines":""
+					}}
+		]
+	},
+"queues":[
+	{"name":"General",
+	 "queueString":"all.q",
+	 "flavor":
+		{"numProcessors":2,
+		 "coresPerProcessor":4,
+		 "RAM":16,
+		 "storage":256}
+	},
+	{"name":"BigMemory",
+	 "queueString":"bigmem.q",
+	 "flavor":
+		{"numProcessors":2,
+		 "coresPerProcessor":8,
+		 "RAM":512,
+		 "storage":256}
+	},
+	{"name":"GPU",
+	 "queueString":"gpu.q",
+	 "flavor":
+		{"numProcessors":2,
+		 "coresPerProcessor":6,
+		 "RAM":196,
+		 "storage":256}
+	},
+	{"name":"Infiniband",
+	 "queueString":"ib.q",
+	 "flavor":
+		{"numProcessors":1,
+		 "coresPerProcessor":4,
+		 "RAM":8,
+		 "storage":256}
+	}]
+}

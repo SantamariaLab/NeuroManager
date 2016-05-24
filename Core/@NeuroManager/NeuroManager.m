@@ -192,12 +192,16 @@ classdef NeuroManager < handle
     properties
         nmMainDir;         % The installation path of NeuroManager
         simCoreDir;        % Where the NeuroManager and standard simulator files are located
+                           % (the NeuroManager host installation; not the
+                           % SimCore on the remote)
         sshLibDir;         % Where the SSH library files are located
         customSimDir;      % Where user custom files are located
         modelFileDir;      % Where model files are located
         localMachineDir;   % Where local machine files are located
+        simSpecFileDir;    % Where to look for the SimSpec
         simResultsBaseDir; % Where user wants the results tree to be attached
         simResultsDir;     % The pathname of the results tree (automatically generated)
+        curlDir;           % The path of the directory containing the cURL executable
 
         oldPath;    % Retains user's old MATLAB search path for the duration
         
@@ -216,6 +220,9 @@ classdef NeuroManager < handle
         
         % The SimSet to be processed
         nmSimSet;
+        
+        % The configuration of the machine set to set up
+        machineSetConfig;
         
         % The data of the machine running NeuroManager
         hostMachineData; 
@@ -262,7 +269,7 @@ classdef NeuroManager < handle
         % ----------------
         function obj = NeuroManager(varargin)
         % NeuroManager constructor
-            obj.version = '0.961';
+            obj.version = '0.981';
             
             obj.callingFunctionData = dbstack('-completenames');
 
@@ -293,15 +300,16 @@ classdef NeuroManager < handle
                                                    obj.hostMachineData.osType);
             obj.localMachineDir = pathConversion(p.Results.localMachineDir,...
                                                  obj.hostMachineData.osType);
-
+            obj.simSpecFileDir = pathConversion(p.Results.simSpecFileDir,...
+                                                 obj.hostMachineData.osType);
+            obj.curlDir = pathConversion(p.Results.curlDir,...
+                                                 obj.hostMachineData.osType);
             % Add the custom directory to the
             % MATLAB search path; that is where the user's
             % UserSimulation function must be located as well as other
             % simulation files. 
             % Add it to the MATLAB search path and preserve old
             obj.oldPath = addpath(obj.customSimDir);
-            %path
-            %pause
 
             obj.simSpecFullPath = '';  % Set in RunFromFile()
             obj.nmSimSet = SimSet();   % actually assigned in nmRun()
@@ -359,6 +367,7 @@ classdef NeuroManager < handle
             obj.log.write(['LocalMachine Directory: ' obj.localMachineDir]);
             obj.log.write(['SimResultsBase Directory: ' obj.simResultsBaseDir]);
             obj.log.write(['SimResults Directory: ' obj.simResultsDir]);
+            obj.log.write(['cURL Directory: ' obj.curlDir]);
 
             % Tell Notifications about the new log
             obj.simNotificationSet.setLog(obj.log);
@@ -444,6 +453,12 @@ classdef NeuroManager < handle
 
             % Initialize the Machine Set type
             obj.machineSetType = SimType.UNASSIGNED;
+            
+            % Initialize the machineSetConfiguration; the user configures
+            % this overtly in the script
+            obj.machineSetConfig = ...
+                MachineSetConfig(obj.isSingleMachine(), obj.curlDir, ...
+                                 obj.auth, obj.log);
 
             % Send a "starting" message to verify notifications setup
             if obj.simNotificationSet.isEnabled()
@@ -494,8 +509,8 @@ classdef NeuroManager < handle
             [~, obj.numSimulators] = size(obj.simulatorPool);
             
             % PREPARATION
-            % Make the SimSet. SimSpec file must be in custom sim dir
-            obj.simSpecFullPath = fullfile(obj.customSimDir,...
+            % Make the SimSet. SimSpec file must be in simspec dir
+            obj.simSpecFullPath = fullfile(obj.simSpecFileDir,...
                                            simspecFilename);
             obj.log.write(['Constructing SimSet from file '...
                            obj.simSpecFullPath    '.']);
@@ -507,7 +522,7 @@ classdef NeuroManager < handle
         end
 
         % ----------------
-        function constructMachineSet(obj, simType, inConfig)
+        function constructMachineSet(obj, simType)
         % Construct the set of machines and their simulators from a
         % machinesetconfig.
             % Update the webpage
@@ -522,10 +537,10 @@ classdef NeuroManager < handle
                  ['Constructing machine set.'], '');
             end
 
-            configStr = inConfig.printToStr;
+            configStr = obj.machineSetConfig.printToStr;
             obj.log.write(configStr);
             obj.machineSet = obj.makeMyMachines(obj.machineScratchDir,...
-                                                simType, inConfig,...
+                                                simType, ...
                                                 obj.auth);
             obj.machineSetType = simType;
             obj.numMachines = length(obj.machineSet);
@@ -551,7 +566,6 @@ classdef NeuroManager < handle
         % -----------------
         function removeMachineSet(obj)
         % Remove all the machines in the machine set
-
             if obj.machineSetType ~= SimType.UNASSIGNED
                 % Not the ideal place for this but ok for now
                 obj.setSnapshotTimeStr(datestr(now));
@@ -620,6 +634,56 @@ classdef NeuroManager < handle
         function dir = getSimResultsDir(obj)
             dir = obj.simResultsDir;
         end 
+        
+        function setSimSpecFileDir(obj, dir)
+                newDir = pathConversion(dir, obj.hostMachineData.osType);
+            if ~exist(newDir, 'dir')
+                error(['Could not set simSpecFileDir to ' newDir ...
+                       ' - directory does not exist.']);
+            end
+            obj.simSpecFileDir = newDir;
+        end
+        
+        function dir = getSimSpecFileDir(obj)
+            dir = obj.simSpecFileDir;
+        end
+        
+        function log = getLog(obj)
+            log = obj.log;
+        end
+        
+        % --- Interface for the config class
+        function addStandaloneServer(obj, varargin)
+            obj.machineSetConfig.addStandaloneServer(varargin{:});
+        end
+        
+        function addClusterQueue(obj, varargin)
+            obj.machineSetConfig.addClusterQueue(varargin{:});
+        end
+        
+        function addCloudServer(obj, varargin)
+            obj.machineSetConfig.addCloudServer(varargin{:});
+        end            
+        
+        function addWisp(obj, varargin)
+            obj.machineSetConfig.addWisp(varargin{:});
+        end
+        
+        function addWispSet(obj, varargin)
+            obj.machineSetConfig.addWispSet(varargin{:});
+        end
+        
+        function removeWisps(obj)
+            obj.machineSetConfig.removeWisps();
+        end
+        
+        function terminateCloudInstance(obj, resourceName, instanceName)
+            obj.machineSetConfig.terminateCloudInstance(resourceName, instanceName);
+        end
+        
+        function printConfig(obj)
+            obj.machineSetConfig.print();
+        end
     end 
     
     
@@ -645,17 +709,6 @@ classdef NeuroManager < handle
             for i = 1:obj.numMachines
                 if ~obj.machineSet{i}.isReady()
                     result = false;
-                end
-            end
-        end
-        
-        % ---------------
-        function tf = isSimulatorAvailable(obj)
-            tf = false;
-            for i=1:obj.numSimulators
-                if obj.simulatorPool{i}.getState() == SimulatorState.AVAILABLE
-                    tf = true;
-                    break;
                 end
             end
         end

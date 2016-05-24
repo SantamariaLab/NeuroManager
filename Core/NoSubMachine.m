@@ -187,10 +187,12 @@ END OF LICENSE
 % Adds handling of job running for machines that don't require a job file
 classdef NoSubMachine < RunJobMachine
     methods
-        function obj = NoSubMachine(md, xcmpMach, xcmpDir,...
-                                    hostID, hostOS, idExt, auth)
-            obj = obj@RunJobMachine(md, xcmpMach, xcmpDir,...
-                              hostID, hostOS, idExt, auth);
+        function obj = NoSubMachine(config, xcmpMach, xcmpDir,...
+                                    hostID, hostOS, auth)
+%             md.addSetting('id', md.getSetting('resourceName'));
+%             md.addSetting('commsID', md.getSetting('resourceName'));
+            obj = obj@RunJobMachine(config, xcmpMach, xcmpDir,...
+                              hostID, hostOS, auth);
         end 
         
         % ------
@@ -261,5 +263,11 @@ classdef NoSubMachine < RunJobMachine
                         ];
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
+        
+        % ----------
+        function tf = usesClusterManager(obj) %#ok<MANU>
+            tf = false;
+        end
+
     end
 end

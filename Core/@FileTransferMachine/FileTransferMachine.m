@@ -192,8 +192,8 @@ classdef FileTransferMachine < RealMachine
     end
     
     methods
-        function obj = FileTransferMachine(md, hostId, hostOs, IDext, auth)
-                 obj = obj@RealMachine(md, hostId, IDext, auth);
+        function obj = FileTransferMachine(config, hostId, hostOs, auth)
+                 obj = obj@RealMachine(config, hostId, auth);
                  obj.hostOS = hostOs;
         end        
         
@@ -205,8 +205,10 @@ classdef FileTransferMachine < RealMachine
                 if strcmp(obj.hostID, obj.id)
                     copyfile(hostPath, targetPath);
                 else
-                    [hostPathStr,   hostName,   hostExt]    = fileparts(hostPath);
-                    [targetPathstr, targetName, targetExt]  = fileparts(targetPath);
+                    [hostPathStr,   hostName,   hostExt]...
+                                               = fileparts(hostPath);
+                    [targetPathstr, targetName, targetExt]...
+                                               = fileparts(targetPath);
                     obj.fsConnection =...
                         scp_put(obj.fsConnection,...
                                 [hostName, hostExt],  path2UNIX(targetPathstr),...

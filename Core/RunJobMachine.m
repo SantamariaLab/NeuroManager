@@ -196,15 +196,17 @@ classdef RunJobMachine < MATLABCompileMachine
         runNoWait(obj)  
         getJobID(obj)
         runJobCleanup(obj)       % RunJobMachine-specific simulator cleanup
+        % t/f if uses or doesn't use a cluster manager such as SGE or SLURM
+        usesClusterManager(obj)  
     end
     
     methods
-        function obj = RunJobMachine(md, ...
+        function obj = RunJobMachine(config, ...
                                      xcmpMach, xcmpDir,...
-                                     hostID, hostOS, idExt, auth)
-            obj = obj@MATLABCompileMachine(md, ...
+                                     hostID, hostOS, auth)
+            obj = obj@MATLABCompileMachine(config, ...
                                            xcmpMach, xcmpDir,...
-                                           hostID, hostOS, idExt, auth);
+                                           hostID, hostOS, auth);
         end
     end
 end

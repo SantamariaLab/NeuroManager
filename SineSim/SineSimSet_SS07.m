@@ -192,15 +192,17 @@ END OF LICENSE
 % This prelude helps clean things up before starting the simulations
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java %#ok<*CLSCR>
+clear; clear variables; clear classes; clear java %#ok<CLJAVA,CLCLS,*CLSCR>
 
 % See the User Guide for some discussion of each part.
 % Part I: Define authentication files, static directories, and user
 % notification data
-[nmAuthData, nmDirectorySet, userData] = myNMStaticData();
+myData = '';  % Path to user's ini file
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 
 % Part II: Define NeuroManager Host directories specific to this script
 nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
+nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
 % Part III: Create the NeuroManager object and show its version
@@ -221,26 +223,33 @@ else
 end
 
 % Part IV: Create a machine set configuration
-config = MachineSetConfig(nm.isSingleMachine());
-config.addMachine(MachineType.MYSERVER01,      2, 'WorkDir');
-config.addMachine(MachineType.MYSERVER02,      2, 'WorkDir');
-config.addMachine(MachineType.MYCLUSTER01ALL,  0, 'WorkDir');
-config.addMachine(MachineType.MYCLUSTER01BM,   0, 'WorkDir');
-config.addMachine(MachineType.MYCLUSTER01GPU,  0, 'WorkDir');
-config.addMachine(MachineType.MYCLUSTER01IB,   2, 'WorkDir');
-config.addMachine(MachineType.STAMPEDEDEV,     0, 'WorkDir',...
-                                                  'wallClockTime', '00:15:00');
-config.addMachine(MachineType.STAMPEDENORMAL,  2, 'WorkDir',...
-                                                  'wallClockTime', '00:15:00');
+simulatorType = SimType.SIM_SINESIM;
+nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
+                       2, 'WorkDirOnServer01');
+nm.addStandaloneServer(simulatorType, 'Server02Info.json', ...
+                       2, 'WorkDirOnServer02');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
+                       2, 'WorkDirForQueue01');
+nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue02', ...
+                       2, 'WorkDirForQueue01');
+% Stampede requires a time limit in the job submission file, and here's
+% where to specify the time.  Creation of the job submission file is
+% handled internally through the machine class hierarchy.
+nm.addClusterQueue(simulatorType, 'StampedeInfo.json', 'Dev', ...
+                  1, 'WorkDirForDevQueueOnStampede',...
+                  'wallClockTime', '00:15:00');
+nm.addClusterQueue(simulatorType, 'StampedeInfo.json', 'Normal', ...
+                  2, 'WorkDirForNormalQueueOnStampede',...
+                  'wallClockTime', '00:15:00');
 
 % Part V: Test Communications
-nm.testCommunications(config);
+nm.testCommunications();
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(SimType.SIM_SINESIM, config);
+nm.constructMachineSet(simulatorType);
 
 % Part VII: Run the simulations defined in the specifications file,
-% located in the Custom Directory.
+% located in the simSpec Directory.
 result = nm.runFromFile('SineSimSpec.txt');
 
 % Part VIII: Dismantle the Machine Set
