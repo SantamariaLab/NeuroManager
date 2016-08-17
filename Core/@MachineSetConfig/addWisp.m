@@ -96,7 +96,7 @@ function addWisp(obj, varargin)
 	obj.MSConfig(i).cloudInfoFile = cloudInfoFileName;
     obj.MSConfig(i).infoData = cloudInfo;
     obj.MSConfig(i).resourceName = cloudInfo.resourceName;
-    obj.MSConfig(i).resourceType = wispInfo.resourceType;
+    obj.MSConfig(i).resourceType = MachineType.CLOUDSERVER;
     % Pick out the desired image and stick it in here
     requestedImage = wispInfo.imageName;
     imageLocated = false;
@@ -130,7 +130,6 @@ function addWisp(obj, varargin)
         error(['Requested flavor ' flavorName ' not found in info file ' ...
                cloudInfoFileName '.']);
     end
-    
     
     obj.MSConfig(i).hostKeyFingerprint = ...
                             obj.MSConfig(i).imageData.hostKeyFingerprint;

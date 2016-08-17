@@ -187,19 +187,24 @@ END OF LICENSE
 % Part of the MATLABCompileMachine class definition.
 % Also a Workflow Stage
 % ----------
-% This is not called on the xcompiling machine
 function preCompile(obj)
-    compileDir = obj.workDir;
+    compileDir = obj.xCompDir;
     convCompileDir = path2UNIX(compileDir);
+
+    % Clear the compilation directory
+    command = ['cd ' convCompileDir ...
+               '; rm -r ' convCompileDir '/*'];
+    obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+    
+    % Create and upload a MATLAB compile shell file
     compileCommand = [...
        path2UNIX(...
-            fullfile(obj.getMATLABCompilerDir(),...
-                     obj.getMATLABCompiler()))...
+            fullfile(obj.getCompilerDir(),...
+                     obj.getCompiler()))...
        ' -a ' convCompileDir ...
        ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
        '1> stdoutcompile.txt 2> stderrcompile.txt'];
-
-    % Create and upload a MATLAB compile shell file
+    
     obj.compileShellName = [obj.id 'MLCompShell.sh'];
     mlCompShell = fullfile(obj.machineScratch, obj.compileShellName);
     mlCompShellTarget = fullfile(compileDir, obj.compileShellName);
@@ -223,4 +228,9 @@ function preCompile(obj)
     command = ['cd ' convCompileDir ...
                '; chmod +x ' obj.compileShellName];
     obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+    
+    % Bring up all the files to compile
+    obj.fileListToMachine(obj.files2Compile,...
+                          obj.ML2CompileDir,...
+                          compileDir);
 end

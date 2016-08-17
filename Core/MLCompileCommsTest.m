@@ -1,8 +1,8 @@
 classdef MLCompileCommsTest < MachineCommsTest
     methods
         function obj = MLCompileCommsTest(config, hostID, hostOS,...
-                         hostScratchDir, targetBaseDir,...
-                         auth, log, ~)
+                                          hostScratchDir, auth, log)
+            targetBaseDir = config.getXCompDir();
             obj = obj@MachineCommsTest(config, hostID, hostOS,...
                               hostScratchDir, targetBaseDir, auth, log);
             obj.configureDualKey(config);

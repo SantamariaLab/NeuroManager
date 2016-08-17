@@ -204,12 +204,12 @@ function tfResult = testCommunications(obj)
 
     % Test the compile machine
     obj.log.write(['Testing compile machine communications.']);
-    [config, compDir] = obj.mLCompileConfig.getMachine();
+    config = obj.mLCompileConfig.getMachine();
     testMachine = ...
         MLCompileCommsTest(config, obj.hostMachineData.id, ...
                            obj.hostMachineData.osType,...
-                           obj.machineScratchDir, compDir,...
-                           obj.auth, obj.log, '');
+                           obj.machineScratchDir,...
+                           obj.auth, obj.log);
     ID = testMachine.getID();
     commsID = testMachine.getCommsID();
     obj.log.write(['Testing machine communications for '...
@@ -238,7 +238,7 @@ function tfResult = testCommunications(obj)
 %         [type, numSimulators, ~, config, queueData, ~, ~, ~,...
 %             baseDir, ~, ~, ~] = obj.machineSetConfig.getMachine(i);
         config = obj.machineSetConfig.getMachine(i);
-        type = config.getResourceType();
+        type = config.getResourceType()
         numSimulators = config.getNumSimulators();
         
         % Skip machine if no simulators 

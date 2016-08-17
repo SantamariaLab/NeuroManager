@@ -1,8 +1,8 @@
 classdef CloudConfig  < MachineConfig
     properties
         instanceName;
-        isEphemeral; % indicates need for removal of instance
-        cloudInfoFile; % Used for Wisp removal
+        isEphemeral;    % indicates need for removal of instance
+        cloudInfoFile;  % Used for Wisp removal
     end
     
     methods

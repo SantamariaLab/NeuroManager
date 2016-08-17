@@ -14,7 +14,7 @@ function setMLCompileServer(obj, varargin)
     p.KeepUnmatched = false;
 
     addRequired(p, 'infoFile', @ischar);
-    addRequired(p, 'compDir', @(x) ischar(x) && ~isempty(x)); 
+%     addRequired(p, 'compDir', @(x) ischar(x) && ~isempty(x)); 
     parse(p, varargin{:});                              
 
     % The constructor checks for file existence
@@ -53,7 +53,7 @@ function setMLCompileServer(obj, varargin)
 
     % Need multiple checks on this; here and elsewhere IMPORTANT!!!
     % (not implemented yet)
-    obj.mLCompileConfig.workDir = p.Results.compDir;
+%     obj.mLCompileConfig.workDir = p.Results.compDir;
 
     % SingleMachine configuration requires a positive number of
     % simulators

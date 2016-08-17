@@ -188,10 +188,8 @@ END OF LICENSE
 % files.
 classdef Cluster < RunJobMachine
     methods
-        function obj = Cluster(config, xCmpMach, xCmpDir,...
-                                    hostID, hostOS, ~, auth)
-            obj = obj@RunJobMachine(config, xCmpMach, xCmpDir,...
-                                     hostID, hostOS, auth);
+        function obj = Cluster(config, hostID, hostOS, auth)
+            obj = obj@RunJobMachine(config, hostID, hostOS, auth);
             obj.configureDualKey(config);
         end
     end

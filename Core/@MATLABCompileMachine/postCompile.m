@@ -185,52 +185,16 @@ END OF LICENSE
 
 % postCompile.m
 % Part of the MATLABCompileMachine class definition.
-% ----------
-% This is not called by the xcompiling machine
 function postCompile(obj)
-% Refer to NeuroManagerStaging.xlsx
-            % common into base
-%             command = ['cd '...
-%                 path2UNIX(obj.getSimulatorCommonFilesPath()) ...
-%                 '; cp -l runSimulation run_runSimulation.sh ' ...
-%                 path2UNIX(targetBaseDir) ';'];
-%             obj.issueMachineCommand(command, CommandType.FILESYSTEM); 
-
-    % Transfer relevant compiled files from xcomp machine to
-    % host and then to target and copy to Simulator Commons
+    % Transfer relevant compiled files from xcomp machine to host 
     transferDir = fullfile(obj.machineScratch, 'MLCompiled');
     mkdir(transferDir);  % Process result sometime
     for i = 1:length(obj.compilationFileTransferList)
         obj.fileFromMachine(transferDir,...
-            fullfile(obj.workDir,...
+            fullfile(obj.xCompDir,...
                      obj.compilationFileTransferList{i}));
     end
 
-%             % Transfer relevant compiled files to target
-%             obj.fileListToMachine(obj.compilationFileTransferList,...
-%                                               transferDir, targetBaseDir);
-%             % Change permissions
-%             command = '';
-%             for i = 1:length(obj.compilationFileTransferList)
-%                 command = [command 'chmod +x ' ...
-%                        path2UNIX(fullfile(targetBaseDir,...
-%                        obj.compilationFileTransferList{i})) '; ']; %#ok<AGROW>
-%             end
-%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-
-%             % Copy to target's Simulator Commons
-%             command = ['cd ' path2UNIX(targetBaseDir) '; '];
-%             for i = 1:length(obj.compilationFileTransferList)
-%                 command = [command 'cp ' obj.compilationFileTransferList{i} ' '...
-%                        path2UNIX(obj.getSimulatorCommonFilesPath()) '; ']; %#ok<AGROW>
-%             end
-%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-%         else
-%             % common into base
-%             command = ['cd '...
-%                 path2UNIX(obj.getSimulatorCommonFilesPath()) ...
-%                 '; cp -l * ' path2UNIX(targetBaseDir) ';'];
-%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-%         end
-%     end 
+    % Don't clean up the compile directory to enable troubleshooting
+    % (nothing to do)
 end

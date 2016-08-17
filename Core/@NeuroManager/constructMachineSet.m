@@ -22,42 +22,19 @@ function constructMachineSet(obj, simType)
     % MLCM = MATLAB Compile Machine
     % Ignore compiler compatibility for now
     % Ignore test for compilation directory for now
-    [config, workDir] = obj.mLCompileConfig.getMachine();
+    obj.log.write(['Beginning MATLAB compilation.']);
+    config = obj.mLCompileConfig.getMachine();
     MLCM = MATLABCompileMachine(config, obj.machineSetType, ...
-                obj.machineScratchDir, workDir, ...
+                obj.machineScratchDir, ...
                 obj.hostMachineData.id, obj.hostMachineData.osType, ...
                 obj.auth, obj.log, obj.simNotificationSet);
     obj.MLCFTL = MLCM.getCompilationFileTransferList();
     MLCM.gatherFiles(obj.simCoreDir, obj.customSimDir);
-%     disp('Stopped after moving files into machineScratch\ML2Compile')
-%     pause
-    MLCM.upload4Compile();
-%     disp('Stopped after moving files up to remote')
-%     pause
-    
     MLCM.preCompile();
-%     disp('Stopped after preCompile')
-%     pause
-    checkfilePathlist = MLCM.compile();
-%     disp('Stopped after compile')
-%     pause
-    disp('Waiting for compile')
-    while(1)
-        result = MLCM.checkForCheckfileList(checkfilePathlist)
-        if result(1) 
-            break
-        elseif result(2)
-            error('MATLAB Compilation Failure')
-        else
-            pause(10);
-        end
-    end
-    disp('Compile complete')
-%     pause
+    MLCM.compile();
     MLCM.postCompile();
-    disp('postCompile complete')
-%     pause
-
+    MLCM.delete();
+    obj.log.write(['MATLAB compilation complete.']);
     
     % Make the machines in the MachineSetConfig
     obj.machineSet = obj.makeMyMachines(obj.machineScratchDir,...

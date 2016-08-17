@@ -197,7 +197,9 @@ classdef MachineCommsTest < FileTransferMachine
         function obj = MachineCommsTest(config, hostID, hostOs,...
                                          machineScratchDir,...
                                          targetBaseDir, auth, log)
-            
+            % Can't remove targetBaseDir from constructor params because
+            % this class is used for both compilation and simulation
+            % machines and the distinction is known one class up
             obj = obj@FileTransferMachine(config, hostID, hostOs, auth);
             obj.configureDualKey(config);
             obj.config = config;

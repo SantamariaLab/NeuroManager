@@ -47,9 +47,8 @@ classdef MLCompileConfig  < MachineConfig
             end
         end
         
-        function [config, workDir] = getMachine(obj)
+        function config = getMachine(obj)
             config = obj;
-            workDir = obj.getWorkDir();
         end
     end
 end

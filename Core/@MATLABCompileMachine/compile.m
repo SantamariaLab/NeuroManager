@@ -185,10 +185,9 @@ END OF LICENSE
 
 % compile.m
 % Part of the MATLABCompileMachine class definition.
-% ----------
-% This is not called on the xcompiling machine
-function checkfilePathlist = compile(obj)
-    compileDir = obj.workDir;
+% Waits for compilation to finish
+function compile(obj)
+    compileDir = obj.xCompDir;
     command = ['cd ' path2UNIX(compileDir)...
                '; ./' obj.compileShellName];
     obj.issueMachineCommandDontWait(command, CommandType.JOBSUBMISSION);
@@ -196,4 +195,17 @@ function checkfilePathlist = compile(obj)
         path2UNIX(fullfile(compileDir, 'COMPILESUCCESS'));
     checkfilePathlist{2} =...
         path2UNIX(fullfile(compileDir, 'COMPILEFAILURE'));
+    
+    disp('Waiting for compile')
+    while(1)
+        result = obj.checkForCheckfileList(checkfilePathlist);
+        if result(1) 
+            break
+        elseif result(2)
+            error(['MATLAB Compilation Failure. '...
+                   'Check the compile machine''s work directory for information.'])
+        else
+            pause(5);
+        end
+    end
 end            
