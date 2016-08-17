@@ -184,23 +184,21 @@ END OF LICENSE
 %}
 
 % MATLABCompileMachine
-% This class adds some MATLAB Compilation and run facilities to
-% FileTransferMachine, and provides a home for another optional machine for
-% compilation external to this machine. 
-% Note that this class is quasi-recursive, since it is also used as a
-% superclass for the xCompilationMachine's class.
-classdef MATLABCompileMachine < FileTransferMachine
+classdef MATLABCompileMachine < NoSubMachine
     properties
-        matlabCompilerDir = '';  % Location of MATLAB compiler on this machine 
-        matlabCompiler = '';      % Name of MATLAB compiler on this machine 
-        matlabExecutable = '';    % Name of MATLAB executable on this machine 
+        matlabCompilerDir = '';    % Location of MATLAB compiler on this machine 
+        matlabCompiler = '';       % Name of MATLAB compiler on this machine 
+        matlabExecutable = '';     % Name of MATLAB executable on this machine 
         mcrDir = '';               % Location of MCR facilities on this machine
-        
-        % A place to attach a machine for external compilation if required
-        xCompilationMachine = 0;
-        
-        % Where on the XCompilation machine the compilation will be done
-        xCompilationScratchDir = '';
+        simType;
+        machineScratch;            % on the host
+        workDir;                   % on the remote
+        ML2CompileDir;
+        toUploadDir;
+        files2Compile;
+        files2Upload; % i.e., to each machine
+        log;
+        notificationSet;
     end
     
     properties (Access = private)
@@ -216,75 +214,112 @@ classdef MATLABCompileMachine < FileTransferMachine
     end
     
     methods
-        function obj = MATLABCompileMachine(config,...
-                                            xcmpMach, xcmpDir,...
-                                            hostID, hostOs, auth)
-            obj = obj@FileTransferMachine(config, hostID, hostOs, auth);
+        function obj = MATLABCompileMachine(config, simType, scratchDir, ...
+                                            workDir, ...
+                                            hostID, hostOs, ...
+                                            auth, log, notificationSet)
+            obj = obj@NoSubMachine(config, hostID, hostOs, auth);
             % These are for this machine
-%             obj.matlabCompilerDir = md.getSetting('matlabCompilerDir'); 
             obj.matlabCompilerDir = config.getCompilerDir();
-%             obj.matlabCompiler = md.getSetting('matlabCompiler'); 
             obj.matlabCompiler = config.getCompiler();
-%             obj.matlabExecutable = md.getSetting('matlabExecutable'); 
             obj.matlabExecutable = config.getExecutable();
 
-%             obj.mcrDir = md.getSetting('mcrDir');
             obj.mcrDir = config.getMcrDir();
-            obj.xCompilationMachine = xcmpMach;
-            
-            % Create a subdirectory for this machine (so that we
-            % don't have collisions from multiple parallel xcompiles on
-            % the same machine)
-            if (obj.xCompilationMachine ~= 0)
-                obj.xCompilationScratchDir =...
-                    path2UNIX(fullfile(xcmpDir, obj.id));
-                command = ['mkdir ' obj.xCompilationScratchDir...
-                           ';chmod 766 ' obj.xCompilationScratchDir];
-                obj.xCompilationMachine.issueMachineCommand(command,...
-                                                CommandType.FILESYSTEM);
-                % Ensure the xcompilation scratch directory is empty
-                % NEED TO ENSURE MORE SAFEGUARDS HERE TOO
-                 command = ['cd '...
-                     path2UNIX(obj.xCompilationScratchDir)...
-                     '; rm -f *.m; rm -f *.log; rm -f * txt;'...
-                     ' rm -f run_runSimulation.sh; rm -f runSimulation;'];
-                 obj.xCompilationMachine.issueMachineCommand(command,...
-                                              CommandType.FILESYSTEM);
-            end
-
             obj.compileCheckfilePathSuccess = ''; % Set during Compile()
             obj.compileCheckfilePathFailure = ''; % Set during Compile()
             obj.compilationFileTransferList =...
                             {'runSimulation', 'run_runSimulation.sh'};
+            obj.simType = simType;
+            obj.machineScratch = scratchDir;
+            obj.workDir = workDir;
+            obj.log = log;
+            obj.notificationSet = notificationSet;
         end
         
-        % ----------
-        function dir = getXCompilationScratchDir(obj)
-            dir = obj.xCompilationScratchDir;
+        function gatherFiles(obj, coreDir, customDir)
+            % coreDir is where the baseSimulatorFiles are located;
+            % customDir is where the custom files are located
+            % Create a directory in machineScratch to hold the m-files for
+            % compilation
+            obj.ML2CompileDir = fullfile(obj.machineScratch, 'ML2Compile');
+            mkdir(obj.ML2CompileDir); % TEST FOR ERROR HERE
+            obj.toUploadDir = fullfile(obj.machineScratch, 'ToUpload');
+            mkdir(obj.toUploadDir); % TEST FOR ERROR HERE
+            
+            % Create a dummy host-only Simulator of the proper type in
+            % order to determine files to compile and place them in the 
+            simulatorID = 'dummy4compile';
+            type = obj.simType;
+            dummySim  = type.constrFunc(simulatorID, obj,...
+                                        obj.log, obj.notificationSet);
+            % Query the simulator for the files to compile and to upload
+            % separately from compilation
+            [baseListComp, baseListNonComp] = splitFileList(dummySim.getBaseSimulatorFileList())
+            copyFileListToDirectory(baseListComp, coreDir, obj.ML2CompileDir);
+            copyFileListToDirectory(baseListNonComp, coreDir, obj.toUploadDir);
+
+            [extListComp, extListNonComp]= splitFileList(dummySim.getExtendedSimulatorFileList())
+            copyFileListToDirectory(extListComp, customDir, obj.ML2CompileDir);
+            copyFileListToDirectory(extListNonComp, customDir, obj.toUploadDir);
+            
+            [reqdCustListComp, reqdCustListNonComp] = splitFileList(dummySim.getReqdCustomFileList())
+            copyFileListToDirectory(reqdCustListComp, customDir, obj.ML2CompileDir);
+            copyFileListToDirectory(reqdCustListNonComp, customDir, obj.toUploadDir);
+            
+            [addlCustListComp, addlCustListNonComp] = splitFileList(dummySim.getAddlCustomFileList())
+            copyFileListToDirectory(addlCustListComp, customDir, obj.ML2CompileDir);
+            copyFileListToDirectory(addlCustListNonComp, customDir, obj.toUploadDir);
+            dummySim.delete();
+            obj.files2Compile = [baseListComp extListComp reqdCustListComp addlCustListComp]
+            obj.files2Upload =  [baseListNonComp extListNonComp reqdCustListNonComp addlCustListNonComp]
+        end
+        
+        function upload4Compile(obj)
+            obj.fileListToMachine(obj.files2Compile,...
+                                  obj.ML2CompileDir,...
+                                  obj.workDir);
         end
 
+        % -------------
+        % MOVE THIS TO NM constructMachineSet
+%         function processSimulatorCompileFiles(obj)
+%         % PreCompile() and Compile()
+%             % PreCompile() Refer to NeuroManagerStaging.xlsx
+%             obj.machine.preCompile(obj.targetBaseDir);
+%             
+%             % Log the compile version (machines don't have the log so we do
+%             % it here)
+%             simstr = obj.machine.getMATLABCompileVersion();
+%             obj.log.write(['Simulator ' obj.getID()...
+%                            ' on machine ' obj.machine.getID()...
+%                            ': Compiling MATLAB Version: ' simstr])
+% 
+%             % Compile() Refer to NeuroManagerStaging.xlsx
+%             checkfilePathlist = obj.machine.compile(obj.targetBaseDir);
+%             obj.machine.setCompileCheckfilePath(checkfilePathlist);
+%         end        
+        
+        
+        
+        
         % ----------
         function uploadStdSimulatorFiles(obj, fileList, destDir)
-            if(obj.xCompilationMachine == 0)
-                % Straight upload + special for machinedata.dat
-                obj.fileListToMachine(fileList,...
-                                      obj.simFileSourceDir,...
-                                      destDir);
-            else
-                % Uploads to XCompilation machine for compilation 
-                obj.xCompilationMachine.fileListToMachine(fileList,...
-                                      obj.simFileSourceDir,...
-                                      obj.xCompilationScratchDir);
-            end
+            % Straight upload + special for machinedata.dat
+            obj.fileListToMachine(fileList,...
+                                  obj.simFileSourceDir,...
+                                  destDir);
+
+                              
+            % MOVED TO SimMachine.m
             % Also have to upload the machine-specific data file to 
             % commons in the execution machine 
             % save data to file; unique name for scratch dir only - on
             % target has standard name.
-            sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
-            obj.fileToMachine(sourceFile,...
-                              fullfile(destDir, 'MachineData.dat'));
-            obj.remoteCopy(destDir, obj.getSimulatorCommonFilesPath(),...
-                                                {'MachineData.dat'});
+%             sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
+%             obj.fileToMachine(sourceFile,...
+%                               fullfile(destDir, 'MachineData.dat'));
+%             obj.remoteCopy(destDir, obj.getSimulatorCommonFilesPath(),...
+%                                                 {'MachineData.dat'});
         end
         
         % ----------
@@ -293,16 +328,15 @@ classdef MATLABCompileMachine < FileTransferMachine
         % machine-based also?  Because of the need for xcompilation that
         % some machines have and not others.
         function uploadCustSimulatorFiles(obj, fileList, destDir)
-            if(obj.xCompilationMachine == 0)
-                % Upload custom files then copy to SimulatorCommons
-                obj.fileListToMachine(fileList,...
-                                      obj.custFileSourceDir,...
-                                      destDir);
-                [~, nonMfileList] = splitFileList(fileList); 
-                obj.remoteCopy(destDir,...
-                               obj.getSimulatorCommonFilesPath(),...
-                               nonMfileList);
-            else
+            % Upload custom files then copy to SimulatorCommons
+            obj.fileListToMachine(fileList,...
+                                  obj.custFileSourceDir,...
+                                  destDir);
+            [~, nonMfileList] = splitFileList(fileList); 
+            obj.remoteCopy(destDir,...
+                           obj.getSimulatorCommonFilesPath(),...
+                           nonMfileList);
+%            else
                 % Refer to NeuroManagerStaging.xlsx
                 % TACC uploads mfiles to compilation machine for compilation
                 % and non-mfiles to fsmachine's destdir for runtime use, then
@@ -317,7 +351,7 @@ classdef MATLABCompileMachine < FileTransferMachine
                 obj.remoteCopy(destDir,...
                                obj.getSimulatorCommonFilesPath(),...
                                nonMfileList);
-            end
+ %           end
         end
 
         % --------
@@ -359,16 +393,16 @@ classdef MATLABCompileMachine < FileTransferMachine
         
         % --------
         function delete(obj) 
-             if (obj.xCompilationMachine ~= 0)
-                command = ['cd ' obj.xCompilationScratchDir '; '...
-                           'rm *.m; rm *.log, rm *.txt; rm *.log; rm *.sh;'...
-                           'rm run_runSimulation.sh; rm runSimulation;'...
-                           'rm COMPILESUCCESS; rm COMPILEFAILURE; '...
-                           'cd ..; rmdir ' obj.xCompilationScratchDir ';'];
-                obj.xCompilationMachine.issueMachineCommand(command,...
-                                                CommandType.FILESYSTEM);
-                obj.xCompilationMachine.delete();
-             end
+%              if (obj.xCompilationMachine ~= 0)
+%                 command = ['cd ' obj.xCompilationScratchDir '; '...
+%                            'rm *.m; rm *.log, rm *.txt; rm *.log; rm *.sh;'...
+%                            'rm run_runSimulation.sh; rm runSimulation;'...
+%                            'rm COMPILESUCCESS; rm COMPILEFAILURE; '...
+%                            'cd ..; rmdir ' obj.xCompilationScratchDir ';'];
+%                 obj.xCompilationMachine.issueMachineCommand(command,...
+%                                                 CommandType.FILESYSTEM);
+%                 obj.xCompilationMachine.delete();
+%              end
         end
     end  
 end
@@ -387,6 +421,16 @@ function [mfileList, nonMfileList] = splitFileList(fileList)
         else
             mfileList{k} = fileList{i}; %#ok<AGROW>
             k = k+1;
+        end
+    end
+end
+
+% Temp HANDLE ERRORS SOON
+function copyFileListToDirectory(list, sourceDir, destDir)
+    if ~isempty(list)
+        numFiles = length(list);
+        for i=1:numFiles
+            copyfile(fullfile(sourceDir, list{i}), destDir);
         end
     end
 end

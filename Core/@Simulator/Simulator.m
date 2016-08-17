@@ -191,23 +191,24 @@ classdef Simulator < handle
         % Each Simulator has its own ID which will be used in directory
         % names, notifications, logs, and the like.
         id;
-        
         type; % From SimType class
-        
-        % A cell array of compatible SimCores. Empty means nothing is
-        % compatible, so subclasses have to set this list according to
-        % their SimCore requirements. MOVED TO SIMTYPE
-%         simCoreCompatibilityList = {}; 
-        
-        % The list of files to be uploaded as part of the simulator;
+       
+        % The lists of files to be uploaded as part of the simulator;
         % dependent on simtype and machine. A cell array of strings.
         % Filenames only
         % NeuroManager Files standard for all simulators plus std simulator-specific
-        stdUploadFiles; 
+%         stdUploadFiles; 
+        baseSimulatorFileList;
+        
+        extendedSimulatorFileList;
+        
         % User-supplied UserSimulation.m
-        custUploadFiles; 
+        reqdCustomFileList;
+%         custUploadFiles; 
+        
         % Additional User-supplied simulator files
-        addlCustUploadFiles; 
+%         addlCustUploadFiles; 
+        addlCustomFileList;
         
         % Full path of simulator's basedir on target machine
         targetBaseDir;
@@ -250,8 +251,8 @@ classdef Simulator < handle
     
     methods (Abstract)
         % Refer to NeuroManager Staging Sequence.xlsx
-        preUploadFiles(obj)   % The simulator aspect of PreUploadFiles
-        postCustomFilesUpload(obj)
+%         preUploadFiles(obj)   % The simulator aspect of PreUploadFiles
+%        postCustomFilesUpload(obj)
         preRunModelProcPhaseH(obj)
         preRunModelProcPhaseP(obj)
         preRunModelProcPhaseD(obj)
@@ -260,8 +261,6 @@ classdef Simulator < handle
     methods
         % Machine makes the simulator so the caller's handle goes in machine.
         function obj = Simulator(id,...
-                                 addlStdFileList,...
-                                 addlCustFileList,...
                                  machine,...
                                  log, notificationSet)
             obj.id = id;
@@ -272,22 +271,40 @@ classdef Simulator < handle
             
             % This file list is true for all simulators; located in the
             % core directory
-            obj.stdUploadFiles = {'runSimulation.m',...
-                                  'SimulationState.m',...
-                                  'StandaloneConfig.m',...
-                                  'ClusterConfig.m',...
-                                  'CloudConfig.m',...
-                                  'MachineConfig.m',...
-                                  'OSType.m'};
+            obj.baseSimulatorFileList = {'runSimulation.m',...
+                                         'SimulationState.m',...
+                                         'StandaloneConfig.m',...
+                                         'ClusterConfig.m',...
+                                         'CloudConfig.m',...
+                                         'MachineConfig.m',...
+                                         'OSType.m'};
             % Simulators can add additional std files that are located
             % in std directory with the rest of the NeuroManager core files
-            obj.stdUploadFiles = [obj.stdUploadFiles, addlStdFileList];
+            % PUT THIS LIST INTO THE SIMTYPE; EVEN BETTER POSSIBLY DEFINE A SIMTYPE WITH
+            % JSON AND PUT THIS LIST (THE ADDITIONAL STD FILES) INTO THE JSON 
+            % DEFINITION OF THE SIMULATOR. The JSON file would only define 
+            % the simulator from the machine's point of view and thus enable
+            % all-simulator file uploads; the simulator classes would define 
+            % simulator-specific file uploads, and the simspec
+            % entries/methods would define simulation-specific file
+            % uploads. Rename standard/custom/addlstd   
+            % to allSRFiles/sRSpecificFiles/sNSpecificFiles.
+            % allSRFiles m-files and sRSpecificFiles m-files will be
+            % compiled and uploaded by the machine.  allSRFiles and
+            % sRSpecificFiles non-m-files will be uploaded by the
+            % machine.  sNSpecificFiles files will be uploaded by the
+            % simulator for a specific simulation.
+            %obj.stdUploadFiles = [obj.stdUploadFiles, addlStdFileList];
+            obj.extendedSimulatorFileList = {};
+            
             % This file list is true for all simulators; located in the
             % custom directory
-            obj.custUploadFiles = {'userSimulation.m'};
+            obj.reqdCustomFileList = {'userSimulation.m'};
+            
             % Simulators can have additional custom upload files here;
             % located in the custom directory
-            obj.addlCustUploadFiles = addlCustFileList;
+            obj.addlCustomFileList = {};
+            
             obj.state = SimulatorState.INPREPARATION;
             obj.currentSimulation = Simulation(); % I.e. no simulation to begin with
             obj.preRunModelProcDStr = '';
@@ -300,50 +317,41 @@ classdef Simulator < handle
             obj.log.write(['Creating simulator ' obj.id ' on Machine '...
                            obj.machine.getID() '.']);
 
-            % Create the simulator's basedir and commonsdir on the target
-            obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
-            obj.targetCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
-            % The cd probably not necessary
-            command = ['cd ' path2UNIX(obj.machine.getBaseDir())...
-                       '; mkdir -m ug=rwx '...
-                       path2UNIX(obj.targetBaseDir)...
-                       '; mkdir  -m ug=rwx '...
-                       path2UNIX(obj.targetCommonDir)...
-                       ];
-            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+            % Build the remote aspects of the simulator
+            % Make separate operation
+%             obj.remoteConstruction();
+            
+%             % Create the simulator's basedir and commonsdir on the target
+%             obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
+%             obj.targetCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
+%             % The cd probably not necessary
+%             command = ['cd ' path2UNIX(obj.machine.getBaseDir())...
+%                        '; mkdir -m ug=rwx '...
+%                        path2UNIX(obj.targetBaseDir)...
+%                        '; mkdir  -m ug=rwx '...
+%                        path2UNIX(obj.targetCommonDir)...
+%                        ];
+%             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
 
             % Upload or transfer std/cust files
-            if ~obj.machine.areSimulatorCommonFilesReady()
-                % See Staging Sequence doc.
-                obj.machine.preUploadFiles();   % Machine aspect
-                obj.preUploadFiles();           % Simulator aspect
-                obj.uploadStdFiles();
-                obj.uploadCustomFiles();
-            end
-            obj.postStdFilesUpload();
-            obj.postCustomFilesUpload();
+%             if ~obj.machine.areSimulatorCommonFilesReady()
+%                 % See Staging Sequence doc.
+%                 obj.machine.preUploadFiles();   % Machine aspect
+%                 obj.preUploadFiles();           % Simulator aspect
+%                 obj.uploadStdFiles();
+%                 obj.uploadCustomFiles();
+%             end
+%             obj.postStdFilesUpload();
+%             obj.postCustomFilesUpload();
 
-            % ------ Compilation
-            % Since we are going to compile the MATLAB into a
-            % stand-alone, we have to compile on the execution machine
-            % or at least one with compatible MATLAB version.
-            %
-            % Here we ask the machine if the files are already
-            % available. If not we produce them (as part of the first
-            % simulator's constructor) and give them to the 
-            % machine (into SimulatorCommon); if the files are already
-            % available we copy them into the simulator (or create a
-            % symlink).  Although the simulator knows about itself (and the
-            % machine doesn't), we don't want all the simulators on
-            % a machine to have to repeat all the really slow compiling. 
-            if ~obj.machine.areSimulatorCommonFilesReady()
-                % PreCompile() and Compile()
-                obj.processSimulatorCompileFiles();
-            else
-                obj.machine.postCompile(obj.targetBaseDir);
-                obj.state = SimulatorState.AVAILABLE;
-            end
+% Move to remote construction
+%             obj.state = SimulatorState.AVAILABLE;
+%             obj.log.write(['Simulator ' obj.id...
+%                            ' Version ' obj.getVersion()...
+%                            ' created on machine '...
+%                            obj.machine.getID() '.']);
         end
+        
         
         % --------------
         function str = getVersion(obj)
@@ -356,70 +364,111 @@ classdef Simulator < handle
 %         end
         
         % --------------
-        function uploadStdFiles(obj)
-            obj.machine.uploadStdSimulatorFiles(obj.stdUploadFiles, ...
-                                                obj.targetBaseDir);
-        end
+%         function uploadStdFiles(obj)
+%             obj.machine.uploadStdSimulatorFiles(obj.stdUploadFiles, ...
+%                                                 obj.targetBaseDir);
+%         end
         
         % --------------
-        function uploadCustomFiles(obj)
-            uploadFiles = [obj.custUploadFiles,...
-                           obj.getAddlCustUploadFileList()];
-            % This also handles the non-mfile copy to SimCommon since that
-            % is machine-based
-            obj.machine.uploadCustSimulatorFiles(uploadFiles,...
-                                                        obj.targetBaseDir);
+%         function uploadCustomFiles(obj)
+%             uploadFiles = [obj.custUploadFiles,...
+%                            obj.getAddlCustUploadFileList()];
+%             % This also handles the non-mfile copy to SimCommon since that
+%             % is machine-based
+%             obj.machine.uploadCustSimulatorFiles(uploadFiles,...
+%                                                         obj.targetBaseDir);
+%         end
+        
+        % ------------
+        % Aug2016
+        function constructRemoteAspect(obj)
+            % Create the simulator's basedir and commonsdir on the target
+            obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
+            obj.targetCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
+            % The cd probably not necessary
+            command = ['cd ' path2UNIX(obj.machine.getBaseDir())...
+                       '; mkdir -m ug=rwx '...
+                       path2UNIX(obj.targetBaseDir)...
+                       '; mkdir  -m ug=rwx '...
+                       path2UNIX(obj.targetCommonDir)...
+                       ];
+            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+            
+            % Copy in the MachineData.dat file
+            obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
+                               obj.targetBaseDir, {'MachineData.dat'});
+            
+            % Transfer in the executable apparatus
+            obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
+                               obj.targetBaseDir, {'runSimulation', 'run_runSimulation.sh'});
+%             command = ['cd ' path2UNIX(fullfile(obj.targetBaseDir, 'temp')) ';'...
+%                        'cp -l runSimulation ..;cp run_runSimulation.sh ..;' ...
+%                        'cp runSimulation run_runSimulation.sh ;'...
+%                        path2UNIX(obj.machine.getSimulatorCommonFilesPath())];
+%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            
+            % Transfer in the model files
+            % Not necessary (???); important to copy model files in before each
+            % simulation to ensure they are pristine for each simulation
+            
+            % now Simulator is ready for operation
+            obj.state = SimulatorState.AVAILABLE;
+            obj.log.write(['Simulator ' obj.id...
+                           ' Version ' obj.getVersion()...
+                           ' created on machine '...
+                           obj.machine.getID() '.']);
         end
         
         % ------------
         % MachineData.dat is not on the std files list since it is created
         % in the machine scratch dir, so we have to handle it separately
-        function postStdFilesUpload(obj)
-            if obj.machine.areSimulatorCommonFilesReady()
-                obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
-                                   obj.targetBaseDir, {'MachineData.dat'});
-            end
-        end
+%         function postStdFilesUpload(obj)
+%             if obj.machine.areSimulatorCommonFilesReady()
+%                 obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
+%                                    obj.targetBaseDir, {'MachineData.dat'});
+%             end
+%         end
         
-        % -------------
-        function processSimulatorCompileFiles(obj)
-        % PreCompile() and Compile()
-            % PreCompile() Refer to NeuroManagerStaging.xlsx
-            obj.machine.preCompile(obj.targetBaseDir);
-            
-            % Log the compile version (machines don't have the log so we do
-            % it here)
-            simstr = obj.machine.getMATLABCompileVersion();
-            obj.log.write(['Simulator ' obj.getID()...
-                           ' on machine ' obj.machine.getID()...
-                           ': Compiling MATLAB Version: ' simstr])
-
-            % Compile() Refer to NeuroManagerStaging.xlsx
-            checkfilePathlist = obj.machine.compile(obj.targetBaseDir);
-            obj.machine.setCompileCheckfilePath(checkfilePathlist);
-        end        
+%         % -------------
+%         % MOVE THIS TO NM constructMachineSet
+%         function processSimulatorCompileFiles(obj)
+%         % PreCompile() and Compile()
+%             % PreCompile() Refer to NeuroManagerStaging.xlsx
+%             obj.machine.preCompile(obj.targetBaseDir);
+%             
+%             % Log the compile version (machines don't have the log so we do
+%             % it here)
+%             simstr = obj.machine.getMATLABCompileVersion();
+%             obj.log.write(['Simulator ' obj.getID()...
+%                            ' on machine ' obj.machine.getID()...
+%                            ': Compiling MATLAB Version: ' simstr])
+% 
+%             % Compile() Refer to NeuroManagerStaging.xlsx
+%             checkfilePathlist = obj.machine.compile(obj.targetBaseDir);
+%             obj.machine.setCompileCheckfilePath(checkfilePathlist);
+%         end        
         
         % --------
         % Compiling is done but the compiled files haven't been distributed
         % in the simulator or into the Simulator common files directory, so
         % do that, then done. ***This function only to be called for the
         % first simulator the machine constructs.***
-        function finishCompilingSimulator(obj)
-        % Since MATLAB compiling is done in parallel this method used
-        % to finish up the first simulator
-            % Includes copying MATLAB executable machinery into SimCommon
-            obj.machine.postCompile(obj.targetBaseDir);
-            obj.state = SimulatorState.AVAILABLE;
-            obj.machine.simulatorCommonFilesAreReady();
-
-            % Log it here since we didn't in the constructor
-            % Same message in SimMachine.m in FinishSimulators() for the
-            % rest of the simulators on the machine
-            obj.log.write(['Simulator ' obj.id...
-                           ' Version ' obj.getVersion()...
-                           ' created on machine '...
-                           obj.machine.getID() '.']);
-        end
+%         function finishCompilingSimulator(obj)
+%         % Since MATLAB compiling is done in parallel this method used
+%         % to finish up the first simulator
+%             % Includes copying MATLAB executable machinery into SimCommon
+%             obj.machine.postCompile(obj.targetBaseDir);
+%             obj.state = SimulatorState.AVAILABLE;
+%             obj.machine.simulatorCommonFilesAreReady();
+% 
+% %             % Log it here since we didn't in the constructor
+% %             % Same message in SimMachine.m in FinishSimulators() for the
+% %             % rest of the simulators on the machine
+% %             obj.log.write(['Simulator ' obj.id...
+% %                            ' Version ' obj.getVersion()...
+% %                            ' created on machine '...
+% %                            obj.machine.getID() '.']);
+%         end
         
         % --------
         function startSimulation(obj, simulation)
@@ -716,9 +765,29 @@ classdef Simulator < handle
         end
         
         % -------------
-        function list = getAddlCustUploadFileList(obj)
-            list = obj.addlCustUploadFiles;
+        function list = getBaseSimulatorFileList(obj)
+            list = obj.baseSimulatorFileList;
         end
+        
+        % -------------
+        function list = getExtendedSimulatorFileList(obj)
+            list = obj.extendedSimulatorFileList;
+        end
+
+        % -------------
+        function list = getReqdCustomFileList(obj)
+            list = obj.reqdCustomFileList;
+        end
+        
+        % -------------
+        function list = getAddlCustomFileList(obj)
+            list = obj.addlCustomFileList;
+        end
+        
+%         % -------------
+%         function list = getAddlCustUploadFileList(obj)
+%             list = obj.addlCustUploadFiles;
+%         end
         
         % -------------
         function setState(obj, state)
@@ -764,15 +833,17 @@ classdef Simulator < handle
         function saveStatsHistory(obj, directory)
             obj.stats.saveStatsHistory(obj.getID(), directory);
         end
+
         
         % -------------
-        % The destructor for the simulator cleans up the remote machine.
+        % CHANGED THIS FROM DELETE() Aug2016
+        % Cleans up the remote machine.
         % We are as explicit as possible for safety; but the ssh package
         % doesn't give us a bash shell, so we have to make do. It would be
         % nice to do this from a list, but there are compile movements and
         % such. By using the full pathnames I hope to be pretty safe.  Using
         % the full pathnames makes the cd's obsolete, I think 
-        function delete(obj)
+        function removeRemoteAspect(obj)
             % Remove the temp directory from the BaseDir 
             command = ['cd '...
                     path2UNIX(fullfile(obj.targetBaseDir, 'temp'))...
@@ -806,8 +877,10 @@ classdef Simulator < handle
                 path2UNIX(obj.targetBaseDir)...
                 ';'];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-
-            % There may be other things to do on the host side 
+        end
+        
+        function delete(obj)
+            % There may be additional things to do on the host 
             % (not implemented yet)
         end
     end

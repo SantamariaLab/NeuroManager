@@ -188,43 +188,20 @@ END OF LICENSE
 % Also a Workflow Stage
 % ----------
 % This is not called on the xcompiling machine
-function preCompile(obj, targetBaseDir)
-% Refer to NeuroManagerStaging.xlsx
-    if(obj.xCompilationMachine == 0)
-        command = ['cd ' path2UNIX(targetBaseDir) ...
-                   '; mkdir temp; chmod 777 temp; mv *.m temp;'];
-        obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-
-        compileDir = fullfile(targetBaseDir, 'temp');
-        convCompileDir = path2UNIX(compileDir);
-        compileCommand = [...
-           path2UNIX(fullfile(obj.getMATLABCompilerDir(),...
-                                      obj.getMATLABCompiler()))...
-           ' -a ' convCompileDir ...
-           ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
-           '1> stdoutcompile.txt 2> stderrcompile.txt'];
-        namePrefix = '';
-    else
-        % (xcomp scratchdir is already made)
-        compileDir = obj.xCompilationScratchDir;
-        convCompileDir = path2UNIX(compileDir);
-        compileCommand = [...
-           path2UNIX(...
-                fullfile(obj.xCompilationMachine.getMATLABCompilerDir(),...
-                         obj.xCompilationMachine.getMATLABCompiler()))...
-           ' -a ' convCompileDir ...
-           ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
-           '1> stdoutcompile.txt 2> stderrcompile.txt'];
-        namePrefix = 'X';
-    end
+function preCompile(obj)
+    compileDir = obj.workDir;
+    convCompileDir = path2UNIX(compileDir);
+    compileCommand = [...
+       path2UNIX(...
+            fullfile(obj.getMATLABCompilerDir(),...
+                     obj.getMATLABCompiler()))...
+       ' -a ' convCompileDir ...
+       ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
+       '1> stdoutcompile.txt 2> stderrcompile.txt'];
 
     % Create and upload a MATLAB compile shell file
-    % Since the host side uses the common Machine Scratch dir, we
-    % need to distinguish between Xcomp and normal comp being done
-    % on the same machine and use nameprefix to do that.
-    scratchCompileShellName = [obj.id 'ML' namePrefix 'CompShell.sh'];
     obj.compileShellName = [obj.id 'MLCompShell.sh'];
-    mlCompShell = fullfile(obj.scratchDir, scratchCompileShellName);
+    mlCompShell = fullfile(obj.machineScratch, obj.compileShellName);
     mlCompShellTarget = fullfile(compileDir, obj.compileShellName);
 
     f = fopen(mlCompShell, 'w');
@@ -239,20 +216,11 @@ function preCompile(obj, targetBaseDir)
     fprintf(f, '%s\n', 'echo $?');
     fclose(f);
 
-    if(obj.xCompilationMachine == 0)
-        convMLCompShellTarget = path2UNIX(mlCompShellTarget);
-        obj.fileToMachine(mlCompShell, convMLCompShellTarget);
+    convMLCompShellTarget =...
+        path2UNIX(mlCompShellTarget);
+    obj.fileToMachine(mlCompShell, convMLCompShellTarget);
 
-        command = ['cd ' path2UNIX(compileDir) ...
-                   '; chmod +x ' obj.compileShellName];
-        obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-    else
-        convMLCompShellTarget =...
-            path2UNIX(mlCompShellTarget);
-        obj.xCompilationMachine.fileToMachine(mlCompShell, convMLCompShellTarget);
-
-        command = ['cd ' convCompileDir ...
-                   '; chmod +x ' obj.compileShellName];
-        obj.xCompilationMachine.issueMachineCommand(command, CommandType.FILESYSTEM);
-    end
+    command = ['cd ' convCompileDir ...
+               '; chmod +x ' obj.compileShellName];
+    obj.issueMachineCommand(command, CommandType.FILESYSTEM);
 end

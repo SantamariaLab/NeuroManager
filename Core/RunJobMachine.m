@@ -185,7 +185,7 @@ END OF LICENSE
 
 % RunJobMachine
 % Adds job running methods to MATLABCompileMachine.
-classdef RunJobMachine < MATLABCompileMachine
+classdef RunJobMachine < FileTransferMachine
     properties
     end
     
@@ -201,12 +201,11 @@ classdef RunJobMachine < MATLABCompileMachine
     end
     
     methods
-        function obj = RunJobMachine(config, ...
-                                     xcmpMach, xcmpDir,...
-                                     hostID, hostOS, auth)
-            obj = obj@MATLABCompileMachine(config, ...
-                                           xcmpMach, xcmpDir,...
-                                           hostID, hostOS, auth);
+        function obj = RunJobMachine(config, hostId, hostOs, auth)
+            obj = obj@FileTransferMachine(config, hostId, hostOs, auth);
+%             obj = obj@MATLABCompileMachine(config, ...
+%                                            xcmpMach, xcmpDir,...
+%                                            hostID, hostOS, auth);
         end
     end
 end

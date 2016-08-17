@@ -249,8 +249,7 @@ classdef SimMachine < RealMachine
                                   auth, log, notificationSet)
             obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
             obj.config = config;
-            obj.state = MachineState.COMPILING;
-%             obj.baseDir = baseDir;          % on the target
+            obj.state = MachineState.INPREPARATION;
             obj.baseDir = config.getWorkDir();          % on the target
             obj.scratchDir = scratchDir;    % on the host
             obj.simFileSourceDir = simFileSourceDir;
@@ -264,28 +263,50 @@ classdef SimMachine < RealMachine
             % log it
             obj.log.write(['Constructing Machine ' obj.getID() '.']);
 
+            % Build the machine place on the remote
             obj.machineBasePrep();
             obj.sType = simType;  
 
-            % Save this machine's data in scratch dir for later upload
-            dataFile = fullfile(scratchDir, obj.machineDataFilename);
-            
-%             disp('!!!!!!!!!!!!!!!!!')
-%             uploadMachineConfig = config.uploadMachineConfig
-%             save(sourceFile, 'uploadMachineConfig', '-mat', '-v7.3');
-            save(dataFile, 'config', '-mat', '-v7.3');
+            obj.preUploadFiles();
 
-            % Get the first simulator construction started and return;
-            % The FinishSimulators method makes the others. This
-            % approach allows parallel compilation on all machines.
-            % We start the first simulator and get out of the machine
-            % constructor in the COMPILING state 
+            % Upload machine data file and other machine-specific files, if
+            % any
+            sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
+            save(sourceFile, 'config', '-mat', '-v7.3');
+            destDir = obj.getSimulatorCommonFilesPath();
+            obj.fileToMachine(sourceFile,...
+                              fullfile(destDir, 'MachineData.dat'));
+            
+            % Upload ML Compiled files to SimulatorCommons
+            compilationFileTransferList = {'runSimulation','run_runSimulation.sh'};   % Pull this from NeuroManager, don't define here
+            sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                   % Define this elsewhere
+            destDir = obj.getSimulatorCommonFilesPath();
+            obj.fileListToMachine(compilationFileTransferList,...
+                                  sourcedir, destDir);
+            % Change permissions
+            % Later do this in Simulator.m after transfer to Simulator base  FIX THIS
+            command = '';
+            for i = 1:length(compilationFileTransferList)
+                command = [command 'chmod +x ' ...
+                       path2UNIX(fullfile(obj.getSimulatorCommonFilesPath(),...
+                       compilationFileTransferList{i})) '; ']; %#ok<AGROW>
+            end
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            
+            % Upload model and other non-compiled simulator-specific files
+            % (Implement next)
+            % NOT COMPLETE
+            
+            % Build the simulators
             obj.mSimulators = {}; 
-%             simulatorID = sprintf([char(obj.sType) '%02.0f'], 1); 
-            simulatorID = sprintf([char(obj.getID()) '%02.0f'], 1); 
-            obj.mSimulators{1} = ...
-                obj.makeSimulator(obj.sType, simulatorID,...
-                                  obj.log, obj.notificationSet);
+            for i = 1:obj.numSimulators
+                simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
+                obj.mSimulators{i} = ...
+                    obj.makeSimulator(obj.sType, simulatorID,...
+                                      obj.log, obj.notificationSet);
+                obj.mSimulators{i}.constructRemoteAspect();
+            end
+            obj.state = MachineState.READY;
         end
         
         
@@ -316,24 +337,24 @@ classdef SimMachine < RealMachine
         end
 
         % -----------
-        function finishSimulators(obj)
-        % Builds simulators 2:N on the remote
-        % The machine doesn't call this until the first simulator is
-        % complete, so that we know all the files to be copied are in place
-        % on the remote.
-            for i = 2:obj.numSimulators
-                simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
-                obj.mSimulators{i} = ...
-                    obj.makeSimulator(obj.sType, simulatorID,...
-                                      obj.log, obj.notificationSet);
-                % Log it
-                obj.log.write(['Simulator ' obj.mSimulators{i}.id...
-                               ' Version ' obj.mSimulators{i}.getVersion()...
-                               ' created on machine '...
-                               obj.getID() '.']);
-                obj.mSimulators{i}.setState(SimulatorState.AVAILABLE);
-            end
-        end
+%         function finishSimulators(obj)
+%         % Builds simulators 2:N on the remote
+%         % The machine doesn't call this until the first simulator is
+%         % complete, so that we know all the files to be copied are in place
+%         % on the remote.
+%             for i = 2:obj.numSimulators
+%                 simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
+%                 obj.mSimulators{i} = ...
+%                     obj.makeSimulator(obj.sType, simulatorID,...
+%                                       obj.log, obj.notificationSet);
+%                 % Log it
+%                 obj.log.write(['Simulator ' obj.mSimulators{i}.id...
+%                                ' Version ' obj.mSimulators{i}.getVersion()...
+%                                ' created on machine '...
+%                                obj.getID() '.']);
+%                 obj.mSimulators{i}.setState(SimulatorState.AVAILABLE);
+%             end
+%         end
         
         % ----------------
         function result = isReady(obj)
@@ -346,31 +367,33 @@ classdef SimMachine < RealMachine
         end
 
         % -------------
+        % Moving compilation out of the machine has turned this function
+        % into a no-op
         function state = getState(obj)
         % Returns state and triggers machine state progression.
         % This is where the compiling simulator gets finished, and the
         % rest of the machine's simulators get constructed.
-            if obj.state == MachineState.READY
-                % Nothing special to do
-            elseif obj.state == MachineState.INPREPARATION
-                obj.finishSimulators();
-                obj.state = MachineState.READY;
-                % log it
-                obj.log.write(['Machine ' obj.id ' READY.']);
-            elseif  obj.state == MachineState.COMPILING
-                % If compiling and the compilation is done, the
-                % compilation-done checkfile will show up in the
-                % compiling simulator's temp directory indicating that files
-                % can be transferred in and the other simulators installed (if any).
-                % No poll delay here - that is handled externally.
-                if obj.isCompileComplete()
-                    obj.mSimulators{1}.finishCompilingSimulator();
-                    obj.state = MachineState.INPREPARATION; 
-                obj.log.write(['Machine ' obj.getID() ' INPREPARATION.']);
-                % else if LicenseUnavailable....
-                % state -> MachineUnavailable  then handle this externally
-                end
-            end
+%             if obj.state == MachineState.READY
+%                 % Nothing special to do
+%             elseif obj.state == MachineState.INPREPARATION
+% %                 obj.finishSimulators();
+%                 obj.state = MachineState.READY;
+%                 % log it
+%                 obj.log.write(['Machine ' obj.id ' READY.']);
+%             elseif  obj.state == MachineState.INPREPARATION
+%                 % If compiling and the compilation is done, the
+%                 % compilation-done checkfile will show up in the
+%                 % compiling simulator's temp directory indicating that files
+%                 % can be transferred in and the other simulators installed (if any).
+%                 % No poll delay here - that is handled externally.
+%                 if obj.isCompileComplete()
+%                     obj.mSimulators{1}.finishCompilingSimulator();
+%                     obj.state = MachineState.INPREPARATION; 
+%                 obj.log.write(['Machine ' obj.getID() ' INPREPARATION.']);
+%                 % else if LicenseUnavailable....
+%                 % state -> MachineUnavailable  then handle this externally
+%                 end
+%             end
             state = obj.state;
         end
         

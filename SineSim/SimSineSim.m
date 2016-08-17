@@ -194,11 +194,7 @@ classdef SimSineSim < SimNoModelMLOnly
         function obj = SimSineSim(simulatorID,...
                                   machine,...
                                   log, notificationSet)
-            addlStdFileList = {};
-            addlCustFileList = {};
             obj = obj@SimNoModelMLOnly(simulatorID,...
-                                        addlStdFileList,...
-                                        addlCustFileList,...
                                         machine,...
                                         log, notificationSet);
             obj.version = '1.0';  % Will be recorded in log
@@ -229,6 +225,10 @@ classdef SimSineSim < SimNoModelMLOnly
                                     [simulation.getID() 'AttachMe.pdf']);
                 copyfile(sourceFile, destFile);
             end
+        end
+        
+        function removeRemoteAspect(obj)
+            removeRemoteAspect@SimNoModelMLOnly(obj);
         end
     end
 end

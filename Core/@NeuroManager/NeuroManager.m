@@ -221,6 +221,12 @@ classdef NeuroManager < handle
         % The SimSet to be processed
         nmSimSet;
         
+        % The configuration to use for creating the ML Compile machine
+        mLCompileConfig;
+        % MATLAB Compiled Files Transfer List - the list of files that need
+        % to be distributed to the machines after single-point compilation
+        MLCFTL; 
+        
         % The configuration of the machine set to set up
         machineSetConfig;
         
@@ -266,6 +272,8 @@ classdef NeuroManager < handle
     
     % ====================
     methods (Access = public)
+%         constructMachineSet(obj, simType) % function defn in separate file
+
         % ----------------
         function obj = NeuroManager(varargin)
         % NeuroManager constructor
@@ -521,47 +529,6 @@ classdef NeuroManager < handle
             result = obj.nmRun(simset);
         end
 
-        % ----------------
-        function constructMachineSet(obj, simType)
-        % Construct the set of machines and their simulators from a
-        % machinesetconfig.
-            % Update the webpage
-            obj.displayStatusWebPage('constructmachine');
-
-            % One host scratch dir for all machines, so all files must be
-            % uniquely named. 
-            obj.log.write(['Constructing machine set.']);
-            if obj.simNotificationSet.isEnabled()
-                notificationSubject = ['Re: NeuroManager Notice'];
-                obj.simNotificationSet.send(notificationSubject,...
-                 ['Constructing machine set.'], '');
-            end
-
-            configStr = obj.machineSetConfig.printToStr;
-            obj.log.write(configStr);
-            obj.machineSet = obj.makeMyMachines(obj.machineScratchDir,...
-                                                simType, ...
-                                                obj.auth);
-            obj.machineSetType = simType;
-            obj.numMachines = length(obj.machineSet);
-
-            % Sit here and poll the machines until they are all ready.
-            % The test drives machine state progression.
-            % This poll delay is hardwired at 10.0 seconds; the simulator
-            % poll delay later in the Run() method is the one set by the
-            % user (we don't want that used here because we want the
-            % machine setup to happen asap).
-             while ~obj.machineSetReady()
-                 pause(10);
-             end
-            obj.log.write(['Machine set ready.']);
-            if obj.simNotificationSet.isEnabled()
-                notificationSubject = ['Re: NeuroManager Notice'];
-                obj.simNotificationSet.send(notificationSubject,...
-                 ['Machine set ready.'], '');
-            end
-
-        end
         
         % -----------------
         function removeMachineSet(obj)
@@ -651,26 +618,46 @@ classdef NeuroManager < handle
         function log = getLog(obj)
             log = obj.log;
         end
-        
+
         % --- Interface for the config class
         function addStandaloneServer(obj, varargin)
-            obj.machineSetConfig.addStandaloneServer(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addStandaloneServer(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
         function addClusterQueue(obj, varargin)
-            obj.machineSetConfig.addClusterQueue(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addClusterQueue(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
         function addCloudServer(obj, varargin)
-            obj.machineSetConfig.addCloudServer(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addCloudServer(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end            
         
         function addWisp(obj, varargin)
-            obj.machineSetConfig.addWisp(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addWisp(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
         function addWispSet(obj, varargin)
-            obj.machineSetConfig.addWispSet(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addWispSet(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
         function removeWisps(obj)
@@ -684,13 +671,22 @@ classdef NeuroManager < handle
         function printConfig(obj)
             obj.machineSetConfig.print();
         end
+        
+        function setSimulatorType(obj, type)
+            % if type valid
+            try
+                obj.machineSetType = type;
+            catch
+                error(['setSimulatorType error: ' type ' is not a valid SimType.']);
+            end
+        end
     end 
     
     
     % ====================
     methods (Access = private)
         result = nmRun(obj, simset) % function defn in separate file
-
+        
         % ---------------
         function addSimulatorToPool(obj, simulator)
         % Puts the input simulator into the simulator pool

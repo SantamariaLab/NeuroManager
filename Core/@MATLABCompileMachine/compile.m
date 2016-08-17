@@ -187,21 +187,11 @@ END OF LICENSE
 % Part of the MATLABCompileMachine class definition.
 % ----------
 % This is not called on the xcompiling machine
-function checkfilePathlist = compile(obj, targetBasedir)
-% Refer to NeuroManagerStaging.xlsx
-    if(obj.xCompilationMachine == 0)
-        compileDir = fullfile(targetBasedir, 'temp');
-        command = ['cd ' path2UNIX(compileDir)...
-                   '; ./' obj.compileShellName];
-        obj.issueMachineCommandDontWait(command, CommandType.JOBSUBMISSION);
-    else
-        % MATLAB compilation done directly in scratch directory on Xcompile machine
-        compileDir = obj.xCompilationScratchDir;
-        command = ['cd ' path2UNIX(compileDir)...
-                   '; ./' obj.compileShellName];
-        obj.xCompilationMachine.issueMachineCommandDontWait(command,...
-                                    CommandType.JOBSUBMISSION);
-    end
+function checkfilePathlist = compile(obj)
+    compileDir = obj.workDir;
+    command = ['cd ' path2UNIX(compileDir)...
+               '; ./' obj.compileShellName];
+    obj.issueMachineCommandDontWait(command, CommandType.JOBSUBMISSION);
     checkfilePathlist{1} =...
         path2UNIX(fullfile(compileDir, 'COMPILESUCCESS'));
     checkfilePathlist{2} =...
