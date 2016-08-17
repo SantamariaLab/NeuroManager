@@ -55,8 +55,8 @@ function constructMachineSet(obj, simType)
     disp('Compile complete')
 %     pause
     MLCM.postCompile();
-    disp('Stopped after postCompile')
-    pause
+    disp('postCompile complete')
+%     pause
 
     
     % Make the machines in the MachineSetConfig

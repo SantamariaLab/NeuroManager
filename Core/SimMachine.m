@@ -187,7 +187,7 @@ END OF LICENSE
 % Defines NeuroManager-like machine stuff, stuff like directory locations,
 % simulators, and state transitions, for use by the subclass machines. 
 % Generic machine stuff like IPaddress is handled by other classes.
-classdef SimMachine < RealMachine
+classdef SimMachine < RealMachine & MATLABMachineInfo
     properties
         config; % Holds customizing details from the SimCore specification
         
@@ -242,12 +242,16 @@ classdef SimMachine < RealMachine
     
     methods (Access = public)
         % ----------------
-        function obj = SimMachine(config, hostID, ~, scratchDir,...
+        function obj = SimMachine(config, hostID, scratchDir,...
                                   simFileSourceDir, custFileSourceDir,...
                                   modelFileSourceDir,...
-                                  simType, ~,...
-                                  auth, log, notificationSet)
+                                  simType, auth, log, notificationSet)
             obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
+            obj = obj@MATLABMachineInfo(config.getCompilerDir(),...
+                                        config.getCompiler(),...
+                                        config.getExecutable(),...
+                                        config.getMcrDir(),...
+                                        config.getXCompDir());
             obj.config = config;
             obj.state = MachineState.INPREPARATION;
             obj.baseDir = config.getWorkDir();          % on the target
@@ -403,10 +407,10 @@ classdef SimMachine < RealMachine
             list = obj.mSimulators;
         end
         
-        % ----------------
-        function dir = getMCRDir(obj)
-            dir = obj.mcrDir;
-        end
+%         % ----------------
+%         function dir = getMCRDir(obj)
+%             dir = obj.mcrDir;
+%         end
         
         % ----------------
         function dir = getScratchDir(obj)

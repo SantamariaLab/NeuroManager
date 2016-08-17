@@ -235,8 +235,11 @@ function tfResult = testCommunications(obj)
     configStr = obj.machineSetConfig.printToStr;
     obj.log.write(configStr);
     for i = 1:obj.machineSetConfig.getNumMachines()
-        [type, numSimulators, ~, config, queueData, ~, ~, ~,...
-            baseDir, ~, ~, ~] = obj.machineSetConfig.getMachine(i);
+%         [type, numSimulators, ~, config, queueData, ~, ~, ~,...
+%             baseDir, ~, ~, ~] = obj.machineSetConfig.getMachine(i);
+        config = obj.machineSetConfig.getMachine(i);
+        type = config.getResourceType();
+        numSimulators = config.getNumSimulators();
         
         % Skip machine if no simulators 
         if ~numSimulators continue; end %#ok<SEPEX>
@@ -245,8 +248,7 @@ function tfResult = testCommunications(obj)
         testMachine = type.commsTestFunc(config, obj.hostMachineData.id,...
                                     obj.hostMachineData.osType,...
                                     obj.machineScratchDir,...
-                                    baseDir, obj.auth, obj.log,...
-                                    queueData);
+                                    obj.auth, obj.log);
         % ...only if that resource hasn't yet been tested
         ID = testMachine.getID();
         commsID = testMachine.getCommsID();

@@ -207,49 +207,40 @@ classdef MachineSetConfig < handle
             obj.log = log;
         end
         
-        
         % -----------
-        function [type, numSimulators, machineName, config,...
-                  queueData, parEnvStr, resourceStr, numNodes, workDir,...
-                  wallClockTime, ipAddr, deleteInstanceWhenDone] =...
-                                                    getMachine(obj, index)
+%         function [type, numSimulators, machineName, config,...
+%                   queueData, parEnvStr, resourceStr, numNodes, workDir,...
+%                   wallClockTime, ipAddr, deleteInstanceWhenDone] =...
+%                                                     getMachine(obj, index)
+        function config = getMachine(obj, index)
             if ((index > obj.numMachines) || (index < 1))
-                type = MachineType.UNASSIGNED;
-                numSimulators = 0;
-                machineName = '';
+%                 type = MachineType.UNASSIGNED;
+%                 numSimulators = 0;
+%                 machineName = '';
                 config = 0;
-                queueData = 0;
-                parEnvStr = '';
-                resourceStr = '';
-                numNodes = 1;
-                workDir = '';
-                wallClockTime = '';
-                ipAddr = '';
-                deleteInstanceWhenDone = false;
+%                 queueData = 0;
+%                 parEnvStr = '';
+%                 resourceStr = '';
+%                 numNodes = 1;
+%                 workDir = '';
+%                 wallClockTime = '';
+%                 ipAddr = '';
+%                 deleteInstanceWhenDone = false;
                 return;
             end
             
-            switch obj.MSConfig(index).resourceType;
-                case 'STANDALONESERVER'
-                    type = MachineType.STANDALONESERVER;
-                case 'CLOUDSERVER'
-                    type = MachineType.CLOUDSERVER;
-                case 'SGECLUSTER'
-                    type = MachineType.SGECLUSTER;
-                case 'SLURMCLUSTER'
-                    type = MachineType.SLURMCLUSTER;
-            end
-            numSimulators = obj.MSConfig(index).getNumSimulators();
-            machineName = obj.MSConfig(index).getMachineName();
+%             type = obj.MSConfig(index).resourceType;
+%             numSimulators = obj.MSConfig(index).getNumSimulators();
+%             machineName = obj.MSConfig(index).getMachineName();
             config = obj.MSConfig(index);
-            queueData = '';
-            parEnvStr = '';
-            resourceStr = '';
-            numNodes = 0;
-            workDir = obj.MSConfig(index).getWorkDir();
-            wallClockTime = 0;
-            ipAddr = obj.MSConfig(index).getIpAddress();
-            deleteInstanceWhenDone = false;
+%             queueData = '';
+%             parEnvStr = '';
+%             resourceStr = '';
+%             numNodes = 0;
+%             workDir = obj.MSConfig(index).getWorkDir();
+%             wallClockTime = 0;
+%             ipAddr = obj.MSConfig(index).getIpAddress();
+%             deleteInstanceWhenDone = false;
         end
         
         % -----------
