@@ -188,6 +188,14 @@ END OF LICENSE
 % addlcustfilelist will change depending on how the user does their Neuron
 % simulations (Use of Python, or not; etc). 
 classdef SimNeuron < ModelFileSim
+    properties (Access=private)
+        extendedSimulatorFileList =...
+                {'createPythonNrnivsh.m', ...
+                 'neuronPythonPrep.m', ...
+                 'runPythonSimulation.m', ...
+                 'createHocOnlyNrnivsh.m', ...
+                 'runHocOnlySimulation.m'};
+    end
     properties
         % We call hoc and mod files both model files, but they have
         % different roles and are treated differently
@@ -225,18 +233,12 @@ classdef SimNeuron < ModelFileSim
     end
     
     methods
-        function obj = SimNeuron(id, addlCustFileList,...
-                                  modFileList, hocFileList,...
-                                  machine, log, notificationSet)
+        function obj = SimNeuron(id, ...
+                                 modFileList, hocFileList,...
+                                 machine, log, notificationSet)
             % Perhaps split this list with two subclasses
-            addlStdFileList =...
-                {'createPythonNrnivsh.m', 'neuronPythonPrep.m',...
-                 'runPythonSimulation.m',...
-                 'createHocOnlyNrnivsh.m', 'runHocOnlySimulation.m'};
             modelFileList = [hocFileList, modFileList];
             obj = obj@ModelFileSim(id,...
-                                   addlStdFileList,...
-                                   addlCustFileList,...
                                    modelFileList,...
                                    machine, log, notificationSet);
             obj.modFileList = modFileList;
@@ -245,11 +247,17 @@ classdef SimNeuron < ModelFileSim
             else
                 obj.noModFiles = false;
             end
+            
             obj.hocFileList = hocFileList;
         end
         % Future: Make this work at this level so that it can work with
         % ModelDB downloaded mod and hoc files without modification.
 
+        % -------------
+        function list = getExtendedSimulatorFileList(obj)
+            list = getExtendedSimulatorFileList@Simulator(obj);
+            list = [list obj.extendedSimulatorFileList];
+        end
         
         % -------------
         function preUploadFiles(obj) 
@@ -290,12 +298,9 @@ classdef SimNeuron < ModelFileSim
         % ------------
         function preRunModelProcPhaseP(obj)
         % Compile the mod files here if appropriate.
-        % See NeuroManagerStaging.xlsx  
             simulation = obj.getSimulation();
             if strcmp(obj.machine.config.modFileCompileLocation, 'P')
-%             preRunModelProcPStr = obj.machine.getCompileNeuronModelFilesStrPhaseP(simulation);
                 preRunModelProcPStr = SimNeuron.getModelFileCompileStr(simulation);
-%                 preRunModelProcPStr = getModelFileCompileStr(simulation);
             else
                 preRunModelProcPStr = '';
             end
@@ -309,19 +314,16 @@ classdef SimNeuron < ModelFileSim
         % Create the command string that will compile the mod files as part
         % of a job submission job file; empty string if no compile; if
         % compile will use the GetModelFileCompileStr function below.
-        % See NeuroManagerStaging.xlsx  
             simulation = obj.getSimulation();
             if strcmp(obj.machine.config.modFileCompileLocation, 'D')
                 str = SimNeuron.getModelFileCompileStr(simulation);
             else
                 str = '';
             end
-%             str = obj.machine.getCompileNeuronModelFilesStrPhaseD(simulation);
-            
         end
         
-        %---------------
-        function delete(obj)
+        
+        function removeRemoteAspect(obj)
             command = ['cd '...
                         path2UNIX(obj.targetBaseDir)...
                         '; rm ' path2UNIX(fullfile(obj.targetBaseDir, '*.m'))...
@@ -332,6 +334,11 @@ classdef SimNeuron < ModelFileSim
                         '; rm ' path2UNIX(fullfile(obj.targetBaseDir, 'runSimulation'))...
                         ];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+            removeRemoteAspect@Simulator(obj);
+        end
+        
+        %---------------
+        function delete(obj)
         end
         
         % ----------------

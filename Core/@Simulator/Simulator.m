@@ -187,6 +187,10 @@ END OF LICENSE
 % The abstract base class for all Simulator classes in the NeuroManager
 % software suite.
 classdef Simulator < handle
+    properties (Access=private)
+          extendedSimulatorFileList;
+          addlCustomFileList;
+    end
     properties
         % Each Simulator has its own ID which will be used in directory
         % names, notifications, logs, and the like.
@@ -200,7 +204,7 @@ classdef Simulator < handle
 %         stdUploadFiles; 
         baseSimulatorFileList;
         
-        extendedSimulatorFileList;
+%         extendedSimulatorFileList;
         
         % User-supplied UserSimulation.m
         reqdCustomFileList;
@@ -208,7 +212,7 @@ classdef Simulator < handle
         
         % Additional User-supplied simulator files
 %         addlCustUploadFiles; 
-        addlCustomFileList;
+%         addlCustomFileList;
         
         % Full path of simulator's basedir on target machine
         targetBaseDir;
@@ -256,6 +260,7 @@ classdef Simulator < handle
         preRunModelProcPhaseH(obj)
         preRunModelProcPhaseP(obj)
         preRunModelProcPhaseD(obj)
+        uploadModelAspect(obj)
     end
    
     methods
@@ -407,9 +412,8 @@ classdef Simulator < handle
 %                        path2UNIX(obj.machine.getSimulatorCommonFilesPath())];
 %             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
             
-            % Transfer in the model files
-            % Not necessary (???); important to copy model files in before each
-            % simulation to ensure they are pristine for each simulation
+            % Transfer in any model files
+            obj.uploadModelAspect();
             
             % now Simulator is ready for operation
             obj.state = SimulatorState.AVAILABLE;

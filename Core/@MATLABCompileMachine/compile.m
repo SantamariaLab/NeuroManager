@@ -196,7 +196,6 @@ function compile(obj)
     checkfilePathlist{2} =...
         path2UNIX(fullfile(compileDir, 'COMPILEFAILURE'));
     
-    disp('Waiting for compile')
     while(1)
         result = obj.checkForCheckfileList(checkfilePathlist);
         if result(1) 

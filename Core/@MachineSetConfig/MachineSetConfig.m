@@ -214,33 +214,10 @@ classdef MachineSetConfig < handle
 %                                                     getMachine(obj, index)
         function config = getMachine(obj, index)
             if ((index > obj.numMachines) || (index < 1))
-%                 type = MachineType.UNASSIGNED;
-%                 numSimulators = 0;
-%                 machineName = '';
                 config = 0;
-%                 queueData = 0;
-%                 parEnvStr = '';
-%                 resourceStr = '';
-%                 numNodes = 1;
-%                 workDir = '';
-%                 wallClockTime = '';
-%                 ipAddr = '';
-%                 deleteInstanceWhenDone = false;
                 return;
             end
-            
-%             type = obj.MSConfig(index).resourceType;
-%             numSimulators = obj.MSConfig(index).getNumSimulators();
-%             machineName = obj.MSConfig(index).getMachineName();
             config = obj.MSConfig(index);
-%             queueData = '';
-%             parEnvStr = '';
-%             resourceStr = '';
-%             numNodes = 0;
-%             workDir = obj.MSConfig(index).getWorkDir();
-%             wallClockTime = 0;
-%             ipAddr = obj.MSConfig(index).getIpAddress();
-%             deleteInstanceWhenDone = false;
         end
         
         % -----------
@@ -268,7 +245,7 @@ classdef MachineSetConfig < handle
             str = [str sprintf('%s\n', 'MachineSetConfig:')];
             for i = 1:obj.numMachines
                 str = [str ...
-                    sprintf('%u: %s %s %s\t\t %u %s %s\n', i,...
+                    sprintf('%u: %s %s %s\t\t %u %s\n', i,...
                     char(obj.MSConfig(i).getResourceType()),...
                     obj.MSConfig(i).getResourceName(),...
                     obj.MSConfig(i).getMachineName(),...

@@ -14,9 +14,9 @@ function addWisp(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
+    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'wispName', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -25,7 +25,7 @@ function addWisp(obj, varargin)
     
     wispName                = p.Results.wispName;
     wispInfoFile            = p.Results.wispInfoFile;
-    simType           = p.Results.simulatorType;
+    simType                 = p.Results.simulatorType;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -92,7 +92,7 @@ function addWisp(obj, varargin)
     % Create a blank config so we can do the compatibility checks
     i = obj.numMachines+1;
     obj.MSConfig(i) = CloudConfig('');
-    obj.MSConfig(i).isWisp = true;
+    obj.MSConfig(i).isEphemeral = true;
 	obj.MSConfig(i).cloudInfoFile = cloudInfoFileName;
     obj.MSConfig(i).infoData = cloudInfo;
     obj.MSConfig(i).resourceName = cloudInfo.resourceName;

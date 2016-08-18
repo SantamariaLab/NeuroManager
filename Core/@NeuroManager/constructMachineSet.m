@@ -1,5 +1,5 @@
 % ----------------
-function constructMachineSet(obj, simType)
+function constructMachineSet(obj)
 % Construct the set of machines and their simulators from a
 % machinesetconfig.
     % Update the webpage
@@ -16,7 +16,7 @@ function constructMachineSet(obj, simType)
     configStr = obj.machineSetConfig.printToStr;
     obj.log.write(configStr);
 
-    obj.machineSetType = simType;
+%     obj.machineSetType = simType;
 
     % Perform the MATLAB Compilation
     % MLCM = MATLAB Compile Machine
@@ -30,7 +30,7 @@ function constructMachineSet(obj, simType)
                 obj.auth, obj.log, obj.simNotificationSet);
     obj.MLCFTL = MLCM.getCompilationFileTransferList();
     MLCM.gatherFiles(obj.simCoreDir, obj.customSimDir);
-    MLCM.preCompile();
+    compVersionStr = MLCM.preCompile();
     MLCM.compile();
     MLCM.postCompile();
     MLCM.delete();

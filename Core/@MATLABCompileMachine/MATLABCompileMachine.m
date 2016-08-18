@@ -253,8 +253,8 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
             copyFileListToDirectory(baseListNonComp, coreDir, obj.toUploadDir);
 
             [extListComp, extListNonComp]= splitFileList(dummySim.getExtendedSimulatorFileList())
-            copyFileListToDirectory(extListComp, customDir, obj.ML2CompileDir);
-            copyFileListToDirectory(extListNonComp, customDir, obj.toUploadDir);
+            copyFileListToDirectory(extListComp, coreDir, obj.ML2CompileDir);
+            copyFileListToDirectory(extListNonComp, coreDir, obj.toUploadDir);
             
             [reqdCustListComp, reqdCustListNonComp] = splitFileList(dummySim.getReqdCustomFileList())
             copyFileListToDirectory(reqdCustListComp, customDir, obj.ML2CompileDir);
@@ -264,18 +264,13 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
             copyFileListToDirectory(addlCustListComp, customDir, obj.ML2CompileDir);
             copyFileListToDirectory(addlCustListNonComp, customDir, obj.toUploadDir);
             dummySim.delete();
-            obj.files2Compile = [baseListComp extListComp reqdCustListComp addlCustListComp]
-            obj.files2Upload =  [baseListNonComp extListNonComp reqdCustListNonComp addlCustListNonComp]
+            obj.files2Compile = [baseListComp extListComp reqdCustListComp addlCustListComp];
+            files2Compile = obj.files2Compile
+            obj.files2Upload =  [baseListNonComp extListNonComp reqdCustListNonComp addlCustListNonComp];
+            files2Upload = obj.files2Upload
         end
         
-%         function upload4Compile(obj)
-%             obj.fileListToMachine(obj.files2Compile,...
-%                                   obj.ML2CompileDir,...
-%                                   obj.xCompDir);
-%         end
-
-
-        
+       
         % --------
         % Path conversion already done in the machine-specific Compile method 
         function setCompileCheckfilePath(obj, pathList)
@@ -339,6 +334,9 @@ end
 
 % Temp HANDLE ERRORS SOON
 function copyFileListToDirectory(list, sourceDir, destDir)
+    list 
+    sourceDir
+    destDir
     if ~isempty(list)
         numFiles = length(list);
         for i=1:numFiles

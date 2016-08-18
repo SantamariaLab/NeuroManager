@@ -3,7 +3,7 @@ function removeWisps(obj)
 % machineSetConfig that have the isWisp property = true.
     for i = 1:obj.numMachines
         if strcmp(obj.MSConfig(i).resourceType, 'CLOUDSERVER')
-            if obj.MSConfig(i).isWisp
+            if obj.MSConfig(i).isWisp()
                 % Load up the cloud info to determine which constructor to use
                 wispCloudInfo = loadjson(obj.MSConfig(i).cloudInfoFile);
                 wispCloudType = ...

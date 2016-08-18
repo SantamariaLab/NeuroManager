@@ -238,7 +238,7 @@ function tfResult = testCommunications(obj)
 %         [type, numSimulators, ~, config, queueData, ~, ~, ~,...
 %             baseDir, ~, ~, ~] = obj.machineSetConfig.getMachine(i);
         config = obj.machineSetConfig.getMachine(i);
-        type = config.getResourceType()
+        type = config.getResourceType();
         numSimulators = config.getNumSimulators();
         
         % Skip machine if no simulators 

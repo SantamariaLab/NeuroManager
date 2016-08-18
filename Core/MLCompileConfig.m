@@ -36,9 +36,6 @@ classdef MLCompileConfig  < MachineConfig
             obj.id = obj.machineName;
             obj.commsID = obj.resourceName;
             
-            obj.compilerDir
-            obj.compiler
-            obj.xCompDir
             if (isempty(obj.compilerDir) || ...
                 isempty(obj.compiler) || isempty(obj.xCompDir))
                 error(['Infofile ' infoFile ...

@@ -287,6 +287,7 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             destDir = obj.getSimulatorCommonFilesPath();
             obj.fileListToMachine(compilationFileTransferList,...
                                   sourcedir, destDir);
+                              
             % Change permissions
             % Later do this in Simulator.m after transfer to Simulator base  FIX THIS
             command = '';
@@ -297,9 +298,15 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             end
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
             
-            % Upload model and other non-compiled simulator-specific files
-            % (Implement next)
-            % NOT COMPLETE
+            % Upload non-compiled (non-m-file) simulator-specific files
+            % from baseSimulatorFileList, extendedSimulatorFileList,
+            % reqdCustomFileList, and addlCustomFileList
+            sourcedir = fullfile(obj.scratchDir, 'ToUpload');   % Define this elsewhere
+            destDir = obj.getSimulatorCommonFilesPath();
+            toUploadFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+            obj.fileListToMachine(toUploadFileTransferList,...
+                                  sourcedir, destDir);
+            
             
             % Build the simulators
             obj.mSimulators = {}; 
@@ -462,6 +469,7 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         function delete(obj)
         % Machine destructor first removes the component simulators
             for i = 1:obj.numSimulators
+%                 obj.mSimulators{i}.removeRemoteAspect();
                 obj.mSimulators{i}.delete();
             end
             
@@ -501,6 +509,26 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             command = ['mkdir ' path2UNIX(obj.simCommonFilesPath)];
             result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
             obj.simCommonFilesReady = false; 
+        end
+    end
+    methods (Static)
+        function list = listFilesInFolder(folder)
+            a = dir(folder);
+            if size(a,1) <= 2
+                list = {};
+                return
+            end
+            a = a(3:end);  % Remove . and ..
+            lena = size(a,1);
+            list = {};
+            bindex = 1;
+            for i=1:lena
+                if ~a(i).isdir
+                    q = a(i).name;
+                    list{bindex}= q;  %#ok<AGROW>
+                    bindex = bindex+1;
+                end
+            end
         end
     end
 end

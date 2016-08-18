@@ -205,6 +205,9 @@ END OF LICENSE
 % in UserSimulation.  Then all our subclasses need to do is override the
 % biomech construction.
 classdef SimNeurPurkinjeMiyasho2001 < SimNeuron
+    properties(Access=private)
+        addlCustomFileList = {'PySim.py'};
+    end
     properties
         morphFile;    % apparently not used
         nonMorphFile; % apparently not used
@@ -215,7 +218,6 @@ classdef SimNeurPurkinjeMiyasho2001 < SimNeuron
         function obj = SimNeurPurkinjeMiyasho2001(id, machine,...
                                                   log, notificationSet)
             % The list of published mod files 
-            addlCustFileList = {'PySim.py'};
             modFileList = {'CaEdbs.mod', 'CalciumP.mod', 'CaP.mod',...
                            'CaP2.mod', 'CaT.mod', 'K2.mod',...
                            'K22.mod', 'K23.mod', 'KA.mod',...
@@ -224,10 +226,17 @@ classdef SimNeurPurkinjeMiyasho2001 < SimNeuron
                            'Khh.mod', 'KM.mod', 'Leak.mod',...
                            'NaF.mod', 'NaP.mod'};
             hocFileList = {'purkinje_MORPH.hoc'};
-            obj = obj@SimNeuron(id, addlCustFileList, modFileList,...
-                                hocFileList, machine, log, notificationSet);
+            obj = obj@SimNeuron(id, modFileList, hocFileList, ...
+                                machine, log, notificationSet);
             obj.version = '1.0';  % Will be recorded in log
         end
+        
+        % -------------
+        function list = getAddlCustomFileList(obj)
+            list = getAddlCustomFileList@Simulator(obj);
+            list = [list obj.addlCustomFileList];
+        end
+
         
         % -----------
         function preRunModelProcPhaseHModFileModification(obj, simulation)  %#ok<INUSD>

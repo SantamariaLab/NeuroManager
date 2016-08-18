@@ -199,26 +199,19 @@ classdef ModelFileSim < Simulator
     end
     
     methods
-        function obj = ModelFileSim(id,...
-                                    addlStdFileList,...
-                                    addlCustFileList,...
-                                    modelFileList,...
-                                    machine,...
+        function obj = ModelFileSim(id, modelFileList, machine,...
                                     log, notificationSet)
-            obj = obj@Simulator(id,...
-                          addlStdFileList,...
-                          addlCustFileList,...
-                          machine,...
-                          log, notificationSet);
-                      
+            obj = obj@Simulator(id, machine, log, notificationSet);
             obj.setModelFilesUploaded(false);
             obj.modelUploadFiles = modelFileList;
-            
+        end
+        
+        function uploadModelAspect(obj)
             % Upload Model Files for each simulator and do the 
             % Post Model Files Upload
-             obj.uploadModelFiles();
-             obj.postModelFilesUpload();
-        end
+            obj.uploadModelFiles();    
+            obj.postModelFilesUpload();
+        end            
         
         % ----------------
         function tfstate = modelFilesUploaded(obj)
