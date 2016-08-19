@@ -229,7 +229,9 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         % created to make them, store them in the simulator common
         % directory, and set the switch. 
         simCommonFilesReady = false; 
-        simCommonFilesPath = ''; % On target
+        simModelRespositoryReady = false; 
+        simCommonFilesPath = '';      % On remote
+        simModelRepositoryPath = '';  % on remote
         
         log;                % Global log for the simulation session
         notificationSet;    % Global notifies for the simulation session
@@ -281,15 +283,16 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             obj.fileToMachine(sourceFile,...
                               fullfile(destDir, 'MachineData.dat'));
             
+            % [uploadCompiledFiles] 
             % Upload ML Compiled files to SimulatorCommons
             compilationFileTransferList = {'runSimulation','run_runSimulation.sh'};   % Pull this from NeuroManager, don't define here
-            sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                   % Define this elsewhere
+            sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                       % Pull this from NeuroManager, don't define here
             destDir = obj.getSimulatorCommonFilesPath();
             obj.fileListToMachine(compilationFileTransferList,...
                                   sourcedir, destDir);
-                              
+
+            % [postUploadCompiledFiles] 
             % Change permissions
-            % Later do this in Simulator.m after transfer to Simulator base  FIX THIS
             command = '';
             for i = 1:length(compilationFileTransferList)
                 command = [command 'chmod +x ' ...
@@ -301,12 +304,18 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             % Upload non-compiled (non-m-file) simulator-specific files
             % from baseSimulatorFileList, extendedSimulatorFileList,
             % reqdCustomFileList, and addlCustomFileList
-            sourcedir = fullfile(obj.scratchDir, 'ToUpload');   % Define this elsewhere
+            sourcedir = fullfile(obj.scratchDir, 'ToUpload');                           % Pull this from NeuroManager, don't define here
             destDir = obj.getSimulatorCommonFilesPath();
             toUploadFileTransferList = SimMachine.listFilesInFolder(sourcedir);
             obj.fileListToMachine(toUploadFileTransferList,...
                                   sourcedir, destDir);
-            
+                              
+            % Upload simulator-specific model files
+            sourcedir = fullfile(obj.scratchDir, 'ToModelRepo');                        % Pull this from NeuroManager, don't define here
+            destDir = obj.getModelRepositoryPath();
+            toModelRepoFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+            obj.fileListToMachine(toModelRepoFileTransferList,...
+                                  sourcedir, destDir);
             
             % Build the simulators
             obj.mSimulators = {}; 
@@ -455,6 +464,10 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             path = obj.simCommonFilesPath;
         end
          
+        % ----------------
+        function path = getModelRepositoryPath(obj)
+            path = obj.simModelRepositoryPath;
+        end
         
         % ----------
         function uploadModelSimulatorFiles(obj, fileList, destDir)
@@ -472,13 +485,13 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
 %                 obj.mSimulators{i}.removeRemoteAspect();
                 obj.mSimulators{i}.delete();
             end
-            
-            % The Simulator common file directory and contents...
-            command = ['cd ' path2UNIX(obj.simCommonFilesPath) ...
-                '; rm ' path2UNIX(fullfile(obj.simCommonFilesPath, '*'))...
-                '; cd ..; rmdir ' path2UNIX(obj.simCommonFilesPath)...
-                ';'];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+% TEMP FOR DEBUG            
+%             % The Simulator common file directory and contents...
+%             command = ['cd ' path2UNIX(obj.simCommonFilesPath) ...
+%                 '; rm ' path2UNIX(fullfile(obj.simCommonFilesPath, '*'))...
+%                 '; cd ..; rmdir ' path2UNIX(obj.simCommonFilesPath)...
+%                 ';'];
+%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
     end
     
@@ -505,9 +518,16 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
 
             % Create the place where the simulator common files will
             % reside. (process the result - NOT IMPLEMENTED YET)
-            obj.simCommonFilesPath = fullfile(obj.baseDir, 'SimulatorCommon');
+            obj.simCommonFilesPath = fullfile(obj.baseDir, 'SimulatorCommon');      % where is this defined?  Get it from there
             command = ['mkdir ' path2UNIX(obj.simCommonFilesPath)];
             result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+
+            % Create the place where the simulator model files will
+            % reside. (process the result - NOT IMPLEMENTED YET)
+            obj.simModelRepositoryPath = fullfile(obj.baseDir, 'ModelRepository');  % where is this defined?  Get it from there
+            command = ['mkdir ' path2UNIX(obj.simModelRepositoryPath)];
+            result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            
             obj.simCommonFilesReady = false; 
         end
     end

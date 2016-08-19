@@ -193,6 +193,9 @@ END OF LICENSE
 % simulation-dependent Kh values before shipping it to the remote.
 %
 classdef SimNeurPurkinjeMiyasho2001Kh < SimNeurPurkinjeMiyasho2001
+    properties(Access=private)
+        hocFileList = {};  % added to dynamically
+    end
     properties
         %Version; Already defined in SimNeurPurkinjeMiyasho2001
     end

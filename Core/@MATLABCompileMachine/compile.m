@@ -187,14 +187,12 @@ END OF LICENSE
 % Part of the MATLABCompileMachine class definition.
 % Waits for compilation to finish
 function compile(obj)
-    compileDir = obj.xCompDir;
-    command = ['cd ' path2UNIX(compileDir)...
-               '; ./' obj.compileShellName];
+    command = ['cd ' path2UNIX(obj.xCompDir) '; ./' obj.compileShellName];
     obj.issueMachineCommandDontWait(command, CommandType.JOBSUBMISSION);
     checkfilePathlist{1} =...
-        path2UNIX(fullfile(compileDir, 'COMPILESUCCESS'));
+        path2UNIX(fullfile(obj.xCompDir, 'COMPILESUCCESS'));
     checkfilePathlist{2} =...
-        path2UNIX(fullfile(compileDir, 'COMPILEFAILURE'));
+        path2UNIX(fullfile(obj.xCompDir, 'COMPILEFAILURE'));
     
     while(1)
         result = obj.checkForCheckfileList(checkfilePathlist);

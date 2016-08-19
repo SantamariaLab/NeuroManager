@@ -368,9 +368,22 @@ classdef Simulation < handle
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
             obj.setTargetDirs(simDirName, inputDirName, outputDirName);
 
+            % Move the model files into the input directory (change this
+            % soon)
+            obj.transferModelFiles();
+            
             % Pre Run Upload Simulation Data Files Stage (defined just
             % below)
             obj.uploadInputDataFiles();
+        end
+        
+        % ---
+        function transferModelFiles(obj)
+        % Move model files from SimulationCommon to the input directory
+        % Needs redesign (using simulationbase/model) but ok for now.
+            command = ['cp ' path2UNIX(fullfile(obj.simulator.getSimulationCommonDir(), '*')) ...
+                       ' ' path2UNIX(obj.getTargetInputDir())];
+            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
         % -------------

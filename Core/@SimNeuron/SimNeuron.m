@@ -195,20 +195,15 @@ classdef SimNeuron < ModelFileSim
                  'runPythonSimulation.m', ...
                  'createHocOnlyNrnivsh.m', ...
                  'runHocOnlySimulation.m'};
-    end
-    properties
+
         % We call hoc and mod files both model files, but they have
         % different roles and are treated differently
         
-        % These are the *.mod files
-        modFileList;
-        % Will be true if mod files list is empty; in that case if a mod
-        % file is created on the fly then this must be set to true in order
-        % for mod files to be compiled and used
-        noModFiles;  % t/f
+        % These are the *.mod files but it is subclasses that add content
+        modFileList = {};
         
-        % These are the *.hoc files
-        hocFileList;
+        % These are the *.hoc files but it is subclasses that add content
+        hocFileList = {};
         
         % Perhaps should have a PythonFileList? 
     end
@@ -233,37 +228,43 @@ classdef SimNeuron < ModelFileSim
     end
     
     methods
-        function obj = SimNeuron(id, ...
-                                 modFileList, hocFileList,...
-                                 machine, log, notificationSet)
-            % Perhaps split this list with two subclasses
-            modelFileList = [hocFileList, modFileList];
-            obj = obj@ModelFileSim(id,...
-                                   modelFileList,...
-                                   machine, log, notificationSet);
-            obj.modFileList = modFileList;
-            if isempty(obj.modFileList)
-                obj.noModFiles = true;
-            else
-                obj.noModFiles = false;
-            end
-            
-            obj.hocFileList = hocFileList;
+        function obj = SimNeuron(id, machine, log, notificationSet)
+            obj = obj@ModelFileSim(id, machine, log, notificationSet);
         end
         % Future: Make this work at this level so that it can work with
         % ModelDB downloaded mod and hoc files without modification.
 
-        % -------------
+        % ---
         function list = getExtendedSimulatorFileList(obj)
             list = getExtendedSimulatorFileList@Simulator(obj);
             list = [list obj.extendedSimulatorFileList];
         end
         
-        % -------------
+        % ---
+        function tf = noModFiles(obj)
+            tf = isempty(obj.getModFileList());
+        end
+        
+        % ---
+        function hocFileList = getHocFileList(obj)
+            hocFileList = obj.hocFileList;
+        end
+        
+        % ---
+        function list = getModFileList(obj)
+            list = obj.modFileList;
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = getModelFileList@ModelFileSim(obj);
+            list = [list obj.getModFileList() obj.getHocFileList()];
+        end
+        
+        % ---
         function preUploadFiles(obj) 
         % Simulator aspect to preUploadFiles
             % Neuron version
-            
             command = [path2UNIX(fullfile(obj.machine.config.neuronDir,...
                                  obj.machine.config.binExt, 'nrniv')) ' --version'];
             result = obj.machine.issueMachineCommand(command,...
@@ -321,7 +322,6 @@ classdef SimNeuron < ModelFileSim
                 str = '';
             end
         end
-        
         
         function removeRemoteAspect(obj)
             command = ['cd '...

@@ -16,8 +16,7 @@ function constructMachineSet(obj)
     configStr = obj.machineSetConfig.printToStr;
     obj.log.write(configStr);
 
-%     obj.machineSetType = simType;
-
+    
     % Perform the MATLAB Compilation
     % MLCM = MATLAB Compile Machine
     % Ignore compiler compatibility for now
@@ -25,12 +24,19 @@ function constructMachineSet(obj)
     obj.log.write(['Beginning MATLAB compilation.']);
     config = obj.mLCompileConfig.getMachine();
     MLCM = MATLABCompileMachine(config, obj.machineSetType, ...
-                obj.machineScratchDir, ...
+                obj.machineScratchDir,  obj.ML2CompileDir, ...
+                obj.toUploadDir, obj.MLCompiledDir,...
                 obj.hostMachineData.id, obj.hostMachineData.osType, ...
                 obj.auth, obj.log, obj.simNotificationSet);
+
     obj.MLCFTL = MLCM.getCompilationFileTransferList();
-    MLCM.gatherFiles(obj.simCoreDir, obj.customSimDir);
-    compVersionStr = MLCM.preCompile();
+
+    % preUploadFiles() 
+    % Need a machine to host the dummy simulator so do it here in the
+    % middle of the compilation sequence (a little wonky but leave it for now)
+    obj.preUploadFiles(MLCM);
+    
+    compVersionStr = MLCM.preCompile(obj.files2Compile);
     MLCM.compile();
     MLCM.postCompile();
     MLCM.delete();

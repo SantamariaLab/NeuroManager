@@ -191,29 +191,31 @@ classdef NoModelFileSim < Simulator
             obj = obj@Simulator(id, machine, log, notificationSet);
         end
         
-        function uploadModelAspect(obj)
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = {};
+        end
+        
+        % ---
+        function refreshModelFiles(obj)
             % Nothing to do because no model files
         end            
         
-        % ----------
+        % ---
         function preRunModelProcPhaseH(obj) %#ok<*MANU>
             % Nothing to do because no model files
         end
         
-        % ----------
+        % ---
         function preRunModelProcPhaseP(obj)
             % Nothing to do because no model files
         end
         
-        % ----------
+        % ---
         function str = preRunModelProcPhaseD(obj)
             % Nothing to do because no model files
             str = '';
-        end
-        
-        % ----------
-        function removeRemoteAspect(obj)
-            removeRemoteAspect@Simulator(obj);
         end
     end
 end

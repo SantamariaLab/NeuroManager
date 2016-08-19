@@ -193,13 +193,14 @@ function preRunModelProcPhaseH(obj)
     inDir = simulation.getTargetInputDir();
     outDir = simulation.getTargetOutputDir();
 
-    % Copy *.mod files from simulator common into simulation input dir
-    obj.machine.remoteCopy(obj.getTargetCommonDir(),...
+    % Renew the SimulationCommon files (rework)
+    obj.refreshModelFiles();
+    
+    % Copy *.mod files from simulation common into simulation input dir
+    obj.machine.remoteCopy(obj.getSimulationCommonDir(),...
                            inDir, obj.modFileList);
 
     % Modify or create/upload new mod files, as required 
-    % Note: if this routine creates a new mod file then it must set
-    % obj.NoModFiles to false.
     obj.preRunModelProcPhaseHModFileModification(simulation);
 
     %--
@@ -214,7 +215,7 @@ function preRunModelProcPhaseH(obj)
                         'and will be overwritten.']);
     % Note: If there are no mod files to process at this point, then no
     % need to run nrnivmodl, but we preserve the flow of things
-    if obj.noModFiles
+    if obj.noModFiles()
         fprintf(f, '%s\n', ['touch NOMODFILESTOCOMPILE; echo 0; exit 0']);
     else
         fprintf(f, '%s\n', ['export PATH=' ...
@@ -250,9 +251,9 @@ function preRunModelProcPhaseH(obj)
     obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
     
     % Copy *.hoc files into simulation input dir
-    obj.machine.remoteCopy(obj.targetCommonDir,...
+    obj.machine.remoteCopy(obj.simulationCommonDir,...
                            simulation.getTargetInputDir(),...
-                           obj.hocFileList);
+                           obj.getHocFileList());
 
     % Modify them or create new hoc files then upload them to the
     % input dir, as required 
@@ -265,5 +266,5 @@ function preRunModelProcPhaseH(obj)
     % user has added any newly created hoc files to obj.HocFileList
     obj.machine.remoteCopy(simulation.getTargetInputDir(),...
                            obj.targetBaseDir,...
-                           obj.hocFileList);
+                           obj.getHocFileList());
 end

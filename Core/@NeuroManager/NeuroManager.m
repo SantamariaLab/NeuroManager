@@ -226,6 +226,9 @@ classdef NeuroManager < handle
         % MATLAB Compiled Files Transfer List - the list of files that need
         % to be distributed to the machines after single-point compilation
         MLCFTL; 
+        files2Compile;      % Not sure if need this
+        files2Upload;       % Not sure if need this
+        modelFiles2Upload;  % Not sure if need this 
         
         % The configuration of the machine set to set up
         machineSetConfig;
@@ -241,6 +244,10 @@ classdef NeuroManager < handle
         numMachines;
         % The host working location for machines to make files, etc
         machineScratchDir;
+        ML2CompileDir;  % Holds remote-destined-m-files for MATLAB compilation
+        MLCompiledDir;  % Holds MATLAB compilation products before upload
+        toUploadDir;    % Holds remote-destined-non-m-files before upload
+        toModelRepoDir; % Holds remote-destined model files before upload
         
         % The set of Simulators NeuroManager has available for running sims
         simulatorPool;
@@ -396,13 +403,26 @@ classdef NeuroManager < handle
             % Web page display controls
             obj.showWebPage = p.Results.showWebPage;
             
-            % Make the machine scratch directory
+            % Make the machine scratch directory and subdirectories
             obj.machineScratchDir = fullfile(obj.simResultsDir, 'MachineScratch');
             [status, ~, ~] =  mkdir(obj.machineScratchDir);
             if ~status
                 ME = MException('ClassdefNeuroManager:machineScratchDirMakeFailure', ...
                                 ['NeuroManager: Could not create Machine Scratch Directory '...
                                  obj.machineScratchDir '.']);
+                throw(ME);
+            end
+            obj.ML2CompileDir = fullfile(obj.machineScratchDir, 'ML2Compile');
+            [status1, ~, ~] = mkdir(obj.ML2CompileDir);               
+            obj.toUploadDir = fullfile(obj.machineScratchDir, 'ToUpload');
+            [status2, ~, ~] = mkdir(obj.toUploadDir);                 
+            obj.toModelRepoDir = fullfile(obj.machineScratchDir, 'ToModelRepo');
+            [status3, ~, ~] = mkdir(obj.toModelRepoDir);                 
+            obj.MLCompiledDir = fullfile(obj.machineScratchDir, 'MLCompiled');
+            [status4, ~, ~] = mkdir(obj.MLCompiledDir);               
+            if ~(status1 && status2 && status3 && status4)
+                ME = MException('ClassdefNeuroManager:machineScratchDirMakeFailure', ...
+                                ['NeuroManager: Could not create Machine Scratch SubDirectory.']);
                 throw(ME);
             end
             
@@ -686,6 +706,8 @@ classdef NeuroManager < handle
     % ====================
     methods (Access = private)
         result = nmRun(obj, simset) % function defn in separate file
+        %gatherFiles(obj, coreDir, customDir)
+        preUploadFiles(obj, machine) % function defn in separate file
         
         % ---------------
         function addSimulatorToPool(obj, simulator)
@@ -708,5 +730,10 @@ classdef NeuroManager < handle
                 end
             end
         end
+    end
+    methods(Static)
+        % function defn in separate file
+        %copyFileListToDirectory(list, sourceDir, destDir)
+        %[mfileList, nonMfileList] = splitFileList(fileList)
     end
 end

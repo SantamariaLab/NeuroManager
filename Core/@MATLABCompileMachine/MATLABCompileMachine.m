@@ -190,6 +190,7 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
         machineScratch;            % on the host
         ML2CompileDir;
         toUploadDir;
+        MLCompiledDir;
         files2Compile;
         files2Upload; % i.e., to each machine
         log;
@@ -209,9 +210,10 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
     end
     
     methods
-        function obj = MATLABCompileMachine(config, simType, scratchDir, ...
-                                            hostID, hostOs, ...
-                                            auth, log, notificationSet)
+        function obj = MATLABCompileMachine(config, simType, ...
+                                scratchDir, ML2CompileDir, toUploadDir, MLCompiledDir, ...
+                                hostID, hostOs, ...
+                                auth, log, notificationSet)
             obj = obj@NoSubMachine(config, hostID, hostOs, auth);
             obj = obj@MATLABMachineInfo(config.getCompilerDir(),...
                             config.getCompiler(),...
@@ -219,57 +221,20 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
                             config.getMcrDir(),...
                             config.getXCompDir());
 
-            % These are for this machine
             obj.compileCheckfilePathSuccess = ''; % Set during Compile()
             obj.compileCheckfilePathFailure = ''; % Set during Compile()
             obj.compilationFileTransferList =...
                             {'runSimulation', 'run_runSimulation.sh'};  % This is the original definition 
             obj.simType = simType;
             obj.machineScratch = scratchDir;
+            obj.ML2CompileDir = ML2CompileDir;
+            obj.toUploadDir = toUploadDir;
+            obj.MLCompiledDir = MLCompiledDir;
             obj.log = log;
             obj.notificationSet = notificationSet;
         end
         
-        function gatherFiles(obj, coreDir, customDir)
-            % coreDir is where the baseSimulatorFiles are located;
-            % customDir is where the custom files are located
-            % Create a directory in machineScratch to hold the m-files for
-            % compilation
-            obj.ML2CompileDir = fullfile(obj.machineScratch, 'ML2Compile');
-            mkdir(obj.ML2CompileDir); % TEST FOR ERROR HERE
-            obj.toUploadDir = fullfile(obj.machineScratch, 'ToUpload');
-            mkdir(obj.toUploadDir); % TEST FOR ERROR HERE
-            
-            % Create a dummy host-only Simulator of the proper type in
-            % order to determine files to compile and place them in the 
-            simulatorID = 'dummy4compile';
-            type = obj.simType;
-            dummySim  = type.constrFunc(simulatorID, obj,...
-                                        obj.log, obj.notificationSet);
-            % Query the simulator for the files to compile and to upload
-            % separately from compilation
-            [baseListComp, baseListNonComp] = splitFileList(dummySim.getBaseSimulatorFileList())
-            copyFileListToDirectory(baseListComp, coreDir, obj.ML2CompileDir);
-            copyFileListToDirectory(baseListNonComp, coreDir, obj.toUploadDir);
 
-            [extListComp, extListNonComp]= splitFileList(dummySim.getExtendedSimulatorFileList())
-            copyFileListToDirectory(extListComp, coreDir, obj.ML2CompileDir);
-            copyFileListToDirectory(extListNonComp, coreDir, obj.toUploadDir);
-            
-            [reqdCustListComp, reqdCustListNonComp] = splitFileList(dummySim.getReqdCustomFileList())
-            copyFileListToDirectory(reqdCustListComp, customDir, obj.ML2CompileDir);
-            copyFileListToDirectory(reqdCustListNonComp, customDir, obj.toUploadDir);
-            
-            [addlCustListComp, addlCustListNonComp] = splitFileList(dummySim.getAddlCustomFileList())
-            copyFileListToDirectory(addlCustListComp, customDir, obj.ML2CompileDir);
-            copyFileListToDirectory(addlCustListNonComp, customDir, obj.toUploadDir);
-            dummySim.delete();
-            obj.files2Compile = [baseListComp extListComp reqdCustListComp addlCustListComp];
-            files2Compile = obj.files2Compile
-            obj.files2Upload =  [baseListNonComp extListNonComp reqdCustListNonComp addlCustListNonComp];
-            files2Upload = obj.files2Upload
-        end
-        
        
         % --------
         % Path conversion already done in the machine-specific Compile method 
@@ -300,6 +265,7 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
         
         % --------
         function delete(obj) 
+% Temporarily commented for troubleshooting
 %              if (obj.xCompilationMachine ~= 0)
 %                 command = ['cd ' obj.xCompilationScratchDir '; '...
 %                            'rm *.m; rm *.log, rm *.txt; rm *.log; rm *.sh;'...
@@ -314,39 +280,39 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
     end  
 end
 
-% SplitFileList
-% A utility function that splits a list of filenames into those
-% that are *.m filenames and those that are not. All lists are cell arrays.
-function [mfileList, nonMfileList] = splitFileList(fileList)
-    % Cell arrays appear to make this approach necessary.
-    j = 1; k = 1;
-    nonMfileList = {}; mfileList = {};
-    for i=1:length(fileList)
-        if isempty(regexp(fileList{i}, '^\w*\.m$', 'once'))
-            nonMfileList{j} = fileList{i}; %#ok<AGROW>
-            j = j+1;
-        else
-            mfileList{k} = fileList{i}; %#ok<AGROW>
-            k = k+1;
-        end
-    end
-end
+% OLD BELOW
+% % SplitFileList
+% % A utility function that splits a list of filenames into those
+% % that are *.m filenames and those that are not. All lists are cell arrays.
+% function [mfileList, nonMfileList] = splitFileList(fileList)
+%     % Cell arrays appear to make this approach necessary.
+%     j = 1; k = 1;
+%     nonMfileList = {}; mfileList = {};
+%     for i=1:length(fileList)
+%         if isempty(regexp(fileList{i}, '^\w*\.m$', 'once'))
+%             nonMfileList{j} = fileList{i}; %#ok<AGROW>
+%             j = j+1;
+%         else
+%             mfileList{k} = fileList{i}; %#ok<AGROW>
+%             k = k+1;
+%         end
+%     end
+% end
 
-% Temp HANDLE ERRORS SOON
-function copyFileListToDirectory(list, sourceDir, destDir)
-    list 
-    sourceDir
-    destDir
-    if ~isempty(list)
-        numFiles = length(list);
-        for i=1:numFiles
-            copyfile(fullfile(sourceDir, list{i}), destDir);
-        end
-    end
-end
+% % Temp HANDLE ERRORS SOON
+% function copyFileListToDirectory(list, sourceDir, destDir)
+%     list 
+%     sourceDir
+%     destDir
+%     if ~isempty(list)
+%         numFiles = length(list);
+%         for i=1:numFiles
+%             copyfile(fullfile(sourceDir, list{i}), destDir);
+%         end
+%     end
+% end
 
 
-% OLD
         % -------------
         % MOVE THIS TO NM constructMachineSet
 %         function processSimulatorCompileFiles(obj)
@@ -430,3 +396,44 @@ end
 %         function str = getMATLABCompiler(obj)
 %             str = obj.matlabCompiler;
 %         end
+
+%         function gatherFiles(obj, coreDir, customDir)
+%             % coreDir is where the baseSimulatorFiles are located;
+%             % customDir is where the custom files are located
+%             % Create a directory in machineScratch to hold the m-files for
+%             % compilation
+%             obj.ML2CompileDir = fullfile(obj.machineScratch, 'ML2Compile');
+%             mkdir(obj.ML2CompileDir); % TEST FOR ERROR HERE
+%             obj.toUploadDir = fullfile(obj.machineScratch, 'ToUpload');
+%             mkdir(obj.toUploadDir); % TEST FOR ERROR HERE
+%             
+%             % Create a dummy host-only Simulator of the proper type in
+%             % order to determine files to compile and place them in the 
+%             simulatorID = 'dummy4compile';
+%             type = obj.simType;
+%             dummySim  = type.constrFunc(simulatorID, obj,...
+%                                         obj.log, obj.notificationSet);
+%             % Query the simulator for the files to compile and to upload
+%             % separately from compilation
+%             [baseListComp, baseListNonComp] = splitFileList(dummySim.getBaseSimulatorFileList())
+%             copyFileListToDirectory(baseListComp, coreDir, obj.ML2CompileDir);
+%             copyFileListToDirectory(baseListNonComp, coreDir, obj.toUploadDir);
+% 
+%             [extListComp, extListNonComp]= splitFileList(dummySim.getExtendedSimulatorFileList())
+%             copyFileListToDirectory(extListComp, coreDir, obj.ML2CompileDir);
+%             copyFileListToDirectory(extListNonComp, coreDir, obj.toUploadDir);
+%             
+%             [reqdCustListComp, reqdCustListNonComp] = splitFileList(dummySim.getReqdCustomFileList())
+%             copyFileListToDirectory(reqdCustListComp, customDir, obj.ML2CompileDir);
+%             copyFileListToDirectory(reqdCustListNonComp, customDir, obj.toUploadDir);
+%             
+%             [addlCustListComp, addlCustListNonComp] = splitFileList(dummySim.getAddlCustomFileList())
+%             copyFileListToDirectory(addlCustListComp, customDir, obj.ML2CompileDir);
+%             copyFileListToDirectory(addlCustListNonComp, customDir, obj.toUploadDir);
+%             dummySim.delete();
+%             obj.files2Compile = [baseListComp extListComp reqdCustListComp addlCustListComp];
+%             files2Compile = obj.files2Compile
+%             obj.files2Upload =  [baseListNonComp extListNonComp reqdCustListNonComp addlCustListNonComp];
+%             files2Upload = obj.files2Upload
+%         end
+        

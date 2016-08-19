@@ -187,10 +187,8 @@ END OF LICENSE
 % Part of the MATLABCompileMachine class definition.
 function postCompile(obj)
     % Transfer relevant compiled files from xcomp machine to host 
-    transferDir = fullfile(obj.machineScratch, 'MLCompiled');
-    mkdir(transferDir);  % Process result sometime
     for i = 1:length(obj.compilationFileTransferList)
-        obj.fileFromMachine(transferDir,...
+        obj.fileFromMachine(obj.MLCompiledDir,...
             fullfile(obj.xCompDir,...
                      obj.compilationFileTransferList{i}));
     end

@@ -216,8 +216,8 @@ classdef Simulator < handle
         
         % Full path of simulator's basedir on target machine
         targetBaseDir;
-        % Full path of simulator's commons directory on target machine
-        targetCommonDir;
+        % Full path of simulationcommon directory on target machine
+        simulationCommonDir;
         
         state; % Defined in class SimulatorState
         
@@ -260,14 +260,12 @@ classdef Simulator < handle
         preRunModelProcPhaseH(obj)
         preRunModelProcPhaseP(obj)
         preRunModelProcPhaseD(obj)
-        uploadModelAspect(obj)
+%         uploadModelAspect(obj)
     end
    
     methods
         % Machine makes the simulator so the caller's handle goes in machine.
-        function obj = Simulator(id,...
-                                 machine,...
-                                 log, notificationSet)
+        function obj = Simulator(id, machine, log, notificationSet)
             obj.id = id;
             obj.type = SimType.UNASSIGNED; 
             
@@ -328,13 +326,13 @@ classdef Simulator < handle
             
 %             % Create the simulator's basedir and commonsdir on the target
 %             obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
-%             obj.targetCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
+%             obj.simulationCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
 %             % The cd probably not necessary
 %             command = ['cd ' path2UNIX(obj.machine.getBaseDir())...
 %                        '; mkdir -m ug=rwx '...
 %                        path2UNIX(obj.targetBaseDir)...
 %                        '; mkdir  -m ug=rwx '...
-%                        path2UNIX(obj.targetCommonDir)...
+%                        path2UNIX(obj.simulationCommonDir)...
 %                        ];
 %             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
 
@@ -389,13 +387,13 @@ classdef Simulator < handle
         function constructRemoteAspect(obj)
             % Create the simulator's basedir and commonsdir on the target
             obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
-            obj.targetCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
+            obj.simulationCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
             % The cd probably not necessary
             command = ['cd ' path2UNIX(obj.machine.getBaseDir())...
                        '; mkdir -m ug=rwx '...
                        path2UNIX(obj.targetBaseDir)...
                        '; mkdir  -m ug=rwx '...
-                       path2UNIX(obj.targetCommonDir)...
+                       path2UNIX(obj.simulationCommonDir)...
                        ];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
             
@@ -413,7 +411,7 @@ classdef Simulator < handle
 %             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
             
             % Transfer in any model files
-            obj.uploadModelAspect();
+            obj.refreshModelFiles();
             
             % now Simulator is ready for operation
             obj.state = SimulatorState.AVAILABLE;
@@ -502,6 +500,9 @@ classdef Simulator < handle
                 end
             end
             
+            obj.refreshSimulatorFiles();
+%             obj.refreshModelFiles();
+
             % ---V
             % Failures here are not detected here; they are detected on the
             % remote and result in a failed simulation.
@@ -520,6 +521,17 @@ classdef Simulator < handle
             obj.submitSimulation();
         end
 
+        function refreshSimulatorFiles(obj)
+            % Reset simulator for new simulation (help ensure unmodified
+            % contents). Clear the simulator basedir and copy from
+            % SimulatorCommon. 
+            command = ['cd ' path2UNIX(obj.targetBaseDir) ...
+                       '; rm ' path2UNIX(fullfile(obj.targetBaseDir, '*')) ...
+                       '; cp ' path2UNIX(fullfile(obj.machine.getSimulatorCommonFilesPath(), '*')) ...
+                       ' ' path2UNIX(obj.targetBaseDir)];
+            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+        end
+        
         % -------------
         % This is part of the Pre Run Upload Simulation Data Files Stage
         % defined in Simulation.m as method UploadInputDataFiles().
@@ -814,8 +826,8 @@ classdef Simulator < handle
         end
         
         % -------------
-        function dir = getTargetCommonDir(obj)
-            dir = obj.targetCommonDir;
+        function dir = getSimulationCommonDir(obj)
+            dir = obj.simulationCommonDir;
         end
         
         % -------------
@@ -868,10 +880,10 @@ classdef Simulator < handle
             
             % Remove the common directory 
             command = ['cd '...
-                    path2UNIX(obj.getTargetCommonDir())...
-                    '; rm ' path2UNIX(fullfile(obj.getTargetCommonDir(), '*'))...
+                    path2UNIX(obj.getSimulationCommonDir())...
+                    '; rm ' path2UNIX(fullfile(obj.getSimulationCommonDir(), '*'))...
                     '; cd ..; rmdir '...
-                    path2UNIX(obj.getTargetCommonDir())];
+                    path2UNIX(obj.getSimulationCommonDir())];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
 
             % Now the simulator directory itself
