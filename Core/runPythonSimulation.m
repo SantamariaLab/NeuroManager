@@ -189,13 +189,13 @@ END OF LICENSE
 % the python file). Easily modified for other approaches.
 function result = runPythonSimulation(runDir, inputDir, outputDir,  ...
                                       pythonFile, pyFuncName, arguments)
-    load('MachineData.dat', 'config', '-mat');
+    load('MachineData.dat', 'remoteConfig', '-mat');
 
 	% Get the proper SimCore configuration
     simCore = {};
-    for i = 1:length(config.simCores)
-        if strcmp(config.simCores{1,i}.name, config.assignedSimCoreName)
-            simCore = config.simCores{1,i};
+    for i = 1:length(remoteConfig.simCores)
+        if strcmp(remoteConfig.simCores{1,i}.name, remoteConfig.assignedSimCoreName)
+            simCore = remoteConfig.simCores{1,i};
         end
     end
     if isempty(simCore)

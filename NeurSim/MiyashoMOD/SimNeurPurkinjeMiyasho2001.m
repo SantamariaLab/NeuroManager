@@ -59,7 +59,7 @@ classdef SimNeurPurkinjeMiyasho2001 < SimNeuron
         % ---
         function list = getModFileList(obj)
             list = getModFileList@SimNeuron(obj);
-            list = [list obj.modFileList(obj)];
+            list = [list obj.modFileList];
         end
         
         % ---

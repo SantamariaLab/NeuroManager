@@ -276,13 +276,18 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             obj.preUploadFiles();
 
             % Upload machine data file and other machine-specific files, if
-            % any
+            % any. We have to dumb-down the config to struct level and pass
+            % the minimum of information; passing the entire config leads
+            % to big problems with the MCR because config itself is a
+            % complex data structure.  
+            remoteConfig.simCores = config.simCores;
+            remoteConfig.assignedSimCoreName = config.assignedSimCoreName; %#ok<*STRNU>
             sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
-            save(sourceFile, 'config', '-mat', '-v7.3');
+            save(sourceFile, 'remoteConfig', '-mat', '-v7.3');
             destDir = obj.getSimulatorCommonFilesPath();
             obj.fileToMachine(sourceFile,...
                               fullfile(destDir, 'MachineData.dat'));
-            
+                          
             % [uploadCompiledFiles] 
             % Upload ML Compiled files to SimulatorCommons
             compilationFileTransferList = {'runSimulation','run_runSimulation.sh'};   % Pull this from NeuroManager, don't define here

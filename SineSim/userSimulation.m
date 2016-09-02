@@ -259,8 +259,6 @@ function [result, errMsg] =...
         return;
     end
     
-    pause(10);
-    
     % If we got this far it's a success
     result = 0; % Needs to return a status of 0 for success, 1 for failure
     errMsg = '';

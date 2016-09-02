@@ -192,27 +192,13 @@ END OF LICENSE
 function result = runHocOnlySimulation(runDir, inputDir,...
                                       outputDir, hocFile, ~)
 
-%debug                                  
-mdat = fullfile(runDir, 'MachineData.dat')
-f = fopen(fullfile(outputDir, 'BEFORELOAD.txt'), 'w');
-fprintf(f, '%s\n', runDir);
-fprintf(f, '%s\n', inputDir);
-fprintf(f, '%s\n', outputDir);
-fprintf(f, '%s\n', hocFile);
-fprintf(f, '%s\n', mdat);
-fclose(f);
-
-    load(fullfile(runDir, 'MachineData.dat'), 'config', '-mat');
-    
-%debug                                  
-f = fopen(fullfile(outputDir, 'AFTERLOAD'), 'w');
-fclose(f);
+    load(fullfile(runDir, 'MachineData.dat'), 'remoteConfig', '-mat');
     
 	% Get the proper SimCore configuration
     simCore = {};
-    for i = 1:length(config.simCores)
-        if strcmp(config.simCores{1,i}.name, config.assignedSimCoreName)
-            simCore = config.simCores{1,i};
+    for i = 1:length(remoteConfig.simCores)
+        if strcmp(remoteConfig.simCores{1,i}.name, remoteConfig.assignedSimCoreName)
+            simCore = remoteConfig.simCores{1,i};
         end
     end
     if isempty(simCore)
@@ -227,13 +213,9 @@ fclose(f);
 %system(['touch ' outputDir '/SIMCOREOK;']);
     end
 
-f = fopen(fullfile(outputDir, 'BEFORECREATESHELL'), 'w');
-fclose(f);
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.
     nrnivShell = createHocOnlyNrnivsh(simCore, runDir, inputDir, outputDir, hocFile);
-f = fopen(fullfile(outputDir, 'AFTERCREATESHELL'), 'w');
-fclose(f);
     
     if isempty(nrnivShell)
 %        system(['touch ' outputDir '/COULDNOTCREATENRNIVSHELL;']);
@@ -242,14 +224,7 @@ fclose(f);
         result = 1;
         return
     end
-% debug
-%system(['touch ' outputDir '/NRNIVSHELLCREATED;']);
-f = fopen(fullfile(outputDir, 'NRNIVSHELLCREATED'), 'w');
-fclose(f);
     copyfile(fullfile(runDir, nrnivShell), outputDir); % for documentation/debug
-%system(['touch ' outputDir '/NRNIVSHELLCOPIED;']);
-f = fopen(fullfile(outputDir, 'NRNIVSHELLCOPIED'), 'w');
-fclose(f);
 
     % Run the simulation using the shell file we created. Simulations run
     % from the run dir.

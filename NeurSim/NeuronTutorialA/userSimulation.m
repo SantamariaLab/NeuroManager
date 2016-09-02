@@ -190,10 +190,6 @@ function [result, errMsg] =...
     
     % runHocOnlySimulation 
     arguments = {};
-% debug
-f = fopen(fullfile(outputDir, 'INUSERSIMULATION'), 'w');
-fclose(f);
-
     status = runHocOnlySimulation(runDir, inputDir,...
                           outputDir, 'runme.hoc', arguments);
 	data = 'dataS0R11'; % Must match the hoc files
