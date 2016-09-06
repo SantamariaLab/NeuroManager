@@ -255,7 +255,7 @@ classdef Simulator < handle
     
     methods (Abstract)
         % Refer to NeuroManager Staging Sequence.xlsx
-%         preUploadFiles(obj)   % The simulator aspect of PreUploadFiles
+        preUploadFiles(obj)   % The simulator aspect of PreUploadFiles
 %        postCustomFilesUpload(obj)
         preRunModelProcPhaseH(obj)
         preRunModelProcPhaseP(obj)
@@ -320,7 +320,9 @@ classdef Simulator < handle
             obj.log.write(['Creating simulator ' obj.id ' on Machine '...
                            obj.machine.getID() '.']);
 
-            % Build the remote aspects of the simulator
+%             obj.preUploadFiles();           % Simulator aspect defined in a subclass
+
+% Build the remote aspects of the simulator
             % Make separate operation
 %             obj.remoteConstruction();
             
@@ -385,6 +387,8 @@ classdef Simulator < handle
         % ------------
         % Aug2016
         function constructRemoteAspect(obj)
+            obj.preUploadFiles();           % Simulator aspect defined in a subclass
+
             % Create the simulator's basedir and commonsdir on the target
             obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
             obj.simulationCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
@@ -397,7 +401,7 @@ classdef Simulator < handle
                        ];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
             
-            % Copy in the MachineData.dat file
+            % Copy in the MachineData.dat file from SimulatorCommon
             obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
                                obj.targetBaseDir, {'MachineData.dat'});
             
@@ -422,57 +426,6 @@ classdef Simulator < handle
                            ' created on machine '...
                            obj.machine.getID() '.']);
         end
-        
-        % ------------
-        % MachineData.dat is not on the std files list since it is created
-        % in the machine scratch dir, so we have to handle it separately
-%         function postStdFilesUpload(obj)
-%             if obj.machine.areSimulatorCommonFilesReady()
-%                 obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
-%                                    obj.targetBaseDir, {'MachineData.dat'});
-%             end
-%         end
-        
-%         % -------------
-%         % MOVE THIS TO NM constructMachineSet
-%         function processSimulatorCompileFiles(obj)
-%         % PreCompile() and Compile()
-%             % PreCompile() Refer to NeuroManagerStaging.xlsx
-%             obj.machine.preCompile(obj.targetBaseDir);
-%             
-%             % Log the compile version (machines don't have the log so we do
-%             % it here)
-%             simstr = obj.machine.getMATLABCompileVersion();
-%             obj.log.write(['Simulator ' obj.getID()...
-%                            ' on machine ' obj.machine.getID()...
-%                            ': Compiling MATLAB Version: ' simstr])
-% 
-%             % Compile() Refer to NeuroManagerStaging.xlsx
-%             checkfilePathlist = obj.machine.compile(obj.targetBaseDir);
-%             obj.machine.setCompileCheckfilePath(checkfilePathlist);
-%         end        
-        
-        % --------
-        % Compiling is done but the compiled files haven't been distributed
-        % in the simulator or into the Simulator common files directory, so
-        % do that, then done. ***This function only to be called for the
-        % first simulator the machine constructs.***
-%         function finishCompilingSimulator(obj)
-%         % Since MATLAB compiling is done in parallel this method used
-%         % to finish up the first simulator
-%             % Includes copying MATLAB executable machinery into SimCommon
-%             obj.machine.postCompile(obj.targetBaseDir);
-%             obj.state = SimulatorState.AVAILABLE;
-%             obj.machine.simulatorCommonFilesAreReady();
-% 
-% %             % Log it here since we didn't in the constructor
-% %             % Same message in SimMachine.m in FinishSimulators() for the
-% %             % rest of the simulators on the machine
-% %             obj.log.write(['Simulator ' obj.id...
-% %                            ' Version ' obj.getVersion()...
-% %                            ' created on machine '...
-% %                            obj.machine.getID() '.']);
-%         end
         
         % --------
         function startSimulation(obj, simulation)
@@ -909,3 +862,57 @@ classdef Simulator < handle
     end
 end
     
+
+
+
+% OLD BELOW
+        % ------------
+        % MachineData.dat is not on the std files list since it is created
+        % in the machine scratch dir, so we have to handle it separately
+%         function postStdFilesUpload(obj)
+%             if obj.machine.areSimulatorCommonFilesReady()
+%                 obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
+%                                    obj.targetBaseDir, {'MachineData.dat'});
+%             end
+%         end
+
+%         % -------------
+%         % MOVE THIS TO NM constructMachineSet
+%         function processSimulatorCompileFiles(obj)
+%         % PreCompile() and Compile()
+%             % PreCompile() Refer to NeuroManagerStaging.xlsx
+%             obj.machine.preCompile(obj.targetBaseDir);
+%             
+%             % Log the compile version (machines don't have the log so we do
+%             % it here)
+%             simstr = obj.machine.getMATLABCompileVersion();
+%             obj.log.write(['Simulator ' obj.getID()...
+%                            ' on machine ' obj.machine.getID()...
+%                            ': Compiling MATLAB Version: ' simstr])
+% 
+%             % Compile() Refer to NeuroManagerStaging.xlsx
+%             checkfilePathlist = obj.machine.compile(obj.targetBaseDir);
+%             obj.machine.setCompileCheckfilePath(checkfilePathlist);
+%         end        
+        
+        % --------
+        % Compiling is done but the compiled files haven't been distributed
+        % in the simulator or into the Simulator common files directory, so
+        % do that, then done. ***This function only to be called for the
+        % first simulator the machine constructs.***
+%         function finishCompilingSimulator(obj)
+%         % Since MATLAB compiling is done in parallel this method used
+%         % to finish up the first simulator
+%             % Includes copying MATLAB executable machinery into SimCommon
+%             obj.machine.postCompile(obj.targetBaseDir);
+%             obj.state = SimulatorState.AVAILABLE;
+%             obj.machine.simulatorCommonFilesAreReady();
+% 
+% %             % Log it here since we didn't in the constructor
+% %             % Same message in SimMachine.m in FinishSimulators() for the
+% %             % rest of the simulators on the machine
+% %             obj.log.write(['Simulator ' obj.id...
+% %                            ' Version ' obj.getVersion()...
+% %                            ' created on machine '...
+% %                            obj.machine.getID() '.']);
+%         end

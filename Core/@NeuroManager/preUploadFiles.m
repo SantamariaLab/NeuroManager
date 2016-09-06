@@ -9,7 +9,7 @@ function preUploadFiles(obj, machine)
                                 obj.log, obj.simNotificationSet);
    
     % Query the simulator for the files to compile and to upload
-    % separately from compilation
+    % separately from compilation; then move them into place on the host
     [baseListComp, baseListNonComp] = splitFileList(dummySim.getBaseSimulatorFileList())
     copyFileListToDirectory(baseListComp, obj.simCoreDir, obj.ML2CompileDir);
     copyFileListToDirectory(baseListNonComp, obj.simCoreDir, obj.toUploadDir);

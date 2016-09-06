@@ -191,6 +191,11 @@ classdef NoModelFileSim < Simulator
             obj = obj@Simulator(id, machine, log, notificationSet);
         end
         
+        % -------------
+        function preUploadFiles(obj)
+            % Nothing to do in this class; but override in subclasses if
+            % you need to
+        end
         
         % ---
         function list = getModelFileList(obj)

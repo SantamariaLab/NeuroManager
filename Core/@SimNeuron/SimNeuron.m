@@ -264,9 +264,23 @@ classdef SimNeuron < ModelFileSim
         % ---
         function preUploadFiles(obj) 
         % Simulator aspect to preUploadFiles
+        % Override the ModelFileSim version
+            % Pull in the config information associated with the chosen
+            % SimCore so it can be used to get version information directly
+            % from the remote
+            remoteConfig = obj.machine.remoteConfig;
+            simCoreName = remoteConfig.assignedSimCoreName;
+            simCores = remoteConfig.simCores;
+            % Assume is one because we got this far
+            for i = 1:length(simCores)
+                if strcmp(simCores{i}.name, simCoreName)
+                    config = simCores{i}.config;
+                end
+            end
+            
             % Neuron version
-            command = [path2UNIX(fullfile(obj.machine.config.neuronDir,...
-                                 obj.machine.config.binExt, 'nrniv')) ' --version'];
+            command = [path2UNIX(fullfile(config.neuronDir,...
+                                          config.binExt, 'nrniv')) ' --version'];
             result = obj.machine.issueMachineCommand(command,...
                                             CommandType.JOBSUBMISSION);
             versionStr = result{1};
@@ -274,7 +288,7 @@ classdef SimNeuron < ModelFileSim
                            obj.getID() ': ' versionStr]);
 
             % Python version
-            command = [obj.machine.config.pythonPath ...
+            command = [config.pythonPath ...
                        ' -c "import sys; print sys.version"'];
             result = obj.machine.issueMachineCommand(command,...
                                             CommandType.JOBSUBMISSION);

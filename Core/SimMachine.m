@@ -233,6 +233,11 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         simCommonFilesPath = '';      % On remote
         simModelRepositoryPath = '';  % on remote
         
+        % Pull this from NeuroManager somehow, don't define here
+        compilationFileTransferList = {'runSimulation','run_runSimulation.sh'};   
+       
+        remoteConfig;  % The SimCore data for the remote machine
+        
         log;                % Global log for the simulation session
         notificationSet;    % Global notifies for the simulation session
     end
@@ -255,6 +260,10 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
                                         config.getMcrDir(),...
                                         config.getXCompDir());
             obj.config = config;
+            remoteConfig.simCores = config.simCores;
+            remoteConfig.assignedSimCoreName = config.assignedSimCoreName;
+            obj.remoteConfig = remoteConfig;  
+
             obj.state = MachineState.INPREPARATION;
             obj.baseDir = config.getWorkDir();          % on the target
             obj.scratchDir = scratchDir;    % on the host
@@ -273,55 +282,67 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             obj.machineBasePrep();
             obj.sType = simType;  
 
-            obj.preUploadFiles();
+            obj.preUploadFiles();  % Machine aspect
 
+            % [uploadCompiledFiles] 
+            obj.uploadCompiledFiles();
+            % Upload ML Compiled files to SimulatorCommons
+%             sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                       % Pull this from NeuroManager, don't define here
+%             destDir = obj.getSimulatorCommonFilesPath();
+%             obj.fileListToMachine(obj.compilationFileTransferList,...
+%                                   sourcedir, destDir);
+
+            % [postUploadCompiledFiles] 
+            obj.postUploadCompiledFiles();
+%             % Change permissions
+%             command = '';
+%             for i = 1:length(obj.compilationFileTransferList)
+%                 command = [command 'chmod +x ' ...
+%                        path2UNIX(fullfile(obj.getSimulatorCommonFilesPath(),...
+%                        compilationFileTransferList{i})) '; ']; %#ok<AGROW>
+%             end
+%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            
+            % [uploadNonCompiledFiles]
+            obj.uploadNonCompiledFiles();
+            % Upload non-compiled (non-m-file) simulator-specific files
+            % from baseSimulatorFileList, extendedSimulatorFileList,
+            % reqdCustomFileList, and addlCustomFileList
+%             sourcedir = fullfile(obj.scratchDir, 'ToUpload');                           % Pull this from NeuroManager, don't define here
+%             destDir = obj.getSimulatorCommonFilesPath();
+%             toUploadFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+%             obj.fileListToMachine(toUploadFileTransferList,...
+%                                   sourcedir, destDir);
+                              
+            % [postUploadNonCompiledFiles]
+            obj.postUploadNonCompiledFiles();
+
+                              
+            % [uploadModelFiles]
+            obj.uploadModelFiles();
+            % Upload simulator-specific model files
+%             sourcedir = fullfile(obj.scratchDir, 'ToModelRepo');                        % Pull this from NeuroManager, don't define here
+%             destDir = obj.getModelRepositoryPath();
+%             toModelRepoFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+%             obj.fileListToMachine(toModelRepoFileTransferList,...
+%                                   sourcedir, destDir);
+            
+            % [postUploadModelFiles]
+            obj.postUploadModelFiles();
+
+            % [uploadMachineSpecificFiles]
+            obj.uploadMachineSpecificFiles();
             % Upload machine data file and other machine-specific files, if
             % any. We have to dumb-down the config to struct level and pass
             % the minimum of information; passing the entire config leads
             % to big problems with the MCR because config itself is a
             % complex data structure.  
-            remoteConfig.simCores = config.simCores;
-            remoteConfig.assignedSimCoreName = config.assignedSimCoreName; %#ok<*STRNU>
-            sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
-            save(sourceFile, 'remoteConfig', '-mat', '-v7.3');
-            destDir = obj.getSimulatorCommonFilesPath();
-            obj.fileToMachine(sourceFile,...
-                              fullfile(destDir, 'MachineData.dat'));
+%             sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
+%             save(sourceFile, 'remoteConfig', '-mat', '-v7.3');
+%             destDir = obj.getSimulatorCommonFilesPath();
+%             obj.fileToMachine(sourceFile,...
+%                               fullfile(destDir, 'MachineData.dat'));
                           
-            % [uploadCompiledFiles] 
-            % Upload ML Compiled files to SimulatorCommons
-            compilationFileTransferList = {'runSimulation','run_runSimulation.sh'};   % Pull this from NeuroManager, don't define here
-            sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                       % Pull this from NeuroManager, don't define here
-            destDir = obj.getSimulatorCommonFilesPath();
-            obj.fileListToMachine(compilationFileTransferList,...
-                                  sourcedir, destDir);
-
-            % [postUploadCompiledFiles] 
-            % Change permissions
-            command = '';
-            for i = 1:length(compilationFileTransferList)
-                command = [command 'chmod +x ' ...
-                       path2UNIX(fullfile(obj.getSimulatorCommonFilesPath(),...
-                       compilationFileTransferList{i})) '; ']; %#ok<AGROW>
-            end
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-            
-            % Upload non-compiled (non-m-file) simulator-specific files
-            % from baseSimulatorFileList, extendedSimulatorFileList,
-            % reqdCustomFileList, and addlCustomFileList
-            sourcedir = fullfile(obj.scratchDir, 'ToUpload');                           % Pull this from NeuroManager, don't define here
-            destDir = obj.getSimulatorCommonFilesPath();
-            toUploadFileTransferList = SimMachine.listFilesInFolder(sourcedir);
-            obj.fileListToMachine(toUploadFileTransferList,...
-                                  sourcedir, destDir);
-                              
-            % Upload simulator-specific model files
-            sourcedir = fullfile(obj.scratchDir, 'ToModelRepo');                        % Pull this from NeuroManager, don't define here
-            destDir = obj.getModelRepositoryPath();
-            toModelRepoFileTransferList = SimMachine.listFilesInFolder(sourcedir);
-            obj.fileListToMachine(toModelRepoFileTransferList,...
-                                  sourcedir, destDir);
-            
             % Build the simulators
             obj.mSimulators = {}; 
             for i = 1:obj.numSimulators
@@ -334,8 +355,71 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             obj.state = MachineState.READY;
         end
         
+        % ---
+        function uploadMachineSpecificFiles(obj)
+            remoteConfig = obj.remoteConfig; %#ok<NASGU,PROP>
+            sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
+            save(sourceFile, 'remoteConfig', '-mat', '-v7.3');
+            destDir = obj.getSimulatorCommonFilesPath();
+            obj.fileToMachine(sourceFile,...
+                              fullfile(destDir, 'MachineData.dat'));
+        end
         
-        % -----------
+        % ---
+        function uploadCompiledFiles(obj)
+            % Upload ML Compiled files to SimulatorCommons
+            sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                       % Pull this from NeuroManager, don't define here
+            destDir = obj.getSimulatorCommonFilesPath();
+            obj.fileListToMachine(obj.compilationFileTransferList,...
+                                  sourcedir, destDir);
+        end
+        
+        % ---
+        function postUploadCompiledFiles(obj)
+            % Change permissions
+            command = '';
+            for i = 1:length(obj.compilationFileTransferList)
+                command = [command 'chmod +x ' ...
+                       path2UNIX(fullfile(obj.getSimulatorCommonFilesPath(),...
+                       obj.compilationFileTransferList{i})) '; ']; %#ok<AGROW>
+            end
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+        end        
+        
+        % ---
+        function uploadNonCompiledFiles(obj)
+            % Upload non-compiled (non-m-file) simulator-specific files
+            % from baseSimulatorFileList, extendedSimulatorFileList,
+            % reqdCustomFileList, and addlCustomFileList
+            sourcedir = fullfile(obj.scratchDir, 'ToUpload');                           % Pull this from NeuroManager, don't define here
+            destDir = obj.getSimulatorCommonFilesPath();
+            toUploadFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+            obj.fileListToMachine(toUploadFileTransferList,...
+                                  sourcedir, destDir);
+        end
+        
+        % ---
+        function postUploadNonCompiledFiles(obj)
+            % (nothing to do)
+        end
+
+        % ---
+        function uploadModelFiles(obj)
+            % Upload simulator-specific model files
+            sourcedir = fullfile(obj.scratchDir, 'ToModelRepo');                        % Pull this from NeuroManager, don't define here
+            destDir = obj.getModelRepositoryPath();
+            toModelRepoFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+            obj.fileListToMachine(toModelRepoFileTransferList,...
+                                  sourcedir, destDir);
+        end
+        
+        % ---
+        function postUploadModelFiles(obj)
+            % (nothing to do)
+        end
+
+
+        % ---
         function preUploadFiles(obj)
         % The machine aspect of PreUploadFiles
         % Extend this in subclasses if you need to; as seen in
