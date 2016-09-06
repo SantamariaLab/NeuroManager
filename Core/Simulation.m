@@ -437,10 +437,10 @@ classdef Simulation < handle
                         % Grab the data from the RUNNING file
                         command = ['cat '...
                                    path2UNIX(obj.getSignalFileRUNNING())];
-                        result = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-                        jobid = sscanf(result{1}, '%u');
-                        if length(result) >= 2
-                            timestr = sscanf(result{2}, '%s%c%s');
+                        commandResult = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+                        jobid = sscanf(commandResult{1}, '%u');
+                        if length(commandResult) >= 2
+                            timestr = sscanf(commandResult{2}, '%s%c%s');
                             time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss');
                         else
 %                             time = '--------------------';
@@ -466,10 +466,10 @@ classdef Simulation < handle
                         % Grab the data from the COMPLETE file
                         command = ['cat '...
                                    path2UNIX(obj.getSignalFileCOMPLETE())];
-                        result = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-                        %jobid = sscanf(result{1}, '%u');
-                        if length(result) >= 1
-                            timestr = sscanf(result{1}, '%s%c%s');
+                        commandResult = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+                        %jobid = sscanf(commandResult{1}, '%u');
+                        if length(commandResult) >= 1
+                            timestr = sscanf(commandResult{1}, '%s%c%s');
                             time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss');
                         else
 %                             time = '--------------------';
@@ -483,13 +483,12 @@ classdef Simulation < handle
                         % Grab the data from the FAILED file
                         command = ['cat '...
                                    path2UNIX(obj.getSignalFileFAILED())];
-                        result = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-                        %jobid = sscanf(result{1}, '%u');
-                        if length(result) >= 1
-                            timestr = sscanf(result{1}, '%s%c%s');
+                        commandResult = obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+                        %jobid = sscanf(commandResult{1}, '%u');
+                        if length(commandResult) >= 1
+                            timestr = sscanf(commandResult{1}, '%s%c%s');
                             time = datetime(timestr, 'InputFormat', 'dd-MMM-yyyy HH:mm:ss');
                         else
-%                             time = '--------------------';
                             time = 0;
                         end
                         obj.setRunCompleteTime(time);
@@ -584,7 +583,7 @@ classdef Simulation < handle
         end
         
         % --------
-        function  postSimulation(obj)  
+        function  postSimulation(obj)   %#ok<MANU>
             % Note: destroys Data on Target
             % Dismantle the simulation's remote directory structure.
             % Rather than run this all via SSH, we might upload and run a

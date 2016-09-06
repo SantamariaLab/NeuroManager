@@ -203,7 +203,7 @@ classdef Simulator < handle
         % NeuroManager Files standard for all simulators plus std simulator-specific
 %         stdUploadFiles; 
         baseSimulatorFileList;
-        
+
 %         extendedSimulatorFileList;
         
         % User-supplied UserSimulation.m
@@ -256,11 +256,9 @@ classdef Simulator < handle
     methods (Abstract)
         % Refer to NeuroManager Staging Sequence.xlsx
         preUploadFiles(obj)   % The simulator aspect of PreUploadFiles
-%        postCustomFilesUpload(obj)
         preRunModelProcPhaseH(obj)
         preRunModelProcPhaseP(obj)
         preRunModelProcPhaseD(obj)
-%         uploadModelAspect(obj)
     end
    
     methods
@@ -319,44 +317,7 @@ classdef Simulator < handle
             % Log it
             obj.log.write(['Creating simulator ' obj.id ' on Machine '...
                            obj.machine.getID() '.']);
-
-%             obj.preUploadFiles();           % Simulator aspect defined in a subclass
-
-% Build the remote aspects of the simulator
-            % Make separate operation
-%             obj.remoteConstruction();
-            
-%             % Create the simulator's basedir and commonsdir on the target
-%             obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
-%             obj.simulationCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
-%             % The cd probably not necessary
-%             command = ['cd ' path2UNIX(obj.machine.getBaseDir())...
-%                        '; mkdir -m ug=rwx '...
-%                        path2UNIX(obj.targetBaseDir)...
-%                        '; mkdir  -m ug=rwx '...
-%                        path2UNIX(obj.simulationCommonDir)...
-%                        ];
-%             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-
-            % Upload or transfer std/cust files
-%             if ~obj.machine.areSimulatorCommonFilesReady()
-%                 % See Staging Sequence doc.
-%                 obj.machine.preUploadFiles();   % Machine aspect
-%                 obj.preUploadFiles();           % Simulator aspect
-%                 obj.uploadStdFiles();
-%                 obj.uploadCustomFiles();
-%             end
-%             obj.postStdFilesUpload();
-%             obj.postCustomFilesUpload();
-
-% Move to remote construction
-%             obj.state = SimulatorState.AVAILABLE;
-%             obj.log.write(['Simulator ' obj.id...
-%                            ' Version ' obj.getVersion()...
-%                            ' created on machine '...
-%                            obj.machine.getID() '.']);
         end
-        
         
         % --------------
         function str = getVersion(obj)
@@ -368,24 +329,7 @@ classdef Simulator < handle
 %             tf = any(strcmp(testName, obj.simCoreCompatibilityList));
 %         end
         
-        % --------------
-%         function uploadStdFiles(obj)
-%             obj.machine.uploadStdSimulatorFiles(obj.stdUploadFiles, ...
-%                                                 obj.targetBaseDir);
-%         end
-        
-        % --------------
-%         function uploadCustomFiles(obj)
-%             uploadFiles = [obj.custUploadFiles,...
-%                            obj.getAddlCustUploadFileList()];
-%             % This also handles the non-mfile copy to SimCommon since that
-%             % is machine-based
-%             obj.machine.uploadCustSimulatorFiles(uploadFiles,...
-%                                                         obj.targetBaseDir);
-%         end
-        
         % ------------
-        % Aug2016
         function constructRemoteAspect(obj)
             obj.preUploadFiles();           % Simulator aspect defined in a subclass
 
@@ -407,14 +351,6 @@ classdef Simulator < handle
             
             % Transfer in the executable apparatus
             obj.refreshSimulatorFiles()
-%             obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
-%                                obj.targetBaseDir, {'runSimulation', 'run_runSimulation.sh'});
-
-%             command = ['cd ' path2UNIX(fullfile(obj.targetBaseDir, 'temp')) ';'...
-%                        'cp -l runSimulation ..;cp run_runSimulation.sh ..;' ...
-%                        'cp runSimulation run_runSimulation.sh ;'...
-%                        path2UNIX(obj.machine.getSimulatorCommonFilesPath())];
-%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
             
             % Transfer in any model files
             obj.refreshModelFiles();
@@ -456,7 +392,6 @@ classdef Simulator < handle
             end
             
             obj.refreshSimulatorFiles();
-%             obj.refreshModelFiles();
 
             % ---V
             % Failures here are not detected here; they are detected on the
@@ -756,11 +691,6 @@ classdef Simulator < handle
             list = obj.addlCustomFileList;
         end
         
-%         % -------------
-%         function list = getAddlCustUploadFileList(obj)
-%             list = obj.addlCustUploadFiles;
-%         end
-        
         % -------------
         function setState(obj, state)
             obj.state = state;
@@ -861,58 +791,3 @@ classdef Simulator < handle
         preRunCreateRunShell(obj) % See separate file
     end
 end
-    
-
-
-
-% OLD BELOW
-        % ------------
-        % MachineData.dat is not on the std files list since it is created
-        % in the machine scratch dir, so we have to handle it separately
-%         function postStdFilesUpload(obj)
-%             if obj.machine.areSimulatorCommonFilesReady()
-%                 obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
-%                                    obj.targetBaseDir, {'MachineData.dat'});
-%             end
-%         end
-
-%         % -------------
-%         % MOVE THIS TO NM constructMachineSet
-%         function processSimulatorCompileFiles(obj)
-%         % PreCompile() and Compile()
-%             % PreCompile() Refer to NeuroManagerStaging.xlsx
-%             obj.machine.preCompile(obj.targetBaseDir);
-%             
-%             % Log the compile version (machines don't have the log so we do
-%             % it here)
-%             simstr = obj.machine.getMATLABCompileVersion();
-%             obj.log.write(['Simulator ' obj.getID()...
-%                            ' on machine ' obj.machine.getID()...
-%                            ': Compiling MATLAB Version: ' simstr])
-% 
-%             % Compile() Refer to NeuroManagerStaging.xlsx
-%             checkfilePathlist = obj.machine.compile(obj.targetBaseDir);
-%             obj.machine.setCompileCheckfilePath(checkfilePathlist);
-%         end        
-        
-        % --------
-        % Compiling is done but the compiled files haven't been distributed
-        % in the simulator or into the Simulator common files directory, so
-        % do that, then done. ***This function only to be called for the
-        % first simulator the machine constructs.***
-%         function finishCompilingSimulator(obj)
-%         % Since MATLAB compiling is done in parallel this method used
-%         % to finish up the first simulator
-%             % Includes copying MATLAB executable machinery into SimCommon
-%             obj.machine.postCompile(obj.targetBaseDir);
-%             obj.state = SimulatorState.AVAILABLE;
-%             obj.machine.simulatorCommonFilesAreReady();
-% 
-% %             % Log it here since we didn't in the constructor
-% %             % Same message in SimMachine.m in FinishSimulators() for the
-% %             % rest of the simulators on the machine
-% %             obj.log.write(['Simulator ' obj.id...
-% %                            ' Version ' obj.getVersion()...
-% %                            ' created on machine '...
-% %                            obj.machine.getID() '.']);
-%         end

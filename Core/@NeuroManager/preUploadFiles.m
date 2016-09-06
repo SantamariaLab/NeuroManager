@@ -1,5 +1,5 @@
 % This aspect of preUploadFiles handles things that need to be done before
-% machine or simulator construction
+% machine or simulator construction ("NeuroManager aspect")
 function preUploadFiles(obj, machine)
     % Create a dummy host-only Simulator of the proper type in
     % order to determine files to compile and place them in the 
@@ -10,23 +10,23 @@ function preUploadFiles(obj, machine)
    
     % Query the simulator for the files to compile and to upload
     % separately from compilation; then move them into place on the host
-    [baseListComp, baseListNonComp] = splitFileList(dummySim.getBaseSimulatorFileList())
+    [baseListComp, baseListNonComp] = splitFileList(dummySim.getBaseSimulatorFileList());
     copyFileListToDirectory(baseListComp, obj.simCoreDir, obj.ML2CompileDir);
     copyFileListToDirectory(baseListNonComp, obj.simCoreDir, obj.toUploadDir);
 
-    [extListComp, extListNonComp]= splitFileList(dummySim.getExtendedSimulatorFileList())
+    [extListComp, extListNonComp]= splitFileList(dummySim.getExtendedSimulatorFileList());
     copyFileListToDirectory(extListComp, obj.simCoreDir, obj.ML2CompileDir);
     copyFileListToDirectory(extListNonComp, obj.simCoreDir, obj.toUploadDir);
 
-    [reqdCustListComp, reqdCustListNonComp] = splitFileList(dummySim.getReqdCustomFileList())
+    [reqdCustListComp, reqdCustListNonComp] = splitFileList(dummySim.getReqdCustomFileList());
     copyFileListToDirectory(reqdCustListComp, obj.customSimDir, obj.ML2CompileDir);
     copyFileListToDirectory(reqdCustListNonComp, obj.customSimDir, obj.toUploadDir);
 
-    [addlCustListComp, addlCustListNonComp] = splitFileList(dummySim.getAddlCustomFileList())
+    [addlCustListComp, addlCustListNonComp] = splitFileList(dummySim.getAddlCustomFileList());
     copyFileListToDirectory(addlCustListComp, obj.customSimDir, obj.ML2CompileDir);
     copyFileListToDirectory(addlCustListNonComp, obj.customSimDir, obj.toUploadDir);
     
-    modelFileList = dummySim.getModelFileList()
+    modelFileList = dummySim.getModelFileList();
     copyFileListToDirectory(modelFileList, obj.modelFileDir, obj.toModelRepoDir);
 
     dummySim.delete();

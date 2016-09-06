@@ -207,20 +207,19 @@ function result = runHocOnlySimulation(runDir, inputDir,...
         result = 1;
         return;
     else
-% debug
-f = fopen(fullfile(outputDir, 'SIMCOREOK'), 'w');
-fclose(f);
-%system(['touch ' outputDir '/SIMCOREOK;']);
+        % DEBUG ONLY
+        f = fopen(fullfile(outputDir, 'SIMCOREOK'), 'w');
+        fclose(f);
     end
 
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.
     nrnivShell = createHocOnlyNrnivsh(simCore, runDir, inputDir, outputDir, hocFile);
     
+    % CHANGE APPROACH
     if isempty(nrnivShell)
-%        system(['touch ' outputDir '/COULDNOTCREATENRNIVSHELL;']);
-f = fopen(fullfile(outputDir, 'COULDNOTCREATENRNIVSHELL'), 'w');
-fclose(f);
+        f = fopen(fullfile(outputDir, 'COULDNOTCREATENRNIVSHELL'), 'w');
+        fclose(f);
         result = 1;
         return
     end

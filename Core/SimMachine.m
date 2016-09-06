@@ -241,12 +241,6 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         log;                % Global log for the simulation session
         notificationSet;    % Global notifies for the simulation session
     end
-
-    methods(Abstract)
-        % Refer to NeuroManagerStaging.xlsx
-       % preUploadFiles(obj)
-    end
-    
     methods (Access = public)
         % ----------------
         function obj = SimMachine(config, hostID, scratchDir,...
@@ -286,62 +280,24 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
 
             % [uploadCompiledFiles] 
             obj.uploadCompiledFiles();
-            % Upload ML Compiled files to SimulatorCommons
-%             sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                       % Pull this from NeuroManager, don't define here
-%             destDir = obj.getSimulatorCommonFilesPath();
-%             obj.fileListToMachine(obj.compilationFileTransferList,...
-%                                   sourcedir, destDir);
 
             % [postUploadCompiledFiles] 
             obj.postUploadCompiledFiles();
-%             % Change permissions
-%             command = '';
-%             for i = 1:length(obj.compilationFileTransferList)
-%                 command = [command 'chmod +x ' ...
-%                        path2UNIX(fullfile(obj.getSimulatorCommonFilesPath(),...
-%                        compilationFileTransferList{i})) '; ']; %#ok<AGROW>
-%             end
-%             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
             
             % [uploadNonCompiledFiles]
             obj.uploadNonCompiledFiles();
-            % Upload non-compiled (non-m-file) simulator-specific files
-            % from baseSimulatorFileList, extendedSimulatorFileList,
-            % reqdCustomFileList, and addlCustomFileList
-%             sourcedir = fullfile(obj.scratchDir, 'ToUpload');                           % Pull this from NeuroManager, don't define here
-%             destDir = obj.getSimulatorCommonFilesPath();
-%             toUploadFileTransferList = SimMachine.listFilesInFolder(sourcedir);
-%             obj.fileListToMachine(toUploadFileTransferList,...
-%                                   sourcedir, destDir);
                               
             % [postUploadNonCompiledFiles]
             obj.postUploadNonCompiledFiles();
-
                               
             % [uploadModelFiles]
             obj.uploadModelFiles();
-            % Upload simulator-specific model files
-%             sourcedir = fullfile(obj.scratchDir, 'ToModelRepo');                        % Pull this from NeuroManager, don't define here
-%             destDir = obj.getModelRepositoryPath();
-%             toModelRepoFileTransferList = SimMachine.listFilesInFolder(sourcedir);
-%             obj.fileListToMachine(toModelRepoFileTransferList,...
-%                                   sourcedir, destDir);
             
             % [postUploadModelFiles]
             obj.postUploadModelFiles();
 
             % [uploadMachineSpecificFiles]
             obj.uploadMachineSpecificFiles();
-            % Upload machine data file and other machine-specific files, if
-            % any. We have to dumb-down the config to struct level and pass
-            % the minimum of information; passing the entire config leads
-            % to big problems with the MCR because config itself is a
-            % complex data structure.  
-%             sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
-%             save(sourceFile, 'remoteConfig', '-mat', '-v7.3');
-%             destDir = obj.getSimulatorCommonFilesPath();
-%             obj.fileToMachine(sourceFile,...
-%                               fullfile(destDir, 'MachineData.dat'));
                           
             % Build the simulators
             obj.mSimulators = {}; 
@@ -418,7 +374,6 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             % (nothing to do)
         end
 
-
         % ---
         function preUploadFiles(obj)
         % The machine aspect of PreUploadFiles
@@ -445,26 +400,6 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
                                         log, notificationSet);
         end
 
-        % -----------
-%         function finishSimulators(obj)
-%         % Builds simulators 2:N on the remote
-%         % The machine doesn't call this until the first simulator is
-%         % complete, so that we know all the files to be copied are in place
-%         % on the remote.
-%             for i = 2:obj.numSimulators
-%                 simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
-%                 obj.mSimulators{i} = ...
-%                     obj.makeSimulator(obj.sType, simulatorID,...
-%                                       obj.log, obj.notificationSet);
-%                 % Log it
-%                 obj.log.write(['Simulator ' obj.mSimulators{i}.id...
-%                                ' Version ' obj.mSimulators{i}.getVersion()...
-%                                ' created on machine '...
-%                                obj.getID() '.']);
-%                 obj.mSimulators{i}.setState(SimulatorState.AVAILABLE);
-%             end
-%         end
-        
         % ----------------
         function result = isReady(obj)
         % Boolean check plus the call to GetState updates machine state,
@@ -480,29 +415,6 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         % into a no-op
         function state = getState(obj)
         % Returns state and triggers machine state progression.
-        % This is where the compiling simulator gets finished, and the
-        % rest of the machine's simulators get constructed.
-%             if obj.state == MachineState.READY
-%                 % Nothing special to do
-%             elseif obj.state == MachineState.INPREPARATION
-% %                 obj.finishSimulators();
-%                 obj.state = MachineState.READY;
-%                 % log it
-%                 obj.log.write(['Machine ' obj.id ' READY.']);
-%             elseif  obj.state == MachineState.INPREPARATION
-%                 % If compiling and the compilation is done, the
-%                 % compilation-done checkfile will show up in the
-%                 % compiling simulator's temp directory indicating that files
-%                 % can be transferred in and the other simulators installed (if any).
-%                 % No poll delay here - that is handled externally.
-%                 if obj.isCompileComplete()
-%                     obj.mSimulators{1}.finishCompilingSimulator();
-%                     obj.state = MachineState.INPREPARATION; 
-%                 obj.log.write(['Machine ' obj.getID() ' INPREPARATION.']);
-%                 % else if LicenseUnavailable....
-%                 % state -> MachineUnavailable  then handle this externally
-%                 end
-%             end
             state = obj.state;
         end
         
@@ -511,11 +423,6 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         % Returns list of the machine's simulators
             list = obj.mSimulators;
         end
-        
-%         % ----------------
-%         function dir = getMCRDir(obj)
-%             dir = obj.mcrDir;
-%         end
         
         % ----------------
         function dir = getScratchDir(obj)
