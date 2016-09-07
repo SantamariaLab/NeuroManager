@@ -225,6 +225,14 @@ classdef StandaloneServer <  SimMachine & Server
             jobID = obj.getJobID(remoteRundir, jobRoot); 
         end
         
+        % ----------
+        function cancelJob(obj, jobID)
+            if jobID ~= 0
+                command = ['kill -9 ' num2str(jobID, '% 10.0f')];
+                obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+            end
+        end
+        
         % ---------------
         % A no-op because this machine type gets process id from the
         % RUNNING file. Abstract version is in RunJobMachine.

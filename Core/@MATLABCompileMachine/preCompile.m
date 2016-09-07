@@ -195,10 +195,37 @@ function compVersionStr = preCompile(obj, fileList)
     compVersionStr = obj.getMATLABCompileVersion();
     obj.log.write(['NeuroManager is MATLAB-compiling '...
                    ' with MATLAB Compiler Version: ' compVersionStr])
+               
+    % Ensure the compilation directory path ends with 'NMComp' as the final
+    % directory name
+    temp = regexp(convCompileDir, '/(\w+)($|/$)', 'tokens');
+    endDir = temp{1}{1};
+    if ~strcmp(endDir, obj.requiredCompilationDirectoryName)
+        error(['Compilation directory ' convCompileDir ...
+               ' must be named ' obj.requiredCompilationDirectoryName '.']);
+    end
     
     % Ensure the compilation directory exists and has no subdirectories
-    % (not implemented yet)
-               
+    if ~obj.checkForDirectory(convCompileDir);
+    	error(['Compilation directory ' convCompileDir ...
+               ' does not exist on compile machine.']);
+    end
+    
+    % No machine command for the following (yet)
+    % Check for subdirectories of the compile directory
+    % This does not find hidden directories
+	command = ['cd ' convCompileDir ';test -d */; echo $?;'];
+    machineResult = obj.issueMachineCommand(command, CommandType.FILESYSTEM); 
+    if strcmp(machineResult{1}, '0')
+        result = true;
+    else
+        result = false;
+    end
+    if result
+    	error(['Compilation directory ' convCompileDir ...
+               ' on compile machine cannot have any subdirectories.']);
+    end
+
     % Clear the compilation directory
     command = ['cd ' convCompileDir ...
                '; rm -r ' convCompileDir '/*'];

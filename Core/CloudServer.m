@@ -234,6 +234,14 @@ classdef CloudServer < SimMachine & Cloud
         end
 
         % ----------
+        function cancelJob(obj, jobID)
+            if jobID ~= 0
+                command = ['kill -9 ' num2str(jobID, '% 10.0f')];
+                obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+            end
+        end
+        
+        % ----------
         % NoSub doesn't have a job file but we still need to create the
         % equivalent shellfile since PreRunModelProcPhaseD is buried in
         % runcommand 

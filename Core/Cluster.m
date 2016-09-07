@@ -193,8 +193,4 @@ classdef Cluster < RunJobMachine
             obj.configureDualKey(config);
         end
     end
-    
-    methods (Abstract)
-        cancelJob(obj)
-    end
 end

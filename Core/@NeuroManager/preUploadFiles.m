@@ -2,7 +2,8 @@
 % machine or simulator construction ("NeuroManager aspect")
 function preUploadFiles(obj, machine)
     % Create a dummy host-only Simulator of the proper type in
-    % order to determine files to compile and place them in the 
+    % order to determine files to compile and place them in the proper
+    % place for upload
     simulatorID = 'dummy4compile';
     type = obj.machineSetType;
     dummySim  = type.constrFunc(simulatorID, machine,...
@@ -31,6 +32,7 @@ function preUploadFiles(obj, machine)
 
     dummySim.delete();
     
+    % These are not yet used consistently
     obj.files2Compile = [baseListComp extListComp reqdCustListComp addlCustListComp];
     obj.files2Upload =  [baseListNonComp extListNonComp reqdCustListNonComp addlCustListNonComp];
     obj.modelFiles2Upload = modelFileList;

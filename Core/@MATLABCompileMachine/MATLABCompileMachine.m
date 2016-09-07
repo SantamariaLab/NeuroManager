@@ -188,6 +188,7 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
     properties
         simType;
         machineScratch;            % on the host
+        requiredCompilationDirectoryName = 'NMComp';
         ML2CompileDir;
         toUploadDir;
         MLCompiledDir;
@@ -260,9 +261,14 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
         function list = getCompilationFileTransferList(obj)
             list = obj.compilationFileTransferList;
         end
+
+        % ----------
+        function cancelJob(obj, jobID) %#ok<INUSD>
+            % No need for this but to make abstract superclass happy
+        end
         
         % --------
-        function delete(obj) 
+        function delete(obj)  %#ok<INUSD>
 % Temporarily commented for troubleshooting
 %              if (obj.xCompilationMachine ~= 0)
 %                 command = ['cd ' obj.xCompilationScratchDir '; '...
