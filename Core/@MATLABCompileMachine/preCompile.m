@@ -205,23 +205,14 @@ function compVersionStr = preCompile(obj, fileList)
                ' must be named ' obj.requiredCompilationDirectoryName '.']);
     end
     
-    % Ensure the compilation directory exists and has no subdirectories
+    % Ensure the compilation directory exists
     if ~obj.checkForDirectory(convCompileDir);
     	error(['Compilation directory ' convCompileDir ...
                ' does not exist on compile machine.']);
     end
     
-    % No machine command for the following (yet)
     % Check for subdirectories of the compile directory
-    % This does not find hidden directories
-	command = ['cd ' convCompileDir ';test -d */; echo $?;'];
-    machineResult = obj.issueMachineCommand(command, CommandType.FILESYSTEM); 
-    if strcmp(machineResult{1}, '0')
-        result = true;
-    else
-        result = false;
-    end
-    if result
+    if obj.checkForSubdirectories(convCompileDir)
     	error(['Compilation directory ' convCompileDir ...
                ' on compile machine cannot have any subdirectories.']);
     end

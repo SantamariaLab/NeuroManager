@@ -185,11 +185,9 @@ END OF LICENSE
 
 % testCommunications.m
 % Part of the NeuroManager class.
-% Tests communications (and file transfer) with any machine in the
-% config that has nonzero number of simulators. A true result
-% means pass.
-
-% ----------------
+% Tests communications and file transfer with any machine in the
+% config that has nonzero number of simulators. A true result means pass.
+% ---
 function tfResult = testCommunications(obj)
     testedMachines = {};
     obj.log.write(['Testing machine communications.']);
@@ -201,42 +199,11 @@ function tfResult = testCommunications(obj)
 
     % Update the webpage
     obj.displayStatusWebPage('testmachine');
-
-    % Test the compile machine
-    obj.log.write(['Testing compile machine communications.']);
-    config = obj.mLCompileConfig.getMachine();
-    testMachine = ...
-        MLCompileCommsTest(config, obj.hostMachineData.id, ...
-                           obj.hostMachineData.osType,...
-                           obj.machineScratchDir,...
-                           obj.auth, obj.log);
-    ID = testMachine.getID();
-    commsID = testMachine.getCommsID();
-    obj.log.write(['Testing machine communications for '...
-                   ID '.']);
-    tfResult = testMachine.commsTest();
-    if tfResult == false
-        obj.log.write(['Machine communications for '...
-                       ID ' failed.']);
-        if obj.simNotificationSet.isEnabled()
-            notificationSubject = ['NeuroManager Error'];
-            obj.simNotificationSet.send(notificationSubject,...
-             ['Communications Test with ' ID ' failed.'], '');
-        end
-        error('MachineCommsTest:Error',...
-              ['Communications Test with ' ID ' failed.']);
-    end
-    testedMachines = [testedMachines commsID]; 
-    obj.log.write(['Machine communications for '...
-                   ID ' passed.']);
-    testMachine.delete();
-                     
+                    
     % Test the machines in the machineSetConfig
     configStr = obj.machineSetConfig.printToStr;
     obj.log.write(configStr);
     for i = 1:obj.machineSetConfig.getNumMachines()
-%         [type, numSimulators, ~, config, queueData, ~, ~, ~,...
-%             baseDir, ~, ~, ~] = obj.machineSetConfig.getMachine(i);
         config = obj.machineSetConfig.getMachine(i);
         type = config.getResourceType();
         numSimulators = config.getNumSimulators();
@@ -258,14 +225,14 @@ function tfResult = testCommunications(obj)
             tfResult = testMachine.commsTest();
             if tfResult == false
                 obj.log.write(['Machine communications for '...
-                               ID ' failed.']);
+                               ID ' FAILED.']);
                 if obj.simNotificationSet.isEnabled()
                     notificationSubject = ['NeuroManager Error'];
                     obj.simNotificationSet.send(notificationSubject,...
-                     ['Communications Test with ' ID ' failed.'], '');
+                     ['Communications Test with ' ID ' FAILED.'], '');
                 end
-                error('MachineCommsTest:Error',...
-                      ['Communications Test with ' ID ' failed.']);
+                testMachine.delete();
+                return;
             end
             testedMachines = [testedMachines commsID]; %#ok<AGROW>
             obj.log.write(['Machine communications for '...
@@ -283,4 +250,3 @@ function tfResult = testCommunications(obj)
          ['Machine communications test PASSED.'], '');
     end
 end
-        

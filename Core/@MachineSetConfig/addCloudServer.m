@@ -60,7 +60,7 @@ function addCloudServer(obj, varargin)
     
     obj.MSConfig(i).numSimulators = p.Results.numSimulators;
 
-    % Need multiple checks on this; here and elsewhere IMPORTANT!!!
+    % work dir acceptability check is done during communications tests
     obj.MSConfig(i).workDir = p.Results.workDir;
     obj.numMachines = i;
 

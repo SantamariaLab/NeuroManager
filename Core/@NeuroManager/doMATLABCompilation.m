@@ -22,6 +22,10 @@ function doMATLABCompilation(obj)
     MLCM.compile();
     MLCM.postCompile();
     MLCM.delete();
+
+    % Record the event for later compatibility checks
+    obj.compiledType = obj.machineSetType;
+
     obj.log.write(['MATLAB compilation complete.']);
 
     % Switch the webpage back to generic initialization activity

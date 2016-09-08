@@ -433,6 +433,15 @@ classdef RealMachine < handle
             end
         end
         
+        % ---
+        function tf = checkForSubdirectories(obj, directory)
+        % Returns true if there are nonhidden subdirectories in the given
+        % directory; assumes the jobsubmission machine
+            command = ['cd ' directory '; test -d */; echo $?;'];
+            machineResult = obj.issueMachineCommand(command, CommandType.JOBSUBMISSION); 
+            tf = strcmp(machineResult{1}, '0');
+        end 
+        
         % ----------------
         % Checks for a file to appear on remote machine at the indicated
         % path and returns when it appears. LATER ADD A TIMEOUT AND

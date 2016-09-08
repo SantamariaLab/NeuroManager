@@ -196,7 +196,7 @@ function addWisp(obj, varargin)
     obj.MSConfig(i).jsIpAddress = obj.MSConfig(i).ipAddress;
 
 
-    % Need multiple checks on this; here and elsewhere IMPORTANT!!!
+    % work dir acceptability check is done during communications tests
     obj.MSConfig(i).workDir = workDir;
     obj.numMachines = i;
 

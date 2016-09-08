@@ -207,11 +207,7 @@ classdef MachineSetConfig < handle
             obj.log = log;
         end
         
-        % -----------
-%         function [type, numSimulators, machineName, config,...
-%                   queueData, parEnvStr, resourceStr, numNodes, workDir,...
-%                   wallClockTime, ipAddr, deleteInstanceWhenDone] =...
-%                                                     getMachine(obj, index)
+        % ---
         function config = getMachine(obj, index)
             if ((index > obj.numMachines) || (index < 1))
                 config = 0;
@@ -220,12 +216,19 @@ classdef MachineSetConfig < handle
             config = obj.MSConfig(index);
         end
         
-        % -----------
+        % ---
         function num = getNumMachines(obj)
             num = obj.numMachines;
         end
         
-        % -----------
+        % ---
+        function tf = checkWorkDir(obj, directory)
+            % Ensure the directory exists and has no visible subdirectories 
+            tf = (obj.checkForDirectory(directory) && ...
+                  ~obj.checkForSubdirectories(directory));
+        end
+        
+        % ---
         function print(obj)
             fprintf('%s\n', 'MachineSetConfig:');
             for i = 1:obj.numMachines
@@ -239,7 +242,7 @@ classdef MachineSetConfig < handle
             fprintf('%s\n', '--------------------');
         end
 
-        % -----------
+        % ---
         function str = printToStr(obj)
             str = '';
             str = [str sprintf('%s\n', 'MachineSetConfig:')];

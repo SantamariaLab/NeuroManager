@@ -219,7 +219,7 @@ classdef MachineCommsTest < FileTransferMachine
                           'requires host and remote to be the same machine.']);
                 end
             end
-            if communicationsOK(obj) && baseDirExist(obj) && fileTransferOK(obj)
+            if communicationsOK(obj) && baseDirAcceptable(obj) && fileTransferOK(obj)
                 tfResult = true;
             else 
                 tfResult = false;
@@ -239,19 +239,26 @@ classdef MachineCommsTest < FileTransferMachine
         tfresult = communicationsOK(obj) % definition in separate file
         tfresult = fileTransferOK(obj)   % definition in separate file
            
-        % Check for existence of base dir
-        function tfResult = baseDirExist(obj)
-            obj.log.write(['Beginning target base directory existence '...
+        % Check for acceptability of base dir
+        function tfResult = baseDirAcceptable(obj)
+            obj.log.write(['Beginning target base directory acceptability '...
                            'check for machine ' obj.getID() '.']);
             tfResult = obj.checkForDirectory(obj.targetBaseDir);
             if tfResult == false
                 obj.log.write(['Indicated base directory (' obj.targetBaseDir ...
                        ') on ' obj.getID() ' does not exist. Test failed.']);
+                return;
+            end
+            if obj.checkForSubdirectories(obj.targetBaseDir)
+                obj.log.write(['Indicated base directory (' obj.targetBaseDir ...
+                       ') on ' obj.getID() ' has subdirectories. Test failed.']);
+                return;
             else
-                obj.log.write(['Target base directory existence check '...
+                obj.log.write(['Target base directory acceptability check '...
                                'on machine ' obj.getID() ' passed.']);
             end
         end
+        
         
         % Debug only; msg should be contiguous, short, no whitespace
         function touchMsg(obj, msg)

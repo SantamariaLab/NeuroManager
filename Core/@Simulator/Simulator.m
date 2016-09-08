@@ -200,23 +200,16 @@ classdef Simulator < handle
         % The lists of files to be uploaded as part of the simulator;
         % dependent on simtype and machine. A cell array of strings.
         % Filenames only
-        % NeuroManager Files standard for all simulators plus std simulator-specific
-%         stdUploadFiles; 
+        % NeuroManager Files standard for all simulators
         baseSimulatorFileList;
 
-%         extendedSimulatorFileList;
-        
         % User-supplied UserSimulation.m
         reqdCustomFileList;
-%         custUploadFiles; 
-        
-        % Additional User-supplied simulator files
-%         addlCustUploadFiles; 
-%         addlCustomFileList;
         
         % Full path of simulator's basedir on target machine
         targetBaseDir;
-        % Full path of simulationcommon directory on target machine
+
+        % Full path of SimulationCommon directory on target machine
         simulationCommonDir;
         
         state; % Defined in class SimulatorState
@@ -736,15 +729,7 @@ classdef Simulator < handle
             obj.stats.saveStatsHistory(obj.getID(), directory);
         end
 
-        
         % -------------
-        % CHANGED THIS FROM DELETE() Aug2016
-        % Cleans up the remote machine.
-        % We are as explicit as possible for safety; but the ssh package
-        % doesn't give us a bash shell, so we have to make do. It would be
-        % nice to do this from a list, but there are compile movements and
-        % such. By using the full pathnames I hope to be pretty safe.  Using
-        % the full pathnames makes the cd's obsolete, I think 
         function removeRemoteAspect(obj)
             % Remove the temp directory from the BaseDir 
             command = ['cd '...
