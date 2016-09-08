@@ -4,8 +4,6 @@ function doMATLABCompilation(obj)
 
     % Perform the MATLAB Compilation
     % MLCM = MATLAB Compile Machine
-    % Ignore compiler compatibility for now
-
     obj.log.write(['Beginning MATLAB compilation.']);
     config = obj.mLCompileConfig.getMachine();
     MLCM = MATLABCompileMachine(config, obj.machineSetType, ...
@@ -18,7 +16,8 @@ function doMATLABCompilation(obj)
 
     obj.preUploadFiles(MLCM);
     
-    MLCM.preCompile(obj.files2Compile); % files2Compile set in preUploadFiles()
+    % files2Compile set in preUploadFiles()
+    obj.MLCompilerVersion = MLCM.preCompile(obj.files2Compile); 
     MLCM.compile();
     MLCM.postCompile();
     MLCM.delete();

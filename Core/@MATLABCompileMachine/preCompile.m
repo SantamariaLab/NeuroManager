@@ -187,19 +187,21 @@ END OF LICENSE
 % Part of the MATLABCompileMachine class definition.
 % Also a Workflow Stage
 % ----------
-function compVersionStr = preCompile(obj, fileList)
+function compVersion = preCompile(obj, fileList)
     compileDir = obj.xCompDir;
     convCompileDir = path2UNIX(compileDir);
 
-    % Log the compile version
+    % Log and return the compile version
     compVersionStr = obj.getMATLABCompileVersion();
     obj.log.write(['NeuroManager is MATLAB-compiling '...
-                   ' with MATLAB Compiler Version: ' compVersionStr])
-               
+                   ' with MATLAB Compiler Version: ' compVersionStr]);
+	temp = regexp(compVersionStr, '^(\w.\w+.\w).', 'tokens');
+    compVersion = temp{1}{1};
+    
     % Ensure the compilation directory path ends with 'NMComp' as the final
     % directory name
-    temp = regexp(convCompileDir, '/(\w+)($|/$)', 'tokens');
-    endDir = temp{1}{1};
+    temp = regexp(convCompileDir, '/(\w+)($|/$)', 'tokens')
+    endDir = temp{1}{1}
     if ~strcmp(endDir, obj.requiredCompilationDirectoryName)
         error(['Compilation directory ' convCompileDir ...
                ' must be named ' obj.requiredCompilationDirectoryName '.']);

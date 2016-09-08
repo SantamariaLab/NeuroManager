@@ -230,6 +230,7 @@ classdef NeuroManager < handle
         files2Upload;       % Not sure if need this
         modelFiles2Upload;  % Not sure if need this 
         compiledType = SimType.UNASSIGNED;
+        MLCompilerVersion = '';
         
         % The configuration of the machine set to set up
         machineSetConfig;

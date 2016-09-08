@@ -35,6 +35,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         compilerDir;
         compiler;
         executable;
+        mcrVer;
         mcrDir;
         xCompDir;
         
@@ -76,6 +77,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.compilerDir = '';
                 obj.compiler = '';
                 obj.executable = '';
+                obj.mcrVer = '';
                 obj.mcrDir = '';
                 obj.xCompDir = '';
                 obj.commsID = '';
@@ -140,6 +142,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.compilerDir         = obj.imageData.matlab.compilerDir;
                 obj.compiler            = obj.imageData.matlab.compiler;
                 obj.executable          = obj.imageData.matlab.executable;
+                obj.mcrVer              = obj.imageData.matlab.mcrVer;
                 obj.mcrDir              = obj.imageData.matlab.mcrDir;
                 obj.xCompDir            = obj.imageData.matlab.xCompDir;
 
@@ -276,6 +279,11 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         % ---
         function executable = getExecutable(obj)
             executable = obj.executable;
+        end
+        
+        % ---
+        function ver = getMcrVer(obj)
+            ver = obj.mcrVer;
         end
         
         % ---
