@@ -260,6 +260,12 @@ classdef MachineCommsTest < FileTransferMachine
         end
         
         
+        % Check for compiler-MCR compatibility
+        function tf = compilerMCRCompatible(obj)
+            
+        end
+        
+        
         % Debug only; msg should be contiguous, short, no whitespace
         function touchMsg(obj, msg)
             f = fopen(fullfile(obj.machineScratchDir, msg), 'w');

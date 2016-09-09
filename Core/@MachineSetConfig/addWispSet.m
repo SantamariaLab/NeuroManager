@@ -219,6 +219,7 @@ function addWispSet(obj, varargin)
                             obj.MSConfig(i).imageData.matlab.compiler;
         obj.MSConfig(i).executable = ...
                             obj.MSConfig(i).imageData.matlab.executable;
+        obj.MSConfig(i).mcrVer = obj.MSConfig(i).imageData.matlab.mcrVer;
         obj.MSConfig(i).mcrDir = obj.MSConfig(i).imageData.matlab.mcrDir;
         obj.MSConfig(i).xCompDir = obj.MSConfig(i).imageData.matlab.xCompDir;
         obj.MSConfig(i).simCores = obj.MSConfig(i).imageData.simCores;
