@@ -187,7 +187,7 @@ END OF LICENSE
 % SineSim.m version --- pairs with Sim_SineSim class file.
 % A trivial simulation simulation for designing and testing NeuroManager.
 function [result, errMsg] =...
-        userSimulation(machineID, simID, ~, inDir, outDir, varargin)
+        userSimulation(machineID, simID, ~, inDir, ~, outDir, varargin)
     % Convert the input parameter vector into familiar variable names
     inFreq = varargin{1};
     inDur = varargin{2};

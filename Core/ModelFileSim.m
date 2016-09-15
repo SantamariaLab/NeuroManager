@@ -212,21 +212,16 @@ classdef ModelFileSim < Simulator
         end
         
         % ---
-        function refreshModelFiles(obj)
-            % Reset model files for new simulation (help ensure unmodified
-            % contents). Clear the simulation common dir and copy from
-            % ModelRepository.
-            command = ['cd ' path2UNIX(obj.getSimulationCommonDir()) ...
-                       '; rm ' path2UNIX(fullfile(obj.getSimulationCommonDir(), '*')) ...
+        function transferModelFiles(obj)
+            % Transfer model files into new simulation: clear the
+            % simulation model dir and copy from ModelRepository.
+            simulation = obj.getSimulation();
+            command = ['cd ' path2UNIX(simulation.getTargetModelDir()) ...
+                       '; rm ' path2UNIX(fullfile(simulation.getTargetModelDir(), '*')) ...
                        '; cp ' path2UNIX(fullfile(obj.machine.getModelRepositoryPath(), '/*')) ...
-                       ' ' path2UNIX(obj.getSimulationCommonDir())];
+                       ' ' path2UNIX(simulation.getTargetModelDir())];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-            
-%             % Upload Model Files for each simulator and do the 
-%             % Post Model Files Upload
-%             %obj.uploadModelFiles();    
-%             obj.postModelFilesUpload();
-        end            
+        end
         
 %         % ---
 %         function tfstate = modelFilesUploaded(obj)

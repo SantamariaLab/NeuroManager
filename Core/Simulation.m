@@ -201,6 +201,7 @@ classdef Simulation < handle
         targetBaseDir;  % Full pathname of this simulation's base dir on target
         targetInputDir; % Full pathname of this simulation's input dir on target
         targetOutputDir;% Full pathname of this simulation's output dir on target
+        targetModelDir; % Full pathname of this simulation's model dir on target
         
         params; % Input parameters - a cell array of strings
 
@@ -277,6 +278,7 @@ classdef Simulation < handle
                 obj.targetBaseDir       = '';
                 obj.targetInputDir      = '';
                 obj.targetOutputDir     = '';
+                obj.targetModelDir     = '';
                 obj.signalFileDOWNLOADCOMPLETE = '';
                 obj.signalFileDOWNLOADERROR = '';
                 obj.signalFileSUBMITTED = '';
@@ -313,6 +315,7 @@ classdef Simulation < handle
                 obj.targetBaseDir = '';
                 obj.targetInputDir = '';
                 obj.targetOutputDir = '';
+                obj.targetModelDir = '';
                 obj.signalFileDOWNLOADCOMPLETE =...
                     fullfile(obj.hostBaseDir, 'DOWNLOADCOMPLETE');  % Host side
                 obj.signalFileDOWNLOADERROR =...
@@ -360,31 +363,30 @@ classdef Simulation < handle
             simDirName = fullfile(obj.simulator.targetBaseDir, obj.getID());
             inputDirName = fullfile(simDirName, 'input');
             outputDirName = fullfile(simDirName, 'output');
+            modelDirName = fullfile(simDirName, 'model');
             command = ['mkdir ' path2UNIX(simDirName)];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
             command = ['mkdir ' path2UNIX(inputDirName)];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
             command = ['mkdir ' path2UNIX(outputDirName)];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-            obj.setTargetDirs(simDirName, inputDirName, outputDirName);
+            command = ['mkdir ' path2UNIX(modelDirName)];
+            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+            obj.setTargetDirs(simDirName, inputDirName, outputDirName, modelDirName);
 
-            % Move the model files into the input directory (change this
-            % soon)
-            obj.transferModelFiles();
-            
             % Pre Run Upload Simulation Data Files Stage (defined just
             % below)
             obj.uploadInputDataFiles();
         end
         
         % ---
-        function transferModelFiles(obj)
-        % Move model files from SimulationCommon to the input directory
-        % Needs redesign (using simulationbase/model) but ok for now.
-            command = ['cp ' path2UNIX(fullfile(obj.simulator.getSimulationCommonDir(), '*')) ...
-                       ' ' path2UNIX(obj.getTargetInputDir())];
-            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
-        end
+%         function transferModelFiles(obj)
+%         % Move model files from SimulationCommon to the input directory
+%         % Needs redesign (using simulationbase/model) but ok for now.
+%             command = ['cp ' path2UNIX(fullfile(obj.simulator.getSimulationCommonDir(), '*')) ...
+%                        ' ' path2UNIX(obj.getTargetInputDir())];
+%             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+%         end
         
         % -------------
         % Assumes custom dir source and simulation inputdir as destination
@@ -598,6 +600,12 @@ classdef Simulation < handle
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
             
             command = ['cd '...
+                path2UNIX(obj.getTargetModelDir())...
+                '; rm '...
+                path2UNIX(fullfile(obj.getTargetModelDir(), '*'))]; 
+            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+            
+            command = ['cd '...
                 path2UNIX(obj.getTargetInputDir())...
                 '; rm '...
                 path2UNIX(fullfile(obj.getTargetInputDir(), '*'))...
@@ -617,6 +625,8 @@ classdef Simulation < handle
                 path2UNIX(obj.getTargetInputDir())...
                 '; rmdir '...
                 path2UNIX(obj.getTargetOutputDir())...
+                '; rmdir '...
+                path2UNIX(obj.getTargetModelDir())...
                 '; cd ..;']; 
             command = strcat(command, ['rmdir '...
                 path2UNIX(obj.getTargetBaseDir()) ';']);
@@ -625,11 +635,12 @@ classdef Simulation < handle
         
         % ----------------
         % Host and Target Directories - get and set
-        function setTargetDirs(obj, base, input, output)
+        function setTargetDirs(obj, base, input, output, model)
         % Sets simulation's base, input, and output dirs as well as signal file paths
             obj.targetBaseDir = base;
             obj.targetInputDir = input;
             obj.targetOutputDir = output;
+            obj.targetModelDir = model;
             obj.signalFileSUBMITTED =...
                 fullfile(obj.simulator.getTargetBaseDir(), ['stdout' obj.id '.txt']);
             obj.signalFileRUNNING =...
@@ -660,6 +671,11 @@ classdef Simulation < handle
         % ----------------
         function dir = getTargetOutputDir(obj)
             dir = obj.targetOutputDir;
+        end
+
+        % ----------------
+        function dir = getTargetModelDir(obj)
+            dir = obj.targetModelDir;
         end
 
         % ----------------

@@ -186,7 +186,8 @@ END OF LICENSE
 % NeuronPythonPrep
 % Adds a machine-specific prefix to the indicated file, then creates a wrapper
 % that following code can use to run the simulation.
-function [wrapPath] = neuronPythonPrep(simCore, runDir, inputDir, outputDir,...
+function [wrapPath] = neuronPythonPrep(simCore, runDir, ...
+                                       inputDir, outputDir,...
                                        inFilename, pyFuncName, arguments)
     % Fix up the uploaded file (infilename) with the machine's proper python path
     prefixFile = fullfile(inputDir, 'pyprefix.py');

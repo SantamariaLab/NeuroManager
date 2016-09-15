@@ -247,7 +247,7 @@ classdef CloudServer < SimMachine & Cloud
         % runcommand 
         function jobFilename = ...
                         preRunCreateJobFile(obj, scratchDir, jobRoot,...
-                                                 remoteRunDir, runCommand);
+                                                 remoteRunDir, runCommand)
             jobFilename = [jobRoot '.sh'];
             jobFileFullLocalPath = fullfile(scratchDir, jobFilename);
             job = fopen(jobFileFullLocalPath, 'w');

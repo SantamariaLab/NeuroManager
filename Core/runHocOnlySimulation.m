@@ -190,14 +190,15 @@ END OF LICENSE
 % Note that this approach does not use the arguments; they must be put into
 % the hoc files.  Parameter provided for symmetry with RunPythonSimulation.
 function result = runHocOnlySimulation(runDir, inputDir,...
-                                      outputDir, hocFile, ~)
+                                      modelDir, outputDir, hocFile, ~)
 
     load(fullfile(runDir, 'MachineData.dat'), 'remoteConfig', '-mat');
     
 	% Get the proper SimCore configuration
     simCore = {};
     for i = 1:length(remoteConfig.simCores)
-        if strcmp(remoteConfig.simCores{1,i}.name, remoteConfig.assignedSimCoreName)
+        if strcmp(remoteConfig.simCores{1,i}.name,...
+                  remoteConfig.assignedSimCoreName)
             simCore = remoteConfig.simCores{1,i};
         end
     end
@@ -214,7 +215,8 @@ function result = runHocOnlySimulation(runDir, inputDir,...
 
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.
-    nrnivShell = createHocOnlyNrnivsh(simCore, runDir, inputDir, outputDir, hocFile);
+    nrnivShell = createHocOnlyNrnivsh(simCore, runDir,...
+                                    inputDir, modelDir, outputDir, hocFile);
     
     % CHANGE APPROACH
     if isempty(nrnivShell)

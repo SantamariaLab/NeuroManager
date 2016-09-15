@@ -203,7 +203,7 @@ classdef NoModelFileSim < Simulator
         end
         
         % ---
-        function refreshModelFiles(obj)
+        function transferModelFiles(obj)
             % Nothing to do because no model files
         end            
         

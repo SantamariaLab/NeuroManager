@@ -191,6 +191,10 @@ classdef Simulator < handle
           extendedSimulatorFileList;
           addlCustomFileList;
     end
+    properties (Abstract)
+        % Every terminal class has to set its version
+        version;
+    end
     properties
         % Each Simulator has its own ID which will be used in directory
         % names, notifications, logs, and the like.
@@ -210,7 +214,7 @@ classdef Simulator < handle
         targetBaseDir;
 
         % Full path of SimulationCommon directory on target machine
-        simulationCommonDir;
+%         simulationCommonDir;
         
         state; % Defined in class SimulatorState
         
@@ -241,14 +245,10 @@ classdef Simulator < handle
         % Notification set for this simulator to use for notifying user
         notificationSet;
     end
-    properties (Abstract)
-        % Every terminal class has to set its version
-        version;
-    end
     
     methods (Abstract)
-        % Refer to NeuroManager Staging Sequence.xlsx
         preUploadFiles(obj)   % The simulator aspect of PreUploadFiles
+        transferModelFiles(obj)
         preRunModelProcPhaseH(obj)
         preRunModelProcPhaseP(obj)
         preRunModelProcPhaseD(obj)
@@ -310,6 +310,9 @@ classdef Simulator < handle
             % Log it
             obj.log.write(['Creating simulator ' obj.id ' on Machine '...
                            obj.machine.getID() '.']);
+                       
+            % Remote aspects of the Simulator are constructed separately;
+            % see constructRemoteAspect() below
         end
         
         % --------------
@@ -328,14 +331,14 @@ classdef Simulator < handle
 
             % Create the simulator's basedir and commonsdir on the target
             obj.targetBaseDir = fullfile(obj.machine.getBaseDir, obj.id);
-            obj.simulationCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
+%             obj.simulationCommonDir = fullfile(obj.targetBaseDir, 'SimulationCommon');
             % The cd probably not necessary
             command = ['cd ' path2UNIX(obj.machine.getBaseDir())...
                        '; mkdir -m ug=rwx '...
                        path2UNIX(obj.targetBaseDir)...
-                       '; mkdir  -m ug=rwx '...
-                       path2UNIX(obj.simulationCommonDir)...
                        ];
+%                        '; mkdir  -m ug=rwx '...
+%                        path2UNIX(obj.simulationCommonDir)...
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
             
             % Copy in the MachineData.dat file from SimulatorCommon
@@ -344,9 +347,6 @@ classdef Simulator < handle
             
             % Transfer in the executable apparatus
             obj.refreshSimulatorFiles()
-            
-            % Transfer in any model files
-            obj.refreshModelFiles();
             
             % now Simulator is ready for operation
             obj.state = SimulatorState.AVAILABLE;
@@ -384,23 +384,25 @@ classdef Simulator < handle
                 end
             end
             
-            obj.refreshSimulatorFiles();
+            % Redo the executable apparatus to ensure isolation
+            obj.refreshSimulatorFiles()
 
-            % ---V
-            % Failures here are not detected here; they are detected on the
-            % remote and result in a failed simulation.
-            
-            % This includes the Pre Run Upload Simulation Data Files Stage
-            % and the PreRun Processing Host (H) Phase. 
+            % Create the Simulation filesystem and fetch any input files
             obj.currentSimulation.prepare(obj.machine, obj);
 
+            % Copy the model files into the model dir
+            obj.transferModelFiles();
+
+            % Special subclass-dependent model file transfers are done with
+            % the preRunModelProc methods.
             % PreRun Model Processing Host (H) Phase
             obj.preRunModelProcPhaseH();
 
             % PreRun Model Processing PreSubmission (P) Phase
             obj.preRunModelProcPhaseP();
 
-            % Do it
+            % Do it. Failures here are not detected here; they are detected
+            % on the remote and result in a failed simulation.
             obj.submitSimulation();
         end
 
@@ -436,8 +438,7 @@ classdef Simulator < handle
             obj.run(jobroot, jfn);
         end 
         
-        % -------------
-        % Refer to NeuroManagerStaging.xlsx
+        % ---
         % jfn = job file name
         function [jobRoot, jfn] = preRunJobProc(obj)
             % Get the string that will make PreRun Processing
@@ -705,10 +706,15 @@ classdef Simulator < handle
         end
         
         % -------------
-        function dir = getSimulationCommonDir(obj)
-            dir = obj.simulationCommonDir;
-        end
+%         function dir = getSimulationCommonDir(obj)
+%             dir = obj.simulationCommonDir;
+%         end
         
+        % ---
+        function dir = getSimulationModelDir(obj)
+            dir = obj.simulationModelDir;
+        end
+
         % -------------
         function time = getCurrentTime(obj)
             time = obj.machine.getMachineTime();

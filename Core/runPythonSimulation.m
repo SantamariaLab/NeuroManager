@@ -187,7 +187,7 @@ END OF LICENSE
 % Strings together some target-side utilities to run a Python-based Neuron
 % simulation and leave the resulting data in voltage and time vectors (via
 % the python file). Easily modified for other approaches.
-function result = runPythonSimulation(runDir, inputDir, outputDir,  ...
+function result = runPythonSimulation(runDir, inputDir, modelDir, outputDir,  ...
                                       pythonFile, pyFuncName, arguments)
     load('MachineData.dat', 'remoteConfig', '-mat');
 
@@ -212,7 +212,7 @@ function result = runPythonSimulation(runDir, inputDir, outputDir,  ...
 
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.
-    nrnivShell = createPythonNrnivsh(simCore, runDir, inputDir, outputDir, wrapper);
+    nrnivShell = createPythonNrnivsh(simCore, runDir, inputDir, modelDir, outputDir, wrapper);
     copyfile(fullfile(runDir, nrnivShell), outputDir); % for documentation/debug
 
     % Run the simulation using the shell file we created. Simulations run

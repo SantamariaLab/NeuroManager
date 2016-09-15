@@ -80,7 +80,7 @@ classdef SimNeurPurkinjeMiyasho2001 < SimNeuron
         function preRunModelProcPhaseHHocFileModification(obj, simulation)   
         % Create and/or modify simulation-dependent hoc files in the
         % Machine Scratch directory, add them to the hoc file list, then
-        % ship them to the simulation input directory. 
+        % ship them to the simulation model directory. 
         % Abstract is in Sim_Neuron.
             % Here we "create" our biomech.hoc on the fly (well, not really
             % in this class - here we have already created it as
@@ -92,7 +92,7 @@ classdef SimNeurPurkinjeMiyasho2001 < SimNeuron
                                      hostBiomechFilename);
             % Upload the file 
             obj.machine.fileToMachine(bioMechFile,...
-                fullfile(simulation.getTargetInputDir, targetBiomechFilename));
+                fullfile(simulation.getTargetModelDir, targetBiomechFilename));
             % Add to the hoc file list since it was not on the original list
             obj.hocFileList = [obj.hocFileList, targetBiomechFilename];
         end

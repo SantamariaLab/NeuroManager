@@ -185,27 +185,27 @@ END OF LICENSE
 
 % preRunModelProcPhaseH.m
 % Part of the SimNeuron class.
-% Get the mod files, modify, make the compilation and run shell
-% files. See NeuroManagerStaging.xlsx  
+% Modify the mod files if necessary, move them into place, make the compilation and run shell files.
 % -----------------
 function preRunModelProcPhaseH(obj) 
     simulation = obj.getSimulation();
-    inDir = simulation.getTargetInputDir();
+%     inDir = simulation.getTargetInputDir();
     outDir = simulation.getTargetOutputDir();
-
-    % Renew the SimulationCommon files (rework)
-    obj.refreshModelFiles();
+    modelDir = simulation.getTargetModelDir();
     
-    % Copy *.mod files from simulation common into simulation input dir
-    obj.machine.remoteCopy(obj.getSimulationCommonDir(),...
-                           inDir, obj.modFileList);
+    % Copy *.mod files from simulation model into simulation input dir
+%     obj.machine.remoteCopy(obj.getSimulationCommonDir(),...
+%                            inDir, obj.modFileList);
 
-    % Modify or create/upload new mod files, as required 
+    % Modify or create/upload new mod files to model dir, as required 
+    % If you create any new mod files, be sure to add them to the
+    % modFileList so that when the noModFiles() method is run (see just
+    % below), it will know that there is something to compile
     obj.preRunModelProcPhaseHModFileModification(simulation);
 
     %--
     % Create the shell file for the Neuron mod file compilation,
-    % upload it to the Simulation's input dir, and make it 
+    % upload it to the Simulation's model dir, and make it 
     % executable.   
     modelShellName = 'nrnivmodlsh.sh';
     modelShellPath = fullfile(simulation.getHostBaseDir(), modelShellName);
@@ -237,34 +237,34 @@ function preRunModelProcPhaseH(obj)
         % library that we will use in the actual call)
         fprintf(f, '%s\n',...
             ['if [ -e '...
-                  path2UNIX(fullfile(inDir, 'x86_64', '.libs', 'libnrnmech.so'))...
+                  path2UNIX(fullfile(modelDir, 'x86_64', '.libs', 'libnrnmech.so'))...
                  ' ]']);
         fprintf(f, '%s\n', ['then touch MODCOMPILESUCCESS; echo 0; exit 0']);
         fprintf(f, '%s\n', ['else touch MODCOMPILEFAILURE; echo 1; exit 1']);
         fprintf(f, '%s\n', ['fi']);
     end
     fclose(f);
-    targetPath = fullfile(simulation.getTargetInputDir(), modelShellName);
+    targetPath = fullfile(simulation.getTargetModelDir(), modelShellName);
     obj.machine.fileToMachine(modelShellPath, targetPath);
-    command = ['cd ' path2UNIX(simulation.getTargetInputDir())...
+    command = ['cd ' path2UNIX(simulation.getTargetModelDir())...
                '; chmod +x ' modelShellName];
     obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
     
-    % Copy *.hoc files into simulation input dir
-    obj.machine.remoteCopy(obj.simulationCommonDir,...
-                           simulation.getTargetInputDir(),...
-                           obj.getHocFileList());
+%     % Copy *.hoc files into simulation input dir
+%     obj.machine.remoteCopy(obj.simulationCommonDir,...
+%                            simulation.getTargetInputDir(),...
+%                            obj.getHocFileList());
 
     % Modify them or create new hoc files then upload them to the
     % input dir, as required 
     obj.preRunModelProcPhaseHHocFileModification(simulation);
 
-    % Copy input dir hoc files into simulator base dir for the run.
+    % Copy model dir hoc files into simulator base dir for the run.
     %  nrniv doesn't seem to have a way to specify an input
     %  directory so we must do this for every simulation.
     % Our remote copy doesn't do wildcards but we assume that the
     % user has added any newly created hoc files to obj.HocFileList
-    obj.machine.remoteCopy(simulation.getTargetInputDir(),...
+    obj.machine.remoteCopy(simulation.getTargetModelDir(),...
                            obj.targetBaseDir,...
                            obj.getHocFileList());
 end

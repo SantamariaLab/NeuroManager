@@ -200,8 +200,8 @@ function compVersion = preCompile(obj, fileList)
     
     % Ensure the compilation directory path ends with 'NMComp' as the final
     % directory name
-    temp = regexp(convCompileDir, '/(\w+)($|/$)', 'tokens')
-    endDir = temp{1}{1}
+    temp = regexp(convCompileDir, '/(\w+)($|/$)', 'tokens');
+    endDir = temp{1}{1};
     if ~strcmp(endDir, obj.requiredCompilationDirectoryName)
         error(['Compilation directory ' convCompileDir ...
                ' must be named ' obj.requiredCompilationDirectoryName '.']);

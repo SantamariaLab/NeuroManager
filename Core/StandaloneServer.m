@@ -265,9 +265,8 @@ classdef StandaloneServer <  SimMachine & Server
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
 
-        % ----------
+        % ---
         function postRunJobProc(obj, simulation)
-            % See NeuroManagerStaging.xlsx
             simulatorBasedir = simulation.simulator.getTargetBaseDir();
             simulationOutputdir = simulation.getTargetOutputDir();
             command = ['mv ' path2UNIX(fullfile(simulatorBasedir, 'std*.txt '))...
@@ -275,7 +274,7 @@ classdef StandaloneServer <  SimMachine & Server
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
-        % ----------
+        % ---
         % Concrete version for this machine type (see RunJobMachine for abstract)
         function runJobCleanup(obj, simBasedir)
         % Clean up target-side files related to running jobs on qsub machine

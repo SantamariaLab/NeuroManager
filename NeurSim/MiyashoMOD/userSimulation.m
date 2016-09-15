@@ -188,7 +188,7 @@ END OF LICENSE
 % little plotting afterwards. Must be used with the
 % Sim_Neur_Purkinje_Miyasho2001 simulator class.
 function [result, errMsg] =...
-        userSimulation(machineID, simID, runDir, inputDir, outputDir, varargin)
+        userSimulation(machineID, simID, runDir, inputDir, modelDir, outputDir, varargin)
     % Convert the input parameters into the simulation names; these are all
     % strings and so will need conversion if you want to use them here.
     current = varargin{1};
@@ -216,9 +216,9 @@ function [result, errMsg] =...
     % (here, 'pythonsim'), located in the file PySim.py, 
     % with the indicated arguments (as a cell array of strings, in the
     % order expected by the function call 'pythonsim').  
-    arguments = {simID, inputDir, outputDir, current, vInit, delay,...
+    arguments = {simID, inputDir, modelDir, outputDir, current, vInit, delay,...
                  stimDuration, timeStep, simtStop, recordInterval};
-    status = runPythonSimulation(runDir, inputDir, outputDir, ...
+    status = runPythonSimulation(runDir, inputDir, modelDir, outputDir, ...
                                  'PySim.py', 'pythonsim', arguments);
     
     % --
