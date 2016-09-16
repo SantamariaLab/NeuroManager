@@ -202,12 +202,17 @@ function [result, errMsg] =...
     % Simulation-specific hoc file prep
     % The '..._Biomech.hoc' file has already been created and uploaded for
     % this simulation by preRunModelProcPhaseHHocFileModification().
-    catFilename = fullfile(inputDir, [simID '_Biomech.hoc']);
+    catFilename = fullfile(modelDir, [simID '_Biomech.hoc']);
     % The new, combined morphology/biomech file is named with the
     % simulation ID, which is what our Python function is expecting.
-    hocNew = fullfile(inputDir, [simID '.hoc']);
+    hocNew = fullfile(modelDir, [simID '.hoc']);
     system(['cat purkinje_MORPH.hoc ' catFilename ' > ' hocNew]);
-     
+
+    % Copy the combined file into the rundir for simulation
+    % (having all hoc files in the rundir makes it easier to use
+    % off-the-shelf models without modifying them internally)
+    copyfile(hocNew, runDir);
+   
     % Copy the combined file into the output dir for documentation
     % purposes (will automatically be downloaded).
     copyfile(hocNew, outputDir);
@@ -216,7 +221,8 @@ function [result, errMsg] =...
     % (here, 'pythonsim'), located in the file PySim.py, 
     % with the indicated arguments (as a cell array of strings, in the
     % order expected by the function call 'pythonsim').  
-    arguments = {simID, inputDir, modelDir, outputDir, current, vInit, delay,...
+    arguments = {simID, runDir, inputDir, modelDir, outputDir,...
+                 current, vInit, delay,...
                  stimDuration, timeStep, simtStop, recordInterval};
     status = runPythonSimulation(runDir, inputDir, modelDir, outputDir, ...
                                  'PySim.py', 'pythonsim', arguments);

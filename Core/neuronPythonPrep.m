@@ -187,10 +187,10 @@ END OF LICENSE
 % Adds a machine-specific prefix to the indicated file, then creates a wrapper
 % that following code can use to run the simulation.
 function [wrapPath] = neuronPythonPrep(simCore, runDir, ...
-                                       inputDir, outputDir,...
+                                       ~, outputDir,...
                                        inFilename, pyFuncName, arguments)
     % Fix up the uploaded file (infilename) with the machine's proper python path
-    prefixFile = fullfile(inputDir, 'pyprefix.py');
+    prefixFile = fullfile(runDir, 'pyprefix.py');
     f = fopen(prefixFile, 'w');
 	fprintf(f, '%s\n', ['#!' simCore.config.pythonPath]);
     fclose(f);
@@ -199,9 +199,9 @@ function [wrapPath] = neuronPythonPrep(simCore, runDir, ...
     modFilename = [modRoot '.py'];
     system(['cat ' prefixFile ' ' ...
             fullfile(runDir, inFilename) ' > '...
-            fullfile(inputDir, modFilename)]);
+            fullfile(runDir, modFilename)]);
     % debug/documentation
-    copyfile(fullfile(inputDir, modFilename),...
+    copyfile(fullfile(runDir, modFilename),...
              fullfile(outputDir, modFilename));
 
     % Prepare a wrapper that simply calls the function with the
@@ -209,7 +209,7 @@ function [wrapPath] = neuronPythonPrep(simCore, runDir, ...
     % support command line arguments for the Python input file). Create the
     % wrapper in the simulation input folder, since it is associated with
     % the individual simulation. 
-    wrapPath = fullfile(inputDir, 'wrap.py'); 
+    wrapPath = fullfile(runDir, 'wrap.py'); 
     f = fopen(wrapPath, 'w');
 	fprintf(f, ['#!' simCore.config.pythonPath...
                 '\nimport sys\nimport ' modRoot '\n\n']);

@@ -187,7 +187,7 @@ END OF LICENSE
 % For use with SimNeuronSimpleSpike02B
 % Assumes the lead hoc file is 'runme.hoc'.
 function [result, errMsg] =...
-        userSimulation(~, simID, runDir, inputDir, outputDir, varargin)
+        userSimulation(~, simID, runDir, inputDir, modelDir, outputDir, varargin)
     
     currentStr = varargin{1};
     durationStr = varargin{2};
@@ -224,7 +224,7 @@ function [result, errMsg] =...
     % them for the plot title (below), which is better in 2B since the
     % values have a closer origin.
     arguments = ''; 
-    status = runHocOnlySimulation(runDir, inputDir,...
+    status = runHocOnlySimulation(runDir, inputDir, modelDir, ...
                          outputDir, 'runme.hoc', arguments);
 
     if status == 0 % i.e, successful return from the simulation

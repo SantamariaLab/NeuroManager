@@ -204,11 +204,10 @@ function result = runPythonSimulation(runDir, inputDir, modelDir, outputDir,  ..
     end
     
     % Add machine-specific prefix to python file (assumed to be in rundir)
-    % and then make a wrapper and put it in the input dir.   
+    % and then make a wrapper and put it in the rundir.   
     % Supplied as part of standard files.
     wrapper = neuronPythonPrep(simCore, runDir, inputDir, outputDir,...
                                pythonFile, pyFuncName, arguments);
-    copyfile(wrapper, outputDir); % for documentation/debug
 
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.

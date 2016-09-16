@@ -187,7 +187,7 @@ END OF LICENSE
 % Creates the machine-specific nrnivsh.sh file in the rundir with mod file
 % library located off the modeldir. Assumes bash.
 % Assumes all hoc files will be located in the simulation's model directory
-function shellName = createHocOnlyNrnivsh(simCore, runDir, inputDir,...
+function shellName = createHocOnlyNrnivsh(simCore, runDir, ~,...
                                           modelDir, outputDir, hocFile)
     % Create the machine- and simulation-dependent Neuron shell.
     f = fopen(fullfile(runDir, 'nrnivsh.sh'), 'w');
@@ -202,8 +202,7 @@ function shellName = createHocOnlyNrnivsh(simCore, runDir, inputDir,...
                         fullfile(simCore.config.neuronDir,...
                                  simCore.config.libExt)...
                         ':$LD_LIBRARY_PATH']);
-	% Should this be inputDir or modelDir? .....v
-    fprintf(f, '%s\n', ['export PYTHONPATH=' inputDir ':$PYTHONPATH']);
+    fprintf(f, '%s\n', ['export PYTHONPATH=' runDir ':$PYTHONPATH']);
     
     addlEnvLibLines = simCore.config.envAddlLibLines;
     if ~isempty(addlEnvLibLines)

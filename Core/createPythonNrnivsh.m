@@ -187,7 +187,7 @@ END OF LICENSE
 % Creates the machine-specific nrnivsh.sh file in the rundir with mod file
 % library located off the modeldir and the python wrapper at pythonwrappath
 % for the machine type seen in machineid. Assumes bash.
-function shellName = createPythonNrnivsh(simCore, runDir, inputDir,...
+function shellName = createPythonNrnivsh(simCore, runDir, ~,...
                                          modelDir, outputDir, pythonWrapPath)
     f = fopen(fullfile(runDir, 'nrnivsh.sh'), 'w');
     fprintf(f, '#!/bin/bash\n');
@@ -206,8 +206,7 @@ function shellName = createPythonNrnivsh(simCore, runDir, inputDir,...
         fprintf(f, '%s\n', addlLibLines{i});
     end
     
-	% Should this be inputDir or modelDir? .....v
-	fprintf(f, '%s\n', ['export PYTHONPATH=' inputDir ':$PYTHONPATH']);
+	fprintf(f, '%s\n', ['export PYTHONPATH=' runDir ':$PYTHONPATH']);
     addlEnvLines = simCore.config.pythonEnvAddlLines;
     if ~isempty(addlEnvLines)
         for i=1:length(addlEnvLines)

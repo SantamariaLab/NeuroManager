@@ -226,6 +226,24 @@ classdef SimNeuronSimpleSpike03 < SimNeuron
             obj.version = '1.0';  % Will be recorded in log
             %javaaddpath(obj.XMLTransformLoc);
         end
+
+        % ---
+        function list = getHocFileList(obj)
+            list = getHocFileList@SimNeuron(obj);
+            list = [list obj.hocFileList];
+        end
+        
+        % ---
+        function list = getModFileList(obj)
+            list = getModFileList@SimNeuron(obj);
+            list = [list obj.modFileList];
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = getModelFileList@ModelFileSim(obj);
+            list = [list obj.modFileList obj.hocFileList];
+        end
         
         % -----------
         function preRunModelProcPhaseHModFileModification(obj, simulation)  
