@@ -41,6 +41,10 @@ function Struct = ini2struct(FileName)
 % 2014/02/01
 
 f = fopen(FileName,'r');                    % open file
+if ~exist(FileName, 'file')==2
+    error(['NeuroManager error: file ' FileName ' not found.']);
+end
+    
 while ~feof(f)                              % and read until it ends
     s = strtrim(fgetl(f));                  % remove leading/trailing spaces
     if isempty(s) || s(1)==';' || s(1)=='#' % skip empty & comments lines

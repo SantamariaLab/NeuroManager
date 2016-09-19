@@ -86,37 +86,50 @@
 	
 	<sessionscript>
 		<locationinfo>
-			<userinfo>
-				myNMStaticData
-			</userinfo>
+			<userstaticdatafilepath>
+				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\dbsStaticData.ini
+			</userstaticdatafilepath>
 			<customdir>
-				NeurSim/SimpleSpike02A
+				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike02A
 			</customdir>
 			<modeldir>
-				NeurSim/SimpleSpike01
+				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike01
 			</modeldir>
+			<simspecdir>
+				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike02A
+			</simspecdir>
 			<resultsdir>
-				NeurSim/SimpleSpike02A
+				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike02A
 			</resultsdir>
 		</locationinfo>
 		
 		<machineset singlemachine="false" usedualkey="true" polldelay="21">
-			<machine>
-				<machinetype>MYSERVER01</machinetype>
+			<compilemachine>
+				<infofile>CheetahInfo.json</infofile>
+			</compilemachine>
+			<standaloneserver>
+				<infofile>SynapseInfo.json</infofile>
 				<numsimulators>4</numsimulators>
-				<workdir>MYSERVER01_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
-			<machine>
-				<machinetype>MYSERVER02</machinetype>
-				<numsimulators>0</numsimulators>
-				<workdir>MYSERVER02_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
-			<machine>
-				<machinetype>MYSGECLUSTERQUEUE</machinetype>
+				<workdir>/home/David.Stockton/NMDev</workdir>
+			</standaloneserver>
+			<cloudserver>
+				<infofile>dbs-testInfo.json</infofile>
 				<numsimulators>4</numsimulators>
-				<workdir>MYSGECLUSTERQUEUE_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
+				<workdir>/home/cc/NMDev</workdir>
+			</cloudserver>
+			<wispset>
+				<numwisps>2</numwisps>
+				<wispnameroot>myWispNameRoot</wispnameroot>
+				<infofile>CCSineSimWispInfo.json</infofile>
+				<numsimulators>2</numsimulators>
+				<workdir>/home/cc/NMDev</workdir>
+			</wispset>
+			<cluster>
+				<infofile>CheetahInfo.json</infofile>
+				<queue>General</queue>
+				<numsimulators>4</numsimulators>
+				<workdir>/home/david.stockton/SMDev/ALL</workdir>
+			</cluster>
 		</machineset>
 	</sessionscript>
-	
 </nmsession>

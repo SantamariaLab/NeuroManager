@@ -70,9 +70,46 @@
 		</xsl:if>
 </xsl:template>
 
-<xsl:template match="machine">
-		<xsl:text>config.addMachine(MachineType.</xsl:text>
-		<xsl:value-of select="translate(machinetype,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+<xsl:template match="compilemachine">
+		<xsl:value-of select="concat('MLCompileMachineInfoFile = ', '''', infofile, '''')"/>
+		<xsl:text>;&#x0A;</xsl:text> 
+		<xsl:text>nm.setMLCompileServer(MLCompileMachineInfoFile)</xsl:text>
+		<xsl:text>;&#x0A;</xsl:text>
+		<xsl:text>nm.doMATLABCompilation()</xsl:text>
+		<xsl:text>;&#x0A;</xsl:text>
+		<xsl:text>%&#x0A;</xsl:text>
+</xsl:template>
+
+<xsl:template match="standaloneserver">
+		<xsl:text>nm.addStandaloneServer(</xsl:text>
+		<xsl:value-of select="concat('''', infofile, '''')"/>
+		<xsl:value-of select="concat(', ', translate(numsimulators,'&#x20;&#x9;&#xD;&#xA;', ''), ', ''')"/>
+		<xsl:value-of select="translate(workdir,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+		<xsl:value-of select="''');&#x0A;'"/>
+</xsl:template>
+
+<xsl:template match="cloudserver">
+		<xsl:text>nm.addCloudServer(</xsl:text>
+		<xsl:value-of select="concat('''', infofile, '''')"/>
+		<xsl:value-of select="concat(', ', translate(numsimulators,'&#x20;&#x9;&#xD;&#xA;', ''), ', ''')"/>
+		<xsl:value-of select="translate(workdir,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+		<xsl:value-of select="''');&#x0A;'"/>
+</xsl:template>
+
+<xsl:template match="wispset">
+		<xsl:text>nm.addWispSet(</xsl:text>
+		<xsl:value-of select="translate(numwisps,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+		<xsl:value-of select="concat(', ''', wispnameroot, '''')"/>
+		<xsl:value-of select="concat(', ''', infofile, '''')"/>
+		<xsl:value-of select="concat(', ', translate(numsimulators,'&#x20;&#x9;&#xD;&#xA;', ''), ', ''')"/>
+		<xsl:value-of select="translate(workdir,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+		<xsl:value-of select="''');&#x0A;'"/>
+</xsl:template>
+
+<xsl:template match="cluster">
+		<xsl:text>nm.addClusterQueue(</xsl:text>
+		<xsl:value-of select="concat('''', infofile, ''', ')"/>
+		<xsl:value-of select="concat('''', queue, '''')"/>
 		<xsl:value-of select="concat(', ', translate(numsimulators,'&#x20;&#x9;&#xD;&#xA;', ''), ', ''')"/>
 		<xsl:value-of select="translate(workdir,'&#x20;&#x9;&#xD;&#xA;', '')"/>
 		<xsl:if test="./@wallclocktime">
@@ -81,14 +118,33 @@
 		<xsl:value-of select="''');&#x0A;'"/>
 </xsl:template>
 
+<!--
+<xsl:template match="machine">
+		<xsl:text>nm.addClusterQueue(MachineType.</xsl:text>
+		<xsl:value-of select="translate(machinetype,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+		<xsl:value-of select="concat(', ', translate(numsimulators,'&#x20;&#x9;&#xD;&#xA;', ''), ', ''')"/>
+		<xsl:value-of select="translate(workdir,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+		<xsl:if test="./@wallclocktime">
+			<xsl:value-of select="concat(''', ''wallClockTime'', ''', @wallclocktime)"/>
+		</xsl:if>
+		<xsl:value-of select="''');&#x0A;'"/>
+</xsl:template>
+-->
+
 <xsl:template match="machineset">
-		<xsl:text>config = MachineSetConfig(nm.isSingleMachine());&#x0A;</xsl:text>
+		<!--<xsl:text>config = MachineSetConfig(nm.isSingleMachine());&#x0A;</xsl:text>-->
 		<!-- do the machines here -->
-		<xsl:apply-templates select="machine"/>
-		<xsl:text>nm.testCommunications(config);&#x0A;</xsl:text>
-		<xsl:text>nm.constructMachineSet(SimType.</xsl:text>
-		<xsl:value-of select="translate(//simset/simtype,'&#x20;&#x9;&#xD;&#xA;', '')"/>
-		<xsl:text>, config);&#x0A;</xsl:text>
+		<xsl:apply-templates select="compilemachine"/>
+		<xsl:apply-templates select="standaloneserver"/>
+		<xsl:apply-templates select="cluster"/>
+		<xsl:apply-templates select="cloudserver"/>
+		<xsl:apply-templates select="wispset"/>
+		<xsl:text>nm.printConfig();&#x0A;</xsl:text>
+		<xsl:text>if ~nm.verifyConfig()&#x0A;</xsl:text>
+		<xsl:text>    nm.removeWisps();&#x0A;</xsl:text>
+		<xsl:text>    return;&#x0A;</xsl:text>
+		<xsl:text>end&#x0A;</xsl:text>
+		<xsl:text>nm.constructMachineSet();&#x0A;</xsl:text>
 		<xsl:text>%&#x0A;</xsl:text>
 </xsl:template>
 
@@ -125,11 +181,17 @@ Error: singlemachine=true but more than one machine specified.
 		<xsl:text>);&#x0A;</xsl:text> 
 		<xsl:text>disp(['NeuroManager Version: ' nm.getVersion()]);&#x0A;</xsl:text>
 		<xsl:text>%&#x0A;</xsl:text>
+		<xsl:text>simulatorType = SimType.</xsl:text>
+		<xsl:value-of select="translate(//simset/simtype,'&#x20;&#x9;&#xD;&#xA;', '')"/>
+		<xsl:text>;&#x0A;</xsl:text>
+		<xsl:text>nm.setSimulatorType(simulatorType)</xsl:text>
+		<xsl:text>;&#x0A;</xsl:text>
 
 		<xsl:apply-templates select="machineset"/>
 
 		<xsl:value-of select="concat('result = nm.runFromFile(''', $simspecfilename, ''');&#x0A;')"/>
 		<xsl:text>nm.removeMachineSet();&#x0A;</xsl:text>
+		<xsl:text>nm.removeWisps();&#x0A;</xsl:text>
 		<xsl:text>nm.shutdown();&#x0A;</xsl:text>
 		<xsl:text>% End of script.&#x0A;</xsl:text>
 	</xsl:result-document>
