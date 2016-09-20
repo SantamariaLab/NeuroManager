@@ -297,14 +297,6 @@ classdef SimNeuron < ModelFileSim
                            obj.getID() ': ' versionStr]);
         end
 
-        % -----------------
-%         function postCustomFilesUpload(obj)
-%         % See NeuroManagerStaging.xlsx  
-%             if obj.machine.areSimulatorCommonFilesReady()
-%                 obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
-%                         obj.targetBaseDir, obj.addlCustUploadFiles);
-%             end
-%         end
        
         % ------------
         % preRunModelProcPhaseH is defined in a separate file.

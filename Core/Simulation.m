@@ -581,7 +581,7 @@ classdef Simulation < handle
             obj.retrieveResultsFromFile();
             
             % Simulator-specific actions here allow better customization
-            obj.simulator.postDownloadProcessingSimulatorSpecific();
+            obj.simulator.postDownloadProcessingSimulatorSpecific(obj);
         end
         
         % --------

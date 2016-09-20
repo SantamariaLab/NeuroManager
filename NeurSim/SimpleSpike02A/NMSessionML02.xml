@@ -87,48 +87,45 @@
 	<sessionscript>
 		<locationinfo>
 			<userstaticdatafilepath>
-				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\dbsStaticData.ini
+				FULL_USERSTATICDATAFILE_DIRECTORY_GOES_HERE/userStaticData.ini
 			</userstaticdatafilepath>
 			<customdir>
-				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike02A
+				FULL_CUSTOM_DIRECTORY_GOES_HERE
 			</customdir>
-			<modeldir>
-				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike01
-			</modeldir>
 			<simspecdir>
-				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike02A
+				FULL_SIMSPEC_DIRECTORY_GOES_HERE
 			</simspecdir>
 			<resultsdir>
-				C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ProjNeuroMan\NeuroManager\NeurSim/SimpleSpike02A
+				FULL_RESULTS_DIRECTORY_GOES_HERE
 			</resultsdir>
 		</locationinfo>
 		
 		<machineset singlemachine="false" usedualkey="true" polldelay="21">
 			<compilemachine>
-				<infofile>CheetahInfo.json</infofile>
+				<infofile>MyCompileMachineInfoFile.json</infofile>
 			</compilemachine>
 			<standaloneserver>
-				<infofile>SynapseInfo.json</infofile>
+				<infofile>MyServer01InfoFile.json</infofile>
 				<numsimulators>4</numsimulators>
-				<workdir>/home/David.Stockton/NMDev</workdir>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
 			</standaloneserver>
 			<cloudserver>
-				<infofile>dbs-testInfo.json</infofile>
+				<infofile>MyCloudServer01InfoFile.json</infofile>
 				<numsimulators>4</numsimulators>
-				<workdir>/home/cc/NMDev</workdir>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
 			</cloudserver>
 			<wispset>
 				<numwisps>2</numwisps>
 				<wispnameroot>myWispNameRoot</wispnameroot>
-				<infofile>CCSineSimWispInfo.json</infofile>
+				<infofile>MyCloudInfoFile.json</infofile>
 				<numsimulators>2</numsimulators>
-				<workdir>/home/cc/NMDev</workdir>
+				<workdir>NMWorkingDirectoryFromImage</workdir>
 			</wispset>
 			<cluster>
-				<infofile>CheetahInfo.json</infofile>
-				<queue>General</queue>
+				<infofile>MyCluster01InfoFile.json</infofile>
+				<queue>QUEUE</queue>
 				<numsimulators>4</numsimulators>
-				<workdir>/home/david.stockton/SMDev/ALL</workdir>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
 			</cluster>
 		</machineset>
 	</sessionscript>

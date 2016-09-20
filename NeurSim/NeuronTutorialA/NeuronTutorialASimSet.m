@@ -202,10 +202,17 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
 				  'isSingleMachine', false, 'useDualKey', true);
 
 simulatorType = SimType.SIM_NEURON_NEURONTUTORIALA;
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ... 
-                       1, 'WorkDirectoryHere');
-nm.testCommunications(); 
-nm.constructMachineSet(simulatorType);
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
+
+nm.addStandaloneServer('Server01Info.json', 1, 'WorkDirectoryHere');
+nm.printConfig();
+if ~nm.verifyConfig()
+    return;
+end
+nm.constructMachineSet();
 
 result = nm.runFromFile('NeuronTutorialASimSpec.txt');
 

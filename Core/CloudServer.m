@@ -206,7 +206,7 @@ classdef CloudServer < SimMachine & Cloud
         % ----------
         function preUploadFiles(obj)
             preUploadFiles@SimMachine(obj);
-            % Nothing specific to do for this machine; see StagingSequence.xlsx
+            % Nothing specific to do for this machine
         end
         
         % Concrete version for this machine type 

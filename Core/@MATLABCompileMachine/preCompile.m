@@ -232,6 +232,7 @@ function compVersion = preCompile(obj, fileList)
        ' -a ' convCompileDir ...
        ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
        '1> stdoutcompile.txt 2> stderrcompile.txt'];
+
     
     obj.compileShellName = [obj.id 'MLCompShell.sh'];
     mlCompShell = fullfile(obj.machineScratch, obj.compileShellName);

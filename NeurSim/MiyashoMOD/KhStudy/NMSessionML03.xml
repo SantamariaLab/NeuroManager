@@ -107,47 +107,49 @@
 	
 	<sessionscript>
 		<locationinfo>
-			<userinfo>
-				myNMStaticData
-			</userinfo>
+			<userstaticdatafilepath>
+				FULL_USERSTATICDATAFILE_DIRECTORY_GOES_HERE/userStaticData.ini
+			</userstaticdatafilepath>
 			<customdir>
-				NeurSim/MiyashoMOD/KhStudy
+				FULL_CUSTOM_DIRECTORY_GOES_HERE
 			</customdir>
-			<modeldir>
-				NeurSim/MiyashoMOD
-			</modeldir>
+			<simspecdir>
+				FULL_SIMSPEC_DIRECTORY_GOES_HERE
+			</simspecdir>
 			<resultsdir>
-				NeurSim/MiyashoMOD/KhStudy
+				FULL_RESULTS_DIRECTORY_GOES_HERE
 			</resultsdir>
-			<!-- The choice of absolute paths here is under debate -->
-			<addlsearchpath>YOUR_ABSOLUTE_MiyashoMOD_DIRECTORY_GOES_HERE
-			</addlsearchpath>
-			<addlsearchpath>YOUR_ABSOLUTE_NeurSim_DIRECTORY_GOES_HERE
-			</addlsearchpath>
+			<addlsearchpath></addlsearchpath>
+			<addlsearchpath></addlsearchpath>
 		</locationinfo>
 		
 		<machineset singlemachine="false" usedualkey="true" polldelay="21">
-			<machine>
-				<machinetype>MYSERVER01</machinetype>
+			<compilemachine>
+				<infofile>MyCompileMachineInfoFile.json</infofile>
+			</compilemachine>
+			<standaloneserver>
+				<infofile>MyServer01InfoFile.json</infofile>
+				<numsimulators>4</numsimulators>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
+			</standaloneserver>
+			<cloudserver>
+				<infofile>MyCloudServer01InfoFile.json</infofile>
+				<numsimulators>4</numsimulators>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
+			</cloudserver>
+			<wispset>
+				<numwisps>2</numwisps>
+				<wispnameroot>myWispNameRoot</wispnameroot>
+				<infofile>MyCloudInfoFile.json</infofile>
 				<numsimulators>2</numsimulators>
-				<workdir>MYSERVER01_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
-			<machine>
-				<machinetype>MYSERVER02</machinetype>
-				<numsimulators>2</numsimulators>
-				<workdir>MYSERVER02_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
-			<machine>
-				<machinetype>SGECLUSTERQUEUE01</machinetype>
-				<numsimulators>2</numsimulators>
-				<workdir>SGECLUSTERQUEUE01_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
-			<machine>
-				<machinetype>SGECLUSTERQUEUE02</machinetype>
-				<numsimulators>1</numsimulators>
-				<workdir>SGECLUSTERQUEUE02_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
+				<workdir>NMWorkingDirectoryFromImage</workdir>
+			</wispset>
+			<cluster>
+				<infofile>MyCluster01InfoFile.json</infofile>
+				<queue>QUEUE</queue>
+				<numsimulators>4</numsimulators>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
+			</cluster>
 		</machineset>
 	</sessionscript>
-	
 </nmsession>

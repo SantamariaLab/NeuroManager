@@ -1,6 +1,6 @@
 % CollectGPUData prints the data from the MATLAB gpuDevice() object to the
 % named file.
-function CollectGPUData(filepath)
+function collectGPUData(filepath)
     gpu = gpuDevice();
     f = fopen(filepath, 'w');
     fprintf(f, '%s: %s\n', '                  Name', gpu.Name);

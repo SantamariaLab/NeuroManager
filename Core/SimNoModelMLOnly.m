@@ -202,12 +202,7 @@ classdef SimNoModelMLOnly < NoModelFileSim
             % you need to
         end
         
-        % -------------
-        function postCustomFilesUpload(obj)  %#ok<MANU>
-            % Nothing to do in this class; but override in subclasses if
-            % you need to
-        end
-        
+       
         % -------------
         function removeRemoteAspect(obj)
             command =...

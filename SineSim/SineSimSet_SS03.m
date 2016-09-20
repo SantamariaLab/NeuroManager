@@ -212,14 +212,21 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 
 % Part IV: Create a machine set configuration with the remote server
 simulatorType = SimType.SIM_SINESIM;
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
-                       4, 'WorkDirectoryHere'); 
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
 
-% Part V: Test Communications
-nm.testCommunications();
+nm.addStandaloneServer('Server01Info.json', 4, 'WorkDirectoryHere'); 
+nm.printConfig();
+
+% Part V: Test communications, file transfers, and other compatibilities
+if ~nm.verifyConfig()
+    return;
+end
 
 % Part VI: Build the Simulators on the server
-nm.constructMachineSet(simulatorType);
+nm.constructMachineSet();
 
 % Part VII: Run the simulations defined in the specifications file.
 result = nm.runFromFile('SineSimSpec.txt');

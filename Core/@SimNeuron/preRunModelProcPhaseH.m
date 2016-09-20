@@ -193,10 +193,6 @@ function preRunModelProcPhaseH(obj)
     outDir = simulation.getTargetOutputDir();
     modelDir = simulation.getTargetModelDir();
     
-    % Copy *.mod files from simulation model into simulation input dir
-%     obj.machine.remoteCopy(obj.getSimulationCommonDir(),...
-%                            inDir, obj.modFileList);
-
     % Modify or create/upload new mod files to model dir, as required 
     % If you create any new mod files, be sure to add them to the
     % modFileList so that when the noModFiles() method is run (see just
@@ -250,11 +246,6 @@ function preRunModelProcPhaseH(obj)
                '; chmod +x ' modelShellName];
     obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
     
-%     % Copy *.hoc files into simulation input dir
-%     obj.machine.remoteCopy(obj.simulationCommonDir,...
-%                            simulation.getTargetInputDir(),...
-%                            obj.getHocFileList());
-
     % Modify them or create new hoc files then upload them to the
     % input dir, as required 
     obj.preRunModelProcPhaseHHocFileModification(simulation);

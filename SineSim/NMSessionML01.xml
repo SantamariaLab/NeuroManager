@@ -79,7 +79,7 @@
 	<sessionscript>
 		<locationinfo>
 			<userstaticdatafilepath>
-				FULL_INFOFILE_DIRECTORY_GOES_HERE/userStaticData.ini
+				FULL_USERSTATICDATAFILE_DIRECTORY_GOES_HERE/userStaticData.ini
 			</userstaticdatafilepath>
 			<customdir>
 				FULL_CUSTOM_DIRECTORY_GOES_HERE
@@ -92,12 +92,15 @@
 			</resultsdir>
 		</locationinfo>
 		
-		<machineset singlemachine="false" usedualkey="true" polldelay="21">
-			<machine>
-				<machinetype>MACHINE_ID_GOES_HERE</machinetype>
+		<machineset singlemachine="true" usedualkey="true" polldelay="21">
+			<compilemachine>
+				<infofile>MyCompileMachineInfoFile.json</infofile>
+			</compilemachine>
+			<standaloneserver>
+				<infofile>MyServer01InfoFile.json</infofile>
 				<numsimulators>4</numsimulators>
-				<workdir>REMOTE_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
+			</standaloneserver> 
 		</machineset>
 	</sessionscript>
 	
