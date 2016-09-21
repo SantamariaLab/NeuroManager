@@ -212,7 +212,8 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
     
     methods
         function obj = MATLABCompileMachine(config, simType, ...
-                                scratchDir, ML2CompileDir, toUploadDir, MLCompiledDir, ...
+                                scratchDir, ML2CompileDir, ...
+                                toUploadDir, MLCompiledDir, ...
                                 hostID, hostOs, ...
                                 auth, log, notificationSet)
             obj = obj@NoSubMachine(config, hostID, hostOs, auth);
@@ -238,13 +239,8 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
         % --------
         % Path conversion already done in the machine-specific Compile method 
         function setCompileCheckfilePath(obj, pathList)
-            if (obj.xCompilationMachine == 0)
-                obj.compileCheckfilePathSuccess = pathList{1};
-                obj.compileCheckfilePathFailure = pathList{2};
-            else
-                obj.xCompilationMachine.compileCheckfilePathSuccess = pathList{1};
-                obj.xCompilationMachine.compileCheckfilePathFailure = pathList{2};
-            end
+            obj.compileCheckfilePathSuccess = pathList{1};
+            obj.compileCheckfilePathFailure = pathList{2};
         end
         
         % --------
@@ -268,18 +264,12 @@ classdef MATLABCompileMachine < NoSubMachine & MATLABMachineInfo
         end
         
         % --------
-        function delete(obj)  %#ok<INUSD>
-% Temporarily commented for troubleshooting
-%              if (obj.xCompilationMachine ~= 0)
-%                 command = ['cd ' obj.xCompilationScratchDir '; '...
-%                            'rm *.m; rm *.log, rm *.txt; rm *.log; rm *.sh;'...
-%                            'rm run_runSimulation.sh; rm runSimulation;'...
-%                            'rm COMPILESUCCESS; rm COMPILEFAILURE; '...
-%                            'cd ..; rmdir ' obj.xCompilationScratchDir ';'];
-%                 obj.xCompilationMachine.issueMachineCommand(command,...
-%                                                 CommandType.FILESYSTEM);
-%                 obj.xCompilationMachine.delete();
-%              end
+        function delete(obj)  
+            command = ['cd ' obj.getXCompDir() '; '...
+                       'rm *.m; rm *.log, rm *.txt; rm *.log; rm *.sh;'...
+                       'rm run_runSimulation.sh; rm runSimulation;'...
+                       'rm COMPILESUCCESS; rm COMPILEFAILURE; '];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
     end  
 end

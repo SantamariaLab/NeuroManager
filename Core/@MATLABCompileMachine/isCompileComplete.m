@@ -185,24 +185,20 @@ END OF LICENSE
 
 % isCompileComplete
 % Part of the MATLABCompileMachine class definition.
-% ----------
+% ---
 function answer = isCompileComplete(obj)
-    if(obj.xCompilationMachine == 0)
-        checkfilePresence = obj.checkForCheckfileList(...
-                        {obj.getCompileCheckfilePathSuccess(),...
-                         obj.getCompileCheckfilePathFailure()});
-        if ~any(checkfilePresence)
-                     answer = false;
-                     return;
-        end
-        if checkfilePresence(2) % i.e., if COMPILEFAILURE showed up
-            error('NeuroManagerError:MATLABCompilationFailure',...
-                  ['Machine ' obj.id ' failed to compile correctly '...
-                   'into an executable.  Check the compiler output and '...
-                   'error files on the target for details.']);
-        end
-        answer = true;
-    else
-        answer = obj.xCompilationMachine.isCompileComplete();
+    checkfilePresence = obj.checkForCheckfileList(...
+                    {obj.getCompileCheckfilePathSuccess(),...
+                     obj.getCompileCheckfilePathFailure()});
+    if ~any(checkfilePresence)
+                 answer = false;
+                 return;
     end
+    if checkfilePresence(2) % i.e., if COMPILEFAILURE showed up
+        error('NeuroManagerError:MATLABCompilationFailure',...
+              ['Machine ' obj.id ' failed to compile correctly '...
+               'into an executable.  Check the compiler output and '...
+               'error files on the target for details.']);
+    end
+    answer = true;
 end

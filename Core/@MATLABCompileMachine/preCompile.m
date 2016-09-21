@@ -186,7 +186,7 @@ END OF LICENSE
 % preCompile
 % Part of the MATLABCompileMachine class definition.
 % Also a Workflow Stage
-% ----------
+% ---
 function compVersion = preCompile(obj, fileList)
     compileDir = obj.xCompDir;
     convCompileDir = path2UNIX(compileDir);

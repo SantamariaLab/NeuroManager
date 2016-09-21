@@ -11,19 +11,23 @@ function preUploadFiles(obj, machine)
    
     % Query the simulator for the files to compile and to upload
     % separately from compilation; then move them into place on the host
-    [baseListComp, baseListNonComp] = splitFileList(dummySim.getBaseSimulatorFileList());
+    [baseListComp, baseListNonComp] =...
+                    splitFileList(dummySim.getBaseSimulatorFileList());
     copyFileListToDirectory(baseListComp, obj.simCoreDir, obj.ML2CompileDir);
     copyFileListToDirectory(baseListNonComp, obj.simCoreDir, obj.toUploadDir);
 
-    [extListComp, extListNonComp]= splitFileList(dummySim.getExtendedSimulatorFileList());
+    [extListComp, extListNonComp]= ...
+                    splitFileList(dummySim.getExtendedSimulatorFileList());
     copyFileListToDirectory(extListComp, obj.simCoreDir, obj.ML2CompileDir);
     copyFileListToDirectory(extListNonComp, obj.simCoreDir, obj.toUploadDir);
 
-    [reqdCustListComp, reqdCustListNonComp] = splitFileList(dummySim.getReqdCustomFileList());
+    [reqdCustListComp, reqdCustListNonComp] = ...
+                    splitFileList(dummySim.getReqdCustomFileList());
     copyFileListToDirectory(reqdCustListComp, obj.customSimDir, obj.ML2CompileDir);
     copyFileListToDirectory(reqdCustListNonComp, obj.customSimDir, obj.toUploadDir);
 
-    [addlCustListComp, addlCustListNonComp] = splitFileList(dummySim.getAddlCustomFileList());
+    [addlCustListComp, addlCustListNonComp] = ...
+                    splitFileList(dummySim.getAddlCustomFileList());
     copyFileListToDirectory(addlCustListComp, obj.customSimDir, obj.ML2CompileDir);
     copyFileListToDirectory(addlCustListNonComp, obj.customSimDir, obj.toUploadDir);
     
@@ -33,22 +37,26 @@ function preUploadFiles(obj, machine)
     dummySim.delete();
     
     % These are not yet used consistently
-    obj.files2Compile = [baseListComp extListComp reqdCustListComp addlCustListComp];
-    obj.files2Upload =  [baseListNonComp extListNonComp reqdCustListNonComp addlCustListNonComp];
+    obj.files2Compile = [baseListComp extListComp ...
+                         reqdCustListComp addlCustListComp];
+    obj.files2Upload =  [baseListNonComp extListNonComp ...
+                         reqdCustListNonComp addlCustListNonComp];
     obj.modelFiles2Upload = modelFileList;
 end
 
-% Temp HANDLE ERRORS SOON
+% ---
 function copyFileListToDirectory(list, sourceDir, destDir)
-%     list 
-%     sourceDir
-%     destDir
     if ~isempty(list)
         numFiles = length(list);
         for i=1:numFiles
-%             f = fullfile(sourceDir, list{i})
-%             d = destDir
-            copyfile(fullfile(sourceDir, list{i}), destDir);
+            filePath = fullfile(sourceDir, list{i});
+            if ((exist(filePath, 'file') == 2) && ...
+                (exist(destDir, 'dir') == 7))
+                copyfile(filePath , destDir);
+            else
+                error(['preUploadFiles: file ' filePath ...
+                       ' or directory ' destDir ' was not found.']);
+            end
         end
     end
 end

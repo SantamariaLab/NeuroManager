@@ -208,7 +208,7 @@ classdef MachineCommsTest < FileTransferMachine
             obj.log = log;
         end
         
-        % -----------------
+        % ---
         function tfResult = commsTest(obj)
             % Test to see that the host and remote are the same in the case of
             % singlemachine configuration
@@ -239,6 +239,7 @@ classdef MachineCommsTest < FileTransferMachine
         tfresult = communicationsOK(obj) % definition in separate file
         tfresult = fileTransferOK(obj)   % definition in separate file
            
+        % ---
         % Check for acceptability of base dir
         function tfResult = baseDirAcceptable(obj)
             obj.log.write(['Beginning target base directory acceptability '...
@@ -259,13 +260,13 @@ classdef MachineCommsTest < FileTransferMachine
             end
         end
         
-        
+        % ---
         % Check for compiler-MCR compatibility
         function tf = compilerMCRCompatible(obj)
             
         end
         
-        
+        % ---
         % Debug only; msg should be contiguous, short, no whitespace
         function touchMsg(obj, msg)
             f = fopen(fullfile(obj.machineScratchDir, msg), 'w');

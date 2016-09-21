@@ -1,8 +1,7 @@
 
 function setMLCompileServer(obj, varargin)
 % xCompDir must already exist on the target and have no subdirectories.
-% Assume that everything in the xCompDir will be deleted.
-% automatically. 
+% Assume that everything in the xCompDir will be deleted automatically. 
     if obj.machineSetType == SimType.UNASSIGNED
         error(['User must assign Simulator Type using the NeuroManager '...
                'class method setSimulatorType() before using this method.']);

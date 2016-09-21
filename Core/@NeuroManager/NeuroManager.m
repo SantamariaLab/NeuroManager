@@ -188,7 +188,6 @@ END OF LICENSE
 % the SimSet on a Simulator Pool, and places the results in a separate
 % directory for each SimSet, labeled with the SimSet ID.  
 classdef NeuroManager < handle
-    % ====================
     properties
         nmMainDir;         % The installation path of NeuroManager
         simCoreDir;        % Where the NeuroManager and standard simulator files are located
@@ -279,11 +278,8 @@ classdef NeuroManager < handle
         version;
     end
     
-    % ====================
     methods (Access = public)
-%         constructMachineSet(obj, simType) % function defn in separate file
-
-        % ----------------
+        % ---
         function obj = NeuroManager(varargin)
         % NeuroManager constructor
             obj.version = '0.981';
@@ -500,7 +496,7 @@ classdef NeuroManager < handle
             obj.displayStatusWebPage('initial');
         end
         
-        % ----------------
+        % ---
         function result = runFromSimSpec(obj, simspec)
         % Runs the input simspec on the set of simulators built in the
         % NeuroManager constructor.
@@ -524,7 +520,7 @@ classdef NeuroManager < handle
             result = obj.nmRun(simset);
         end
         
-        % ----------------
+        % ---
         function result = runFromFile(obj, simspecFilename)
         % Runs the simspec on the set of simulators built in the
         % NeuroManager constructor.
@@ -551,8 +547,7 @@ classdef NeuroManager < handle
             result = obj.nmRun(simset);
         end
 
-        
-        % -----------------
+        % ---
         function removeMachineSet(obj)
         % Remove all the machines in the machine set
             if obj.machineSetType ~= SimType.UNASSIGNED
@@ -568,7 +563,7 @@ classdef NeuroManager < handle
             end
         end
         
-        % -----------------
+        % ---
         function shutdown(obj)
         % Remove the remote machines and close up shop
         % This may turn into a destructor but not yet
@@ -603,27 +598,32 @@ classdef NeuroManager < handle
             path(obj.oldPath);
         end
         
-        % ----------------
+        % ---
         function tf = isSingleMachine(obj)
             tf = obj.singleMachine;
         end
 
+        % ---
         function version = getVersion(obj)
             version = obj.version;
         end
         
+        % ---
         function setSnapshotTimeStr(obj, str)
             obj.snapshotTimeStr = str;
         end
         
+        % ---
         function str = getSnapshotTimeStr(obj)
             str = obj.snapshotTimeStr;
         end
         
+        % ---
         function dir = getSimResultsDir(obj)
             dir = obj.simResultsDir;
         end 
         
+        % ---
         function setSimSpecFileDir(obj, dir)
                 newDir = pathConversion(dir, obj.hostMachineData.osType);
             if ~exist(newDir, 'dir')
@@ -633,15 +633,18 @@ classdef NeuroManager < handle
             obj.simSpecFileDir = newDir;
         end
         
+        % ---
         function dir = getSimSpecFileDir(obj)
             dir = obj.simSpecFileDir;
         end
         
+        % ---
         function log = getLog(obj)
             log = obj.log;
         end
-
-        % --- Interface for the config class
+        
+        % Interface for the config class
+        % --- 
         function addStandaloneServer(obj, varargin)
             if obj.machineSetType ~= SimType.UNASSIGNED
                 obj.machineSetConfig.addStandaloneServer(obj.machineSetType, varargin{:});
@@ -650,6 +653,7 @@ classdef NeuroManager < handle
             end
         end
         
+        % ---
         function addClusterQueue(obj, varargin)
             if obj.machineSetType ~= SimType.UNASSIGNED
                 obj.machineSetConfig.addClusterQueue(obj.machineSetType, varargin{:});
@@ -658,6 +662,7 @@ classdef NeuroManager < handle
             end
         end
         
+        % ---
         function addCloudServer(obj, varargin)
             if obj.machineSetType ~= SimType.UNASSIGNED
                 obj.machineSetConfig.addCloudServer(obj.machineSetType, varargin{:});
@@ -666,6 +671,7 @@ classdef NeuroManager < handle
             end
         end            
         
+        % ---
         function addWisp(obj, varargin)
             if obj.machineSetType ~= SimType.UNASSIGNED
                 obj.machineSetConfig.addWisp(obj.machineSetType, varargin{:});
@@ -674,6 +680,7 @@ classdef NeuroManager < handle
             end
         end
         
+        % ---
         function addWispSet(obj, varargin)
             if obj.machineSetType ~= SimType.UNASSIGNED
                 obj.machineSetConfig.addWispSet(obj.machineSetType, varargin{:});
@@ -682,18 +689,22 @@ classdef NeuroManager < handle
             end
         end
         
+        % ---
         function removeWisps(obj)
             obj.machineSetConfig.removeWisps();
         end
         
+        % ---
         function terminateCloudInstance(obj, resourceName, instanceName)
             obj.machineSetConfig.terminateCloudInstance(resourceName, instanceName);
         end
         
+        % ---
         function printConfig(obj)
             obj.machineSetConfig.print();
         end
         
+        % ---
         function setSimulatorType(obj, type)
             % if type valid
             try
@@ -704,14 +715,11 @@ classdef NeuroManager < handle
         end
     end 
     
-    
-    % ====================
     methods (Access = private)
         result = nmRun(obj, simset) % function defn in separate file
-        %gatherFiles(obj, coreDir, customDir)
         preUploadFiles(obj, machine) % function defn in separate file
         
-        % ---------------
+        % ---
         function addSimulatorToPool(obj, simulator)
         % Puts the input simulator into the simulator pool
         % Assumes the simulator is valid
@@ -719,7 +727,7 @@ classdef NeuroManager < handle
             obj.simulatorPool{obj.numSimulators} = simulator;
         end
         
-        % ---------------
+        % ---
         function result = machineSetReady(obj)
             % Boolean; true if all machines in the set are ready to go
             result = true;
@@ -732,10 +740,5 @@ classdef NeuroManager < handle
                 end
             end
         end
-    end
-    methods(Static)
-        % function defn in separate file
-        %copyFileListToDirectory(list, sourceDir, destDir)
-        %[mfileList, nonMfileList] = splitFileList(fileList)
     end
 end

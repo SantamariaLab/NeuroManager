@@ -192,7 +192,4 @@ function postCompile(obj)
             fullfile(obj.xCompDir,...
                      obj.compilationFileTransferList{i}));
     end
-
-    % Don't clean up the compile directory to enable troubleshooting
-    % (nothing to do)
 end

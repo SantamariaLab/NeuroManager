@@ -185,7 +185,7 @@ END OF LICENSE
 
 % getMATLABCompileVersion
 % Part of the MATLABCompileMachine class definition.
-% ----------------
+% ---
 function str = getMATLABCompileVersion(obj)
     command = [path2UNIX(fullfile(obj.getCompilerDir(),...
                                   obj.getExecutable()))...

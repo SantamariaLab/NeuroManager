@@ -196,7 +196,6 @@ classdef RealMachine < handle
         % view - for example, all queues of a cluster will have the cluster
         % comms id.
         commsID;
-%         configID;
 
         fsUserName;     % File system machine username
         fsPassword;     % File system machine password

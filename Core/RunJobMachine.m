@@ -204,9 +204,6 @@ classdef RunJobMachine < FileTransferMachine
     methods
         function obj = RunJobMachine(config, hostId, hostOs, auth)
             obj = obj@FileTransferMachine(config, hostId, hostOs, auth);
-%             obj = obj@MATLABCompileMachine(config, ...
-%                                            xcmpMach, xcmpDir,...
-%                                            hostID, hostOS, auth);
         end
     end
 end
