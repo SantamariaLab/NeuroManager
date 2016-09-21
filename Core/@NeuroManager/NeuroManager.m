@@ -282,7 +282,7 @@ classdef NeuroManager < handle
         % ---
         function obj = NeuroManager(varargin)
         % NeuroManager constructor
-            obj.version = '0.981';
+            obj.version = '0.985';
             
             obj.callingFunctionData = dbstack('-completenames');
 
