@@ -186,12 +186,12 @@ END OF LICENSE
 % UserSimulation.m
 % For use with NeuronTutorialA
 function [result, errMsg] =...
-    userSimulation(~, ~, runDir, inputDir, outputDir, varargin)
+    userSimulation(~, ~, runDir, inputDir, modelDir, outputDir, varargin)
     
     % runHocOnlySimulation 
     arguments = {};
     status = runHocOnlySimulation(runDir, inputDir,...
-                          outputDir, 'runme.hoc', arguments);
+                          modelDir, outputDir, 'runme.hoc', arguments);
 	data = 'dataS0R11'; % Must match the hoc files
 	dataFile = [data '.dat'];
     

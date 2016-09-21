@@ -200,11 +200,17 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
                 'useDualKey', true, 'isSingleMachine', true);
 
 simulatorType = SimType.SIM_NEURON_SIMPLESPIKE01;
-nm.addStandaloneServer(simulatorType,  'Server01Info.json', ...
-                           2, 'WorkDirOnMYSERVER01');
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
 
-nm.testCommunications(); 
-nm.constructMachineSet(simulatorType);
+nm.addStandaloneServer('Server01Info.json', 2, 'WorkDirOnMYSERVER01');
+
+if ~nm.verifyConfig()
+    return;
+end
+nm.constructMachineSet();
 nm.runFromFile('SimpleSpike01SimSpec.txt');
 nm.removeMachineSet();
 nm.shutdown();

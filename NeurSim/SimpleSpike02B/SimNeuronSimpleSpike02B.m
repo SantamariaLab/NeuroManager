@@ -191,20 +191,40 @@ classdef SimNeuronSimpleSpike02B < SimNeuron
     properties
         version;
     end
+    properties (Access=private)
+        modFileList = {};
+        hocFileList = {};
+    end
     
     methods
         function obj = SimNeuronSimpleSpike02B(id, machine,...
                                                log, notificationSet)
-            addlCustFileList =  {};
-            modFileList = {'Khh.mod', 'Leak.mod', 'NaF.mod'};
-            hocFileList = {'biomechs.hoc', 'morphology.hoc',...
+            obj = obj@SimNeuron(id, machine, log, notificationSet);
+            obj.modFileList = {'Khh.mod', 'Leak.mod', 'NaF.mod'};
+            obj.hocFileList = {'biomechs.hoc', 'morphology.hoc',...
                            'runme.hoc', 'simulation.hoc'};
-            obj = obj@SimNeuron(id, addlCustFileList, modFileList,...
-                                 hocFileList, machine, log, notificationSet);
             obj.version = '1.0';  % Will be recorded in log
         end
+
+        % ---
+        function list = getHocFileList(obj)
+            list = getHocFileList@SimNeuron(obj);
+            list = [list obj.hocFileList];
+        end
         
-        % -----------
+        % ---
+        function list = getModFileList(obj)
+            list = getModFileList@SimNeuron(obj);
+            list = [list obj.modFileList];
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = getModelFileList@ModelFileSim(obj);
+            list = [list obj.modFileList obj.hocFileList];
+        end        
+        
+        % ---
         function preRunModelProcPhaseHModFileModification(obj, simulation)  %#ok<INUSD>
         % Create and/or modify simulation-dependent model files in the
         % Machine Scratch directory, then ship them to the simulation input
@@ -212,11 +232,11 @@ classdef SimNeuronSimpleSpike02B < SimNeuron
             % Nothing to do for this class
         end
 
-        % -----------
+        % ---
         function preRunModelProcPhaseHHocFileModification(obj, simulation)   %#ok<INUSD>
         % Create and/or modify simulation-dependent hoc files in the
         % Machine Scratch directory, add them to the hoc file list, then
-        % ship them to the simulation input directory. 
+        % ship them to the simulation model directory. 
         % Abstract is in Sim_Neuron.
             % In Example02B we do all the parameter.hoc construction on the
             % target in UserSimulation.m, not here as it was in Example02A.

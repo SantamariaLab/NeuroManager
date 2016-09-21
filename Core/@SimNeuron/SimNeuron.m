@@ -188,19 +188,22 @@ END OF LICENSE
 % addlcustfilelist will change depending on how the user does their Neuron
 % simulations (Use of Python, or not; etc). 
 classdef SimNeuron < ModelFileSim
-    properties
+    properties (Access=private)
+        extendedSimulatorFileList =...
+                {'createPythonNrnivsh.m', ...
+                 'neuronPythonPrep.m', ...
+                 'runPythonSimulation.m', ...
+                 'createHocOnlyNrnivsh.m', ...
+                 'runHocOnlySimulation.m'};
+
         % We call hoc and mod files both model files, but they have
         % different roles and are treated differently
         
-        % These are the *.mod files
-        modFileList;
-        % Will be true if mod files list is empty; in that case if a mod
-        % file is created on the fly then this must be set to true in order
-        % for mod files to be compiled and used
-        noModFiles;  % t/f
+        % These are the *.mod files but it is subclasses that add content
+        modFileList = {};
         
-        % These are the *.hoc files
-        hocFileList;
+        % These are the *.hoc files but it is subclasses that add content
+        hocFileList = {};
         
         % Perhaps should have a PythonFileList? 
     end
@@ -217,7 +220,7 @@ classdef SimNeuron < ModelFileSim
     
     methods (Static)
         function str = getModelFileCompileStr(simulation)
-            str = ['cd ' path2UNIX(simulation.getTargetInputDir())...
+            str = ['cd ' path2UNIX(simulation.getTargetModelDir())...
                    '; cp nrnivmodlsh.sh '...
                    path2UNIX(simulation.getTargetOutputDir())...
                    '; ./nrnivmodlsh.sh; '];
@@ -225,39 +228,59 @@ classdef SimNeuron < ModelFileSim
     end
     
     methods
-        function obj = SimNeuron(id, addlCustFileList,...
-                                  modFileList, hocFileList,...
-                                  machine, log, notificationSet)
-            % Perhaps split this list with two subclasses
-            addlStdFileList =...
-                {'createPythonNrnivsh.m', 'neuronPythonPrep.m',...
-                 'runPythonSimulation.m',...
-                 'createHocOnlyNrnivsh.m', 'runHocOnlySimulation.m'};
-            modelFileList = [hocFileList, modFileList];
-            obj = obj@ModelFileSim(id,...
-                                   addlStdFileList,...
-                                   addlCustFileList,...
-                                   modelFileList,...
-                                   machine, log, notificationSet);
-            obj.modFileList = modFileList;
-            if isempty(obj.modFileList)
-                obj.noModFiles = true;
-            else
-                obj.noModFiles = false;
-            end
-            obj.hocFileList = hocFileList;
+        function obj = SimNeuron(id, machine, log, notificationSet)
+            obj = obj@ModelFileSim(id, machine, log, notificationSet);
         end
         % Future: Make this work at this level so that it can work with
         % ModelDB downloaded mod and hoc files without modification.
 
+        % ---
+        function list = getExtendedSimulatorFileList(obj)
+            list = getExtendedSimulatorFileList@Simulator(obj);
+            list = [list obj.extendedSimulatorFileList];
+        end
         
-        % -------------
+        % ---
+        function tf = noModFiles(obj)
+            tf = isempty(obj.getModFileList());
+        end
+        
+        % ---
+        function hocFileList = getHocFileList(obj)
+            hocFileList = obj.hocFileList;
+        end
+        
+        % ---
+        function list = getModFileList(obj)
+            list = obj.modFileList;
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = getModelFileList@ModelFileSim(obj);
+            list = [list obj.getModFileList() obj.getHocFileList()];
+        end
+        
+        % ---
         function preUploadFiles(obj) 
         % Simulator aspect to preUploadFiles
-            % Neuron version
+        % Override the ModelFileSim version
+            % Pull in the config information associated with the chosen
+            % SimCore so it can be used to get version information directly
+            % from the remote
+            remoteConfig = obj.machine.remoteConfig;
+            simCoreName = remoteConfig.assignedSimCoreName;
+            simCores = remoteConfig.simCores;
+            % Assume is one because we got this far
+            for i = 1:length(simCores)
+                if strcmp(simCores{i}.name, simCoreName)
+                    config = simCores{i}.config;
+                end
+            end
             
-            command = [path2UNIX(fullfile(obj.machine.config.neuronDir,...
-                                 obj.machine.config.binExt, 'nrniv')) ' --version'];
+            % Neuron version
+            command = [path2UNIX(fullfile(config.neuronDir,...
+                                          config.binExt, 'nrniv')) ' --version'];
             result = obj.machine.issueMachineCommand(command,...
                                             CommandType.JOBSUBMISSION);
             versionStr = result{1};
@@ -265,7 +288,7 @@ classdef SimNeuron < ModelFileSim
                            obj.getID() ': ' versionStr]);
 
             % Python version
-            command = [obj.machine.config.pythonPath ...
+            command = [config.pythonPath ...
                        ' -c "import sys; print sys.version"'];
             result = obj.machine.issueMachineCommand(command,...
                                             CommandType.JOBSUBMISSION);
@@ -274,14 +297,6 @@ classdef SimNeuron < ModelFileSim
                            obj.getID() ': ' versionStr]);
         end
 
-        % -----------------
-        function postCustomFilesUpload(obj)
-        % See NeuroManagerStaging.xlsx  
-            if obj.machine.areSimulatorCommonFilesReady()
-                obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath(),...
-                        obj.targetBaseDir, obj.addlCustUploadFiles);
-            end
-        end
        
         % ------------
         % preRunModelProcPhaseH is defined in a separate file.
@@ -290,12 +305,9 @@ classdef SimNeuron < ModelFileSim
         % ------------
         function preRunModelProcPhaseP(obj)
         % Compile the mod files here if appropriate.
-        % See NeuroManagerStaging.xlsx  
             simulation = obj.getSimulation();
             if strcmp(obj.machine.config.modFileCompileLocation, 'P')
-%             preRunModelProcPStr = obj.machine.getCompileNeuronModelFilesStrPhaseP(simulation);
                 preRunModelProcPStr = SimNeuron.getModelFileCompileStr(simulation);
-%                 preRunModelProcPStr = getModelFileCompileStr(simulation);
             else
                 preRunModelProcPStr = '';
             end
@@ -309,19 +321,15 @@ classdef SimNeuron < ModelFileSim
         % Create the command string that will compile the mod files as part
         % of a job submission job file; empty string if no compile; if
         % compile will use the GetModelFileCompileStr function below.
-        % See NeuroManagerStaging.xlsx  
             simulation = obj.getSimulation();
             if strcmp(obj.machine.config.modFileCompileLocation, 'D')
                 str = SimNeuron.getModelFileCompileStr(simulation);
             else
                 str = '';
             end
-%             str = obj.machine.getCompileNeuronModelFilesStrPhaseD(simulation);
-            
         end
         
-        %---------------
-        function delete(obj)
+        function removeRemoteAspect(obj)
             command = ['cd '...
                         path2UNIX(obj.targetBaseDir)...
                         '; rm ' path2UNIX(fullfile(obj.targetBaseDir, '*.m'))...
@@ -332,6 +340,11 @@ classdef SimNeuron < ModelFileSim
                         '; rm ' path2UNIX(fullfile(obj.targetBaseDir, 'runSimulation'))...
                         ];
             obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
+            removeRemoteAspect@Simulator(obj);
+        end
+        
+        %---------------
+        function delete(obj)
         end
         
         % ----------------

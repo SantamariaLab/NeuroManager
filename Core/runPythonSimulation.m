@@ -187,15 +187,15 @@ END OF LICENSE
 % Strings together some target-side utilities to run a Python-based Neuron
 % simulation and leave the resulting data in voltage and time vectors (via
 % the python file). Easily modified for other approaches.
-function result = runPythonSimulation(runDir, inputDir, outputDir,  ...
+function result = runPythonSimulation(runDir, inputDir, modelDir, outputDir,  ...
                                       pythonFile, pyFuncName, arguments)
-    load('MachineData.dat', 'config', '-mat');
+    load('MachineData.dat', 'remoteConfig', '-mat');
 
 	% Get the proper SimCore configuration
     simCore = {};
-    for i = 1:length(config.simCores)
-        if strcmp(config.simCores{1,i}.name, config.assignedSimCoreName)
-            simCore = config.simCores{1,i};
+    for i = 1:length(remoteConfig.simCores)
+        if strcmp(remoteConfig.simCores{1,i}.name, remoteConfig.assignedSimCoreName)
+            simCore = remoteConfig.simCores{1,i};
         end
     end
     if isempty(simCore)
@@ -204,15 +204,14 @@ function result = runPythonSimulation(runDir, inputDir, outputDir,  ...
     end
     
     % Add machine-specific prefix to python file (assumed to be in rundir)
-    % and then make a wrapper and put it in the input dir.   
+    % and then make a wrapper and put it in the rundir.   
     % Supplied as part of standard files.
     wrapper = neuronPythonPrep(simCore, runDir, inputDir, outputDir,...
                                pythonFile, pyFuncName, arguments);
-    copyfile(wrapper, outputDir); % for documentation/debug
 
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.
-    nrnivShell = createPythonNrnivsh(simCore, runDir, inputDir, outputDir, wrapper);
+    nrnivShell = createPythonNrnivsh(simCore, runDir, inputDir, modelDir, outputDir, wrapper);
     copyfile(fullfile(runDir, nrnivShell), outputDir); % for documentation/debug
 
     % Run the simulation using the shell file we created. Simulations run

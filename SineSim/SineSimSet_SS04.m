@@ -208,19 +208,27 @@ nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 % authentication should be the normal mode of operation.
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 
+simulatorType = SimType.SIM_SINESIM;
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
+
 % Part IV: Create a machine set configuration. Working with a cluster is
 % the same as other machines from this file's perspective; the differences
 % are handled in the machine classes via the workflow stages. Each queue on
 % the cluster is treated like a separate machine.
-simulatorType = SimType.SIM_SINESIM;
-nm.addClusterQueue(simulatorType, 'ClusterInfo.json', 'Queue01Name', ...
+nm.addClusterQueue('ClusterInfo.json', 'Queue01Name', ...
                    6, 'myWorkingDirectory/QUEUE01');
+nm.printConfig();
 
-% Part V: Test Communications
-nm.testCommunications();
+% Part V: Test communications, file transfers, and other compatibilities
+if ~nm.verifyConfig()
+    return;
+end
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(simulatorType);
+nm.constructMachineSet();
 
 % Part VII: Run the simulations defined in the specifications file,
 % located in the simSpec Directory.

@@ -191,11 +191,15 @@ classdef SimNeuronSimpleSpike02C < SimNeuron
     properties
         version;
     end
+    properties (Access=private)
+        modFileList = {};
+        hocFileList = {};
+    end
     
     methods
         function obj = SimNeuronSimpleSpike02C(id, machine,...
                                                log, notificationSet)
-            addlCustFileList =  {};
+            obj = obj@SimNeuron(id, machine, log, notificationSet);
             % List of all the fixed biomechs that will be available to
             % simulations and uploaded during simulator construction;
             % if a biomech is not on this list the simulation will have
@@ -205,20 +209,36 @@ classdef SimNeuronSimpleSpike02C < SimNeuron
             % In this Example02C we are constructing Leak.mod on the
             % fly (see below), so in contrast to the previous examples
             % we have removed it from the modfilelist. 
-            modFileList = {'Khh.mod', 'NaF.mod'};
+            obj.modFileList = {'Khh.mod', 'NaF.mod'};
             % In this Example02C we are also constructing parameter.hoc
             % on the fly in UserSimulation.m, so it is not in this list. 
-            hocFileList = {'biomechs.hoc', 'morphology.hoc',...
+            obj.hocFileList = {'biomechs.hoc', 'morphology.hoc',...
                            'runme.hoc', 'simulation.hoc'};
-            obj = obj@SimNeuron(id, addlCustFileList, modFileList,...
-                                 hocFileList, machine, log, notificationSet);
             obj.version = '1.0';  % Will be recorded in log
+        end
+        
+        % ---
+        function list = getHocFileList(obj)
+            list = getHocFileList@SimNeuron(obj);
+            list = [list obj.hocFileList];
+        end
+        
+        % ---
+        function list = getModFileList(obj)
+            list = getModFileList@SimNeuron(obj);
+            list = [list obj.modFileList];
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = getModelFileList@ModelFileSim(obj);
+            list = [list obj.modFileList obj.hocFileList];
         end
         
         % -----------
         function preRunModelProcPhaseHModFileModification(obj, simulation)  
         % Create and/or modify simulation-dependent model files in the
-        % Machine Scratch directory, then ship them to the simulation input
+        % Machine Scratch directory, then ship them to the simulation model
         % directory. Abstract is in Sim_Neuron.
             % In Example02C we are constructing a mod file on the fly using
             % a value from the simspec file. We need a unique name in the
@@ -269,19 +289,17 @@ classdef SimNeuronSimpleSpike02C < SimNeuron
             
             % Upload the file since it was taken off the original list
             obj.machine.fileToMachine(modFile,...
-                fullfile(simulation.getTargetInputDir(), targetModFilename));
-            % Add to the mod file list
+                fullfile(simulation.getTargetModelDir(), targetModFilename));
+            % Add to the mod file list (see comment in SimNeuron's
+            % preRunModelProcPhaseH.m file)
             obj.modFileList = [obj.modFileList, targetModFilename];
-            % In case there were no other mod files we need to say the list
-            % is no longer empty to ensure the mod files are compiled
-            obj.noModFiles = false; 
         end
 
         % -----------
         function preRunModelProcPhaseHHocFileModification(obj, simulation)   %#ok<INUSD>
         % Create and/or modify simulation-dependent hoc files in the
         % Machine Scratch directory, add them to the hoc file list, then
-        % ship them to the simulation input directory. Abstract in Sim_Neuron.
+        % ship them to the simulation model directory. Abstract in Sim_Neuron.
             % In Example02C as well we do the parameter.hoc construction on
             % the target in UserSimulation.m, not here as it was in
             % Example02A. 

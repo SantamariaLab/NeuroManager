@@ -186,7 +186,8 @@ END OF LICENSE
 % userSimulation.m
 % For use with SimNeuronSimpleSpike03
 function [result, errMsg] =...
-        userSimulation(~, simID, runDir, inputDir, outputDir, varargin)
+        userSimulation(~, simID, ...
+                        runDir, inputDir, modelDir, outputDir, varargin)
     
     % In this example we don't use the input parameters here; they have
     % already been incorporated into the NaF model file on the host by the
@@ -229,7 +230,7 @@ function [result, errMsg] =...
     % following call since the mod files carry them. However we do use
     % them for the plot titles (below).
     arguments = ''; 
-    status = runHocOnlySimulation(runDir, inputDir,...
+    status = runHocOnlySimulation(runDir, inputDir, modelDir, ...
                                   outputDir, 'runme.hoc', arguments);
 
     if status == 0 % i.e, successful return from the simulation

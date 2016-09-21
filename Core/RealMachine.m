@@ -196,7 +196,6 @@ classdef RealMachine < handle
         % view - for example, all queues of a cluster will have the cluster
         % comms id.
         commsID;
-%         configID;
 
         fsUserName;     % File system machine username
         fsPassword;     % File system machine password
@@ -432,6 +431,15 @@ classdef RealMachine < handle
                 result = false;
             end
         end
+        
+        % ---
+        function tf = checkForSubdirectories(obj, directory)
+        % Returns true if there are nonhidden subdirectories in the given
+        % directory; assumes the jobsubmission machine
+            command = ['cd ' directory '; test -d */; echo $?;'];
+            machineResult = obj.issueMachineCommand(command, CommandType.JOBSUBMISSION); 
+            tf = strcmp(machineResult{1}, '0');
+        end 
         
         % ----------------
         % Checks for a file to appear on remote machine at the indicated

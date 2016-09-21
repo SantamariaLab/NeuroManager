@@ -58,7 +58,11 @@
 
 	<xs:element name="machinetype" type="xs:NMTOKEN"/>
 	<xs:element name="numsimulators" type="xs:nonNegativeInteger"/> 
+	<xs:element name="numwisps" type="xs:nonNegativeInteger"/> 
 	<xs:element name="workdir" type="xs:anyURI"/>    <!-- may need adjustment -->
+	<xs:element name="infofile" type="xs:anyURI"/>    <!-- may need adjustment -->
+	<xs:element name="queue" type="xs:string"/> <!-- May not be best -->
+	<xs:element name="wispnameroot" type="xs:string"/> <!-- May not be best -->
 	
 	<!-- in the hh:mm:ss format used by SLURM -->
 	<xs:attribute name="wallclocktime">
@@ -69,16 +73,58 @@
 		</xs:simpleType>
 	</xs:attribute>
 	
-	<xs:element name="machine">
+	<xs:element name="compilemachine">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element ref="machinetype" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="infofile" minOccurs="1" maxOccurs="1"/>
+			</xs:sequence>	
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="standaloneserver">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="infofile" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="numsimulators" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="workdir" minOccurs="1" maxOccurs="1"/>
+			</xs:sequence>	
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="cloudserver">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="infofile" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="numsimulators" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="workdir" minOccurs="1" maxOccurs="1"/>
+			</xs:sequence>	
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="wispset">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="numwisps" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="wispnameroot" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="infofile" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="numsimulators" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="workdir" minOccurs="1" maxOccurs="1"/>
+			</xs:sequence>	
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="cluster">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="infofile" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="queue" minOccurs="1" maxOccurs="1"/>
 				<xs:element ref="numsimulators" minOccurs="1" maxOccurs="1"/>
 				<xs:element ref="workdir" minOccurs="1" maxOccurs="1"/>
 			</xs:sequence>	
 			<xs:attribute ref="wallclocktime" use="optional"/>
 		</xs:complexType>
 	</xs:element>
+
 	
 	<xs:attribute name="singlemachine" type="xs:boolean" default="false"/>
 	<xs:attribute name="usedualkey" type="xs:boolean" default="false"/>
@@ -86,15 +132,20 @@
 	
 	<xs:element name="machineset">
 		<xs:complexType>
-			<xs:sequence>
-				<xs:element ref="machine" minOccurs="1" maxOccurs="unbounded"/>
-			</xs:sequence>		
+			<xs:sequence> 
+				<xs:element ref="compilemachine" minOccurs="1" maxOccurs="1"/>
+				<xs:choice  minOccurs="0" maxOccurs="unbounded">
+					<xs:element ref="standaloneserver" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element ref="cloudserver" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element ref="wispset" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element ref="cluster" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:choice>
+			</xs:sequence>
 			<xs:attribute ref="singlemachine"/>
 			<xs:attribute ref="usedualkey"/>
 			<xs:attribute ref="polldelay" use="required"/>
 		</xs:complexType>
 	</xs:element>
-	
 	
 	<xs:element name="sessionscript">
 		<xs:complexType>

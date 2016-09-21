@@ -35,6 +35,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         compilerDir;
         compiler;
         executable;
+        mcrVer;
         mcrDir;
         xCompDir;
         
@@ -76,6 +77,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.compilerDir = '';
                 obj.compiler = '';
                 obj.executable = '';
+                obj.mcrVer = '';
                 obj.mcrDir = '';
                 obj.xCompDir = '';
                 obj.commsID = '';
@@ -103,7 +105,18 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 % NEED TO CHECK FOR VALID TYPE
                 % (not implemented yet)
                 if isfield(obj.infoData, 'resourceType')
-                    obj.resourceType        = obj.infoData.resourceType;
+                    switch obj.infoData.resourceType
+                        case 'STANDALONESERVER'
+                            obj.resourceType = MachineType.STANDALONESERVER;
+                        case 'CLOUDSERVER'
+                            obj.resourceType = MachineType.CLOUDSERVER;
+                        case 'SGECLUSTER'
+                            obj.resourceType = MachineType.SGECLUSTER;
+                        case 'SLURMCLUSTER'
+                            obj.resourceType = MachineType.SLURMCLUSTER;
+                        otherwise
+                            error(['Infofile ' infoFile ' must specify valid resourceType. (not ' obj.infoData.resourceType ')']);
+                    end 
                 else
                     error(['Infofile ' infoFile ' must specify resourceType.']);
                 end
@@ -129,6 +142,7 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
                 obj.compilerDir         = obj.imageData.matlab.compilerDir;
                 obj.compiler            = obj.imageData.matlab.compiler;
                 obj.executable          = obj.imageData.matlab.executable;
+                obj.mcrVer              = obj.imageData.matlab.mcrVer;
                 obj.mcrDir              = obj.imageData.matlab.mcrDir;
                 obj.xCompDir            = obj.imageData.matlab.xCompDir;
 
@@ -143,18 +157,8 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
     % don't set.  The gets seem to work fine...
     methods (Sealed)
         % ---
-        function name = findCompatibleSimCore(obj)
-            name = '';
-            supportedList = obj.getSimCoreList();
-            for j = 1:length(obj.acceptableSimCoreList)
-                for k = 1:length(supportedList)
-                    if strcmp(obj.acceptableSimCoreList{j}, ...
-                              supportedList{k})
-                        name = supportedList{k};
-                        return;
-                    end
-                end
-            end
+        function name = getMachineName(obj)
+            name = obj.machineName;
         end
         
         % ---
@@ -163,23 +167,8 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         end
         
         % ---
-        function id = getCommsID(obj)
-            id = obj.commsID;
-        end
-        
-        % ---
-        function name = getInstanceName(obj)
-            name = obj.instanceName;
-        end
-        
-        % ---
         function type = getResourceType(obj)
             type = obj.resourceType;
-        end
-        
-        % ---
-        function name = getMachineName(obj)
-            name = obj.machineName;
         end
         
         % ---
@@ -233,6 +222,16 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         end
         
         % ---
+        function list = getAcceptableSimCoreList(obj)
+            list = obj.acceptableSimCoreList;
+        end
+        
+        % ---
+        function name = getAssignedSimCoreName(obj)
+            name = obj.assignedSimCoreName;
+        end
+        
+        % ---
         function num = getNumSimulators(obj)
             num = obj.numSimulators;
         end
@@ -248,23 +247,13 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         end
         
         % ---
-%         function name = getRequestedSimCoreName(obj)
-%             name = obj.requestedSimCoreName;
-%         end
-
-        % ---
-        function name = getAssignedSimCoreName(obj)
-            name = obj.assignedSimCoreName;
-        end
-        
-        % ---
         function num = getNumProcessors(obj)
             num = obj.numProcessors;
         end
         
         % ---
-        function num = getNumCoresPerProcessor(obj)
-            num = obj.numCoresPerProcessor;
+        function num = getCoresPerProcessor(obj)
+            num = obj.coresPerProcessor;
         end
         
         % ---
@@ -293,6 +282,11 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         end
         
         % ---
+        function ver = getMcrVer(obj)
+            ver = obj.mcrVer;
+        end
+        
+        % ---
         function dir = getMcrDir(obj)
             dir = obj.mcrDir;
         end
@@ -301,6 +295,11 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
         function dir = getXCompDir(obj)
             dir = obj.xCompDir;
         end        
+        
+        % ---
+        function id = getCommsID(obj)
+            id = obj.commsID;
+        end
         
         % ---
         function tf = flavorCompatibilityCheck(obj, flavorMin)
@@ -318,5 +317,19 @@ classdef MachineConfig < matlab.mixin.Heterogeneous  & dynamicprops
             end
         end
 
+        % ---
+        function name = findCompatibleSimCore(obj)
+            name = '';
+            supportedList = obj.getSimCoreList();
+            for j = 1:length(obj.acceptableSimCoreList)
+                for k = 1:length(supportedList)
+                    if strcmp(obj.acceptableSimCoreList{j}, ...
+                              supportedList{k})
+                        name = supportedList{k};
+                        return;
+                    end
+                end
+            end
+        end
     end
 end

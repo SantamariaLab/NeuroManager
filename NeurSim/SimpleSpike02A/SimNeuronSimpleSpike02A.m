@@ -191,18 +191,37 @@ classdef SimNeuronSimpleSpike02A < SimNeuron
     properties
         version;
     end
-    
+    properties (Access=private)
+        modFileList = {};
+        hocFileList = {};
+    end
     methods
         function obj = SimNeuronSimpleSpike02A(id, machine,...
                                                log, notificationSet)
-            addlCustFileList =  {};
-            modFileList = {'Khh.mod', 'Leak.mod', 'NaF.mod'};
+            obj = obj@SimNeuron(id, machine, log, notificationSet);
+            obj.modFileList = {'Khh.mod', 'Leak.mod', 'NaF.mod'};
             % No parameters.hoc here since we will be making it on-the-fly
-            hocFileList = {'biomechs.hoc', 'morphology.hoc',...
+            obj.hocFileList = {'biomechs.hoc', 'morphology.hoc',...
                            'runme.hoc', 'simulation.hoc'};
-            obj = obj@SimNeuron(id, addlCustFileList, modFileList,...
-                                hocFileList, machine, log, notificationSet);
             obj.version = '1.0';  % Will be recorded in log
+        end
+
+        % ---
+        function list = getHocFileList(obj)
+            list = getHocFileList@SimNeuron(obj);
+            list = [list obj.hocFileList];
+        end
+        
+        % ---
+        function list = getModFileList(obj)
+            list = getModFileList@SimNeuron(obj);
+            list = [list obj.modFileList];
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = getModelFileList@ModelFileSim(obj);
+            list = [list obj.modFileList obj.hocFileList];
         end
         
         % -----------
@@ -217,7 +236,7 @@ classdef SimNeuronSimpleSpike02A < SimNeuron
         function preRunModelProcPhaseHHocFileModification(obj, simulation)  
         % Create and/or modify simulation-dependent hoc files in the
         % Machine Scratch directory, add them to the hoc file list, then
-        % ship them to the simulation input directory. 
+        % ship them to the simulation model directory. 
         % Abstract is in Sim_Neuron.
             % Here we create our parameters.hoc on the fly with input values; also
             % name our data file using the simid for better provenance. We
@@ -249,7 +268,7 @@ classdef SimNeuronSimpleSpike02A < SimNeuron
             fclose(pFile);
             % Upload the file since it was taken off the original list
             obj.machine.fileToMachine(parameterFile,...
-                fullfile(simulation.getTargetInputDir(), targetParameterFilename));
+                fullfile(simulation.getTargetModelDir(), targetParameterFilename));
             % Add to the hoc file list
             obj.hocFileList = [obj.hocFileList, targetParameterFilename];
         end

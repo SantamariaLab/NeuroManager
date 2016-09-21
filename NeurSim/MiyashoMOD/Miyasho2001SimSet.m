@@ -207,21 +207,28 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData, ...
 
 % IV
 simulatorType = SimType.SIM_NEUR_PURKINJE_MIYASHO2001;
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
-                       2, 'Server01 Working Directory');
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachine.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
+
+nm.addStandaloneServer('Server01Info.json', 2, 'Server01 Working Directory');
                    
-nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'General', ...
+nm.addClusterQueue('Cluster01Info.json', 'General', ...
                    2, 'Cluster01 Working Directory');
 nm.printConfig();
 
 % V
-nm.testCommunications();
+nm.printConfig();
+if ~nm.verifyConfig()
+    return;
+end
 
 % VI
-nm.constructMachineSet(simulatorType);
+nm.constructMachineSet();
 
 % VII
-result = nm.runFromFile('Miyasho2001StraightSimSpec.txt'); %#ok<*UNRCH>
+result = nm.runFromFile('Miyasho2001StraightSimSpec.txt'); 
 
 % VIII
 nm.removeMachineSet();

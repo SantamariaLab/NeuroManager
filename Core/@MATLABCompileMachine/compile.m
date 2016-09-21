@@ -185,25 +185,24 @@ END OF LICENSE
 
 % compile.m
 % Part of the MATLABCompileMachine class definition.
-% ----------
-% This is not called on the xcompiling machine
-function checkfilePathlist = compile(obj, targetBasedir)
-% Refer to NeuroManagerStaging.xlsx
-    if(obj.xCompilationMachine == 0)
-        compileDir = fullfile(targetBasedir, 'temp');
-        command = ['cd ' path2UNIX(compileDir)...
-                   '; ./' obj.compileShellName];
-        obj.issueMachineCommandDontWait(command, CommandType.JOBSUBMISSION);
-    else
-        % MATLAB compilation done directly in scratch directory on Xcompile machine
-        compileDir = obj.xCompilationScratchDir;
-        command = ['cd ' path2UNIX(compileDir)...
-                   '; ./' obj.compileShellName];
-        obj.xCompilationMachine.issueMachineCommandDontWait(command,...
-                                    CommandType.JOBSUBMISSION);
-    end
+% Waits for compilation to finish
+function compile(obj)
+    command = ['cd ' path2UNIX(obj.xCompDir) '; ./' obj.compileShellName];
+    obj.issueMachineCommandDontWait(command, CommandType.JOBSUBMISSION);
     checkfilePathlist{1} =...
-        path2UNIX(fullfile(compileDir, 'COMPILESUCCESS'));
+        path2UNIX(fullfile(obj.xCompDir, 'COMPILESUCCESS'));
     checkfilePathlist{2} =...
-        path2UNIX(fullfile(compileDir, 'COMPILEFAILURE'));
+        path2UNIX(fullfile(obj.xCompDir, 'COMPILEFAILURE'));
+    
+    while(1)
+        result = obj.checkForCheckfileList(checkfilePathlist);
+        if result(1) 
+            break
+        elseif result(2)
+            error(['MATLAB Compilation Failure. '...
+                   'Check the compile machine''s work directory for information.'])
+        else
+            pause(5);
+        end
+    end
 end            

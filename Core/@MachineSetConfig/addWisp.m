@@ -14,9 +14,9 @@ function addWisp(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
+    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'wispName', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -25,7 +25,7 @@ function addWisp(obj, varargin)
     
     wispName                = p.Results.wispName;
     wispInfoFile            = p.Results.wispInfoFile;
-    simType           = p.Results.simulatorType;
+    simType                 = p.Results.simulatorType;
     numSimulators           = p.Results.numSimulators;
     workDir                 = p.Results.workDir;
     
@@ -92,11 +92,11 @@ function addWisp(obj, varargin)
     % Create a blank config so we can do the compatibility checks
     i = obj.numMachines+1;
     obj.MSConfig(i) = CloudConfig('');
-    obj.MSConfig(i).isWisp = true;
+    obj.MSConfig(i).isEphemeral = true;
 	obj.MSConfig(i).cloudInfoFile = cloudInfoFileName;
     obj.MSConfig(i).infoData = cloudInfo;
     obj.MSConfig(i).resourceName = cloudInfo.resourceName;
-    obj.MSConfig(i).resourceType = wispInfo.resourceType;
+    obj.MSConfig(i).resourceType = MachineType.CLOUDSERVER;
     % Pick out the desired image and stick it in here
     requestedImage = wispInfo.imageName;
     imageLocated = false;
@@ -131,7 +131,6 @@ function addWisp(obj, varargin)
                cloudInfoFileName '.']);
     end
     
-    
     obj.MSConfig(i).hostKeyFingerprint = ...
                             obj.MSConfig(i).imageData.hostKeyFingerprint;
     obj.MSConfig(i).compilerDir = ...
@@ -140,6 +139,7 @@ function addWisp(obj, varargin)
                             obj.MSConfig(i).imageData.matlab.compiler;
     obj.MSConfig(i).executable = ...
                             obj.MSConfig(i).imageData.matlab.executable;
+    obj.MSConfig(i).mcrVer = obj.MSConfig(i).imageData.matlab.mcrVer;
     obj.MSConfig(i).mcrDir = obj.MSConfig(i).imageData.matlab.mcrDir;
     obj.MSConfig(i).xCompDir = obj.MSConfig(i).imageData.matlab.xCompDir;
     obj.MSConfig(i).simCores = obj.MSConfig(i).imageData.simCores;
@@ -197,7 +197,7 @@ function addWisp(obj, varargin)
     obj.MSConfig(i).jsIpAddress = obj.MSConfig(i).ipAddress;
 
 
-    % Need multiple checks on this; here and elsewhere IMPORTANT!!!
+    % work dir acceptability check is done during communications tests
     obj.MSConfig(i).workDir = workDir;
     obj.numMachines = i;
 

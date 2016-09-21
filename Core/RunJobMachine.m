@@ -185,7 +185,7 @@ END OF LICENSE
 
 % RunJobMachine
 % Adds job running methods to MATLABCompileMachine.
-classdef RunJobMachine < MATLABCompileMachine
+classdef RunJobMachine < FileTransferMachine
     properties
     end
     
@@ -195,18 +195,15 @@ classdef RunJobMachine < MATLABCompileMachine
         % Run and don't wait for the UNIX return; just throws and goes.
         runNoWait(obj)  
         getJobID(obj)
+        cancelJob(obj)
         runJobCleanup(obj)       % RunJobMachine-specific simulator cleanup
         % t/f if uses or doesn't use a cluster manager such as SGE or SLURM
         usesClusterManager(obj)  
     end
     
     methods
-        function obj = RunJobMachine(config, ...
-                                     xcmpMach, xcmpDir,...
-                                     hostID, hostOS, auth)
-            obj = obj@MATLABCompileMachine(config, ...
-                                           xcmpMach, xcmpDir,...
-                                           hostID, hostOS, auth);
+        function obj = RunJobMachine(config, hostId, hostOs, auth)
+            obj = obj@FileTransferMachine(config, hostId, hostOs, auth);
         end
     end
 end

@@ -187,7 +187,7 @@ END OF LICENSE
 % Defines NeuroManager-like machine stuff, stuff like directory locations,
 % simulators, and state transitions, for use by the subclass machines. 
 % Generic machine stuff like IPaddress is handled by other classes.
-classdef SimMachine < RealMachine
+classdef SimMachine < RealMachine & MATLABMachineInfo
     properties
         config; % Holds customizing details from the SimCore specification
         
@@ -229,28 +229,36 @@ classdef SimMachine < RealMachine
         % created to make them, store them in the simulator common
         % directory, and set the switch. 
         simCommonFilesReady = false; 
-        simCommonFilesPath = ''; % On target
+        simModelRespositoryReady = false; 
+        simCommonFilesPath = '';      % On remote
+        simModelRepositoryPath = '';  % on remote
+        
+        % Pull this from NeuroManager somehow, don't define here
+        compilationFileTransferList = {'runSimulation','run_runSimulation.sh'};   
+       
+        remoteConfig;  % The SimCore data for the remote machine
         
         log;                % Global log for the simulation session
         notificationSet;    % Global notifies for the simulation session
     end
-
-    methods(Abstract)
-        % Refer to NeuroManagerStaging.xlsx
-       % preUploadFiles(obj)
-    end
-    
     methods (Access = public)
         % ----------------
-        function obj = SimMachine(config, hostID, ~, scratchDir,...
+        function obj = SimMachine(config, hostID, scratchDir,...
                                   simFileSourceDir, custFileSourceDir,...
                                   modelFileSourceDir,...
-                                  simType, ~,...
-                                  auth, log, notificationSet)
+                                  simType, auth, log, notificationSet)
             obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
+            obj = obj@MATLABMachineInfo(config.getCompilerDir(),...
+                                        config.getCompiler(),...
+                                        config.getExecutable(),...
+                                        config.getMcrDir(),...
+                                        config.getXCompDir());
             obj.config = config;
-            obj.state = MachineState.COMPILING;
-%             obj.baseDir = baseDir;          % on the target
+            remoteConfig.simCores = config.simCores;
+            remoteConfig.assignedSimCoreName = config.assignedSimCoreName;
+            obj.remoteConfig = remoteConfig;  
+
+            obj.state = MachineState.INPREPARATION;
             obj.baseDir = config.getWorkDir();          % on the target
             obj.scratchDir = scratchDir;    % on the host
             obj.simFileSourceDir = simFileSourceDir;
@@ -264,32 +272,109 @@ classdef SimMachine < RealMachine
             % log it
             obj.log.write(['Constructing Machine ' obj.getID() '.']);
 
+            % Build the machine place on the remote
             obj.machineBasePrep();
             obj.sType = simType;  
 
-            % Save this machine's data in scratch dir for later upload
-            dataFile = fullfile(scratchDir, obj.machineDataFilename);
-            
-%             disp('!!!!!!!!!!!!!!!!!')
-%             uploadMachineConfig = config.uploadMachineConfig
-%             save(sourceFile, 'uploadMachineConfig', '-mat', '-v7.3');
-            save(dataFile, 'config', '-mat', '-v7.3');
+            obj.preUploadFiles();  % Machine aspect
 
-            % Get the first simulator construction started and return;
-            % The FinishSimulators method makes the others. This
-            % approach allows parallel compilation on all machines.
-            % We start the first simulator and get out of the machine
-            % constructor in the COMPILING state 
+            % [uploadCompiledFiles] 
+            obj.uploadCompiledFiles();
+
+            % [postUploadCompiledFiles] 
+            obj.postUploadCompiledFiles();
+            
+            % [uploadNonCompiledFiles]
+            obj.uploadNonCompiledFiles();
+                              
+            % [postUploadNonCompiledFiles]
+            obj.postUploadNonCompiledFiles();
+                              
+            % [uploadModelFiles]
+            obj.uploadModelFiles();
+            
+            % [postUploadModelFiles]
+            obj.postUploadModelFiles();
+
+            % [uploadMachineSpecificFiles]
+            obj.uploadMachineSpecificFiles();
+                          
+            % Build the simulators
             obj.mSimulators = {}; 
-%             simulatorID = sprintf([char(obj.sType) '%02.0f'], 1); 
-            simulatorID = sprintf([char(obj.getID()) '%02.0f'], 1); 
-            obj.mSimulators{1} = ...
-                obj.makeSimulator(obj.sType, simulatorID,...
-                                  obj.log, obj.notificationSet);
+            for i = 1:obj.numSimulators
+                simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
+                obj.mSimulators{i} = ...
+                    obj.makeSimulator(obj.sType, simulatorID,...
+                                      obj.log, obj.notificationSet);
+                obj.mSimulators{i}.constructRemoteAspect();
+            end
+            obj.state = MachineState.READY;
         end
         
+        % ---
+        function uploadMachineSpecificFiles(obj)
+            remoteConfig = obj.remoteConfig; %#ok<NASGU,PROP>
+            sourceFile = fullfile(obj.scratchDir, obj.machineDataFilename);
+            save(sourceFile, 'remoteConfig', '-mat', '-v7.3');
+            destDir = obj.getSimulatorCommonFilesPath();
+            obj.fileToMachine(sourceFile,...
+                              fullfile(destDir, 'MachineData.dat'));
+        end
         
-        % -----------
+        % ---
+        function uploadCompiledFiles(obj)
+            % Upload ML Compiled files to SimulatorCommons
+            sourcedir = fullfile(obj.scratchDir, 'MLCompiled');                       % Pull this from NeuroManager, don't define here
+            destDir = obj.getSimulatorCommonFilesPath();
+            obj.fileListToMachine(obj.compilationFileTransferList,...
+                                  sourcedir, destDir);
+        end
+        
+        % ---
+        function postUploadCompiledFiles(obj)
+            % Change permissions
+            command = '';
+            for i = 1:length(obj.compilationFileTransferList)
+                command = [command 'chmod +x ' ...
+                       path2UNIX(fullfile(obj.getSimulatorCommonFilesPath(),...
+                       obj.compilationFileTransferList{i})) '; ']; %#ok<AGROW>
+            end
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+        end        
+        
+        % ---
+        function uploadNonCompiledFiles(obj)
+            % Upload non-compiled (non-m-file) simulator-specific files
+            % from baseSimulatorFileList, extendedSimulatorFileList,
+            % reqdCustomFileList, and addlCustomFileList
+            sourcedir = fullfile(obj.scratchDir, 'ToUpload');                           % Pull this from NeuroManager, don't define here
+            destDir = obj.getSimulatorCommonFilesPath();
+            toUploadFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+            obj.fileListToMachine(toUploadFileTransferList,...
+                                  sourcedir, destDir);
+        end
+        
+        % ---
+        function postUploadNonCompiledFiles(obj)
+            % (nothing to do)
+        end
+
+        % ---
+        function uploadModelFiles(obj)
+            % Upload simulator-specific model files
+            sourcedir = fullfile(obj.scratchDir, 'ToModelRepo');                        % Pull this from NeuroManager, don't define here
+            destDir = obj.getModelRepositoryPath();
+            toModelRepoFileTransferList = SimMachine.listFilesInFolder(sourcedir);
+            obj.fileListToMachine(toModelRepoFileTransferList,...
+                                  sourcedir, destDir);
+        end
+        
+        % ---
+        function postUploadModelFiles(obj)
+            % (nothing to do)
+        end
+
+        % ---
         function preUploadFiles(obj)
         % The machine aspect of PreUploadFiles
         % Extend this in subclasses if you need to; as seen in
@@ -315,26 +400,6 @@ classdef SimMachine < RealMachine
                                         log, notificationSet);
         end
 
-        % -----------
-        function finishSimulators(obj)
-        % Builds simulators 2:N on the remote
-        % The machine doesn't call this until the first simulator is
-        % complete, so that we know all the files to be copied are in place
-        % on the remote.
-            for i = 2:obj.numSimulators
-                simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
-                obj.mSimulators{i} = ...
-                    obj.makeSimulator(obj.sType, simulatorID,...
-                                      obj.log, obj.notificationSet);
-                % Log it
-                obj.log.write(['Simulator ' obj.mSimulators{i}.id...
-                               ' Version ' obj.mSimulators{i}.getVersion()...
-                               ' created on machine '...
-                               obj.getID() '.']);
-                obj.mSimulators{i}.setState(SimulatorState.AVAILABLE);
-            end
-        end
-        
         % ----------------
         function result = isReady(obj)
         % Boolean check plus the call to GetState updates machine state,
@@ -346,31 +411,10 @@ classdef SimMachine < RealMachine
         end
 
         % -------------
+        % Moving compilation out of the machine has turned this function
+        % into a no-op
         function state = getState(obj)
         % Returns state and triggers machine state progression.
-        % This is where the compiling simulator gets finished, and the
-        % rest of the machine's simulators get constructed.
-            if obj.state == MachineState.READY
-                % Nothing special to do
-            elseif obj.state == MachineState.INPREPARATION
-                obj.finishSimulators();
-                obj.state = MachineState.READY;
-                % log it
-                obj.log.write(['Machine ' obj.id ' READY.']);
-            elseif  obj.state == MachineState.COMPILING
-                % If compiling and the compilation is done, the
-                % compilation-done checkfile will show up in the
-                % compiling simulator's temp directory indicating that files
-                % can be transferred in and the other simulators installed (if any).
-                % No poll delay here - that is handled externally.
-                if obj.isCompileComplete()
-                    obj.mSimulators{1}.finishCompilingSimulator();
-                    obj.state = MachineState.INPREPARATION; 
-                obj.log.write(['Machine ' obj.getID() ' INPREPARATION.']);
-                % else if LicenseUnavailable....
-                % state -> MachineUnavailable  then handle this externally
-                end
-            end
             state = obj.state;
         end
         
@@ -378,11 +422,6 @@ classdef SimMachine < RealMachine
         function list = getSimulators(obj)
         % Returns list of the machine's simulators
             list = obj.mSimulators;
-        end
-        
-        % ----------------
-        function dir = getMCRDir(obj)
-            dir = obj.mcrDir;
         end
         
         % ----------------
@@ -421,6 +460,10 @@ classdef SimMachine < RealMachine
             path = obj.simCommonFilesPath;
         end
          
+        % ----------------
+        function path = getModelRepositoryPath(obj)
+            path = obj.simModelRepositoryPath;
+        end
         
         % ----------
         function uploadModelSimulatorFiles(obj, fileList, destDir)
@@ -435,6 +478,7 @@ classdef SimMachine < RealMachine
         function delete(obj)
         % Machine destructor first removes the component simulators
             for i = 1:obj.numSimulators
+%                 obj.mSimulators{i}.removeRemoteAspect();
                 obj.mSimulators{i}.delete();
             end
             
@@ -442,6 +486,13 @@ classdef SimMachine < RealMachine
             command = ['cd ' path2UNIX(obj.simCommonFilesPath) ...
                 '; rm ' path2UNIX(fullfile(obj.simCommonFilesPath, '*'))...
                 '; cd ..; rmdir ' path2UNIX(obj.simCommonFilesPath)...
+                ';'];
+            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+
+            % The Model Repository file directory and contents...
+            command = ['cd ' path2UNIX(obj.simModelRepositoryPath) ...
+                '; rm ' path2UNIX(fullfile(obj.simModelRepositoryPath, '*'))...
+                '; cd ..; rmdir ' path2UNIX(obj.simModelRepositoryPath)...
                 ';'];
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
@@ -470,10 +521,37 @@ classdef SimMachine < RealMachine
 
             % Create the place where the simulator common files will
             % reside. (process the result - NOT IMPLEMENTED YET)
-            obj.simCommonFilesPath = fullfile(obj.baseDir, 'SimulatorCommon');
+            obj.simCommonFilesPath = fullfile(obj.baseDir, 'SimulatorCommon');      % where is this defined?  Get it from there
             command = ['mkdir ' path2UNIX(obj.simCommonFilesPath)];
             result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+
+            % Create the place where the simulator model files will
+            % reside. (process the result - NOT IMPLEMENTED YET)
+            obj.simModelRepositoryPath = fullfile(obj.baseDir, 'ModelRepository');  % where is this defined?  Get it from there
+            command = ['mkdir ' path2UNIX(obj.simModelRepositoryPath)];
+            result = obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+            
             obj.simCommonFilesReady = false; 
+        end
+    end
+    methods (Static)
+        function list = listFilesInFolder(folder)
+            a = dir(folder);
+            if size(a,1) <= 2
+                list = {};
+                return
+            end
+            a = a(3:end);  % Remove . and ..
+            lena = size(a,1);
+            list = {};
+            bindex = 1;
+            for i=1:lena
+                if ~a(i).isdir
+                    q = a(i).name;
+                    list{bindex}= q;  %#ok<AGROW>
+                    bindex = bindex+1;
+                end
+            end
         end
     end
 end

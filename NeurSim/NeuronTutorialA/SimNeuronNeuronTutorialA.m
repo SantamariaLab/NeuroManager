@@ -187,6 +187,9 @@ END OF LICENSE
 % A hoc-only Neuron simulator that simply runs a simulation with no ability
 % to change input parameters. 
 classdef SimNeuronNeuronTutorialA < SimNeuron
+    properties(Access=private)
+        hocFileList = {};  % added to dynamically
+    end
     properties
         version;
     end
@@ -194,14 +197,18 @@ classdef SimNeuronNeuronTutorialA < SimNeuron
     methods
         function obj = SimNeuronNeuronTutorialA(id, machine,...
                                                      log, notificationSet)
-            addlCustFileList =  {};
-            modFileList = {};
+            obj = obj@SimNeuron(id, machine, log, notificationSet);
+
             % The corresponding UserSimulation.m knows that runme.hoc
             % is the lead hoc file.
-            hocFileList = {'tutorialA.hoc', 'runme.hoc', 'TutorialSimulation.hoc'};
-            obj = obj@SimNeuron(id, addlCustFileList, modFileList,...
-                                 hocFileList, machine, log, notificationSet);
+            obj.hocFileList = {'tutorialA.hoc', 'runme.hoc', 'TutorialSimulation.hoc'};
             obj.version = '1.0';  % Will be recorded in log
+        end
+        
+        % ---
+        function list = getHocFileList(obj)
+            list = getHocFileList@SimNeuron(obj);
+            list = [list obj.hocFileList];
         end
         
         % -----------
@@ -214,7 +221,7 @@ classdef SimNeuronNeuronTutorialA < SimNeuron
         
         function preRunModelProcPhaseHHocFileModification(obj, simulation)  %#ok<INUSD>
         % Create and/or modify simulation-dependent hoc files in the
-        % Machine Scratch directory, then ship them to the simulation input
+        % Machine Scratch directory, then ship them to the simulation model
         % directory. Abstract is in Sim_Neuron.
             % Nothing to do for this class
         end

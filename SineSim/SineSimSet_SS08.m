@@ -216,16 +216,22 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
 
 % Part IV: Create a machine set configuration
 simulatorType = SimType.SIM_SINESIM;
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
-                       2, 'WorkDirOnServer01');
-nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
-                       2, 'WorkDirForQueue01');
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
 
-% Part V: Test Communications
-nm.testCommunications();
+nm.addStandaloneServer('Server01Info.json', 2, 'WorkDirOnServer01');
+nm.addClusterQueue('Cluster01Info.json', 'Queue01', 2, 'WorkDirForQueue01');
+nm.printConfig();
+
+% Part V: Test communications, file transfers, and other compatibilities
+if ~nm.verifyConfig()
+    return;
+end
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(simulatorType);
+nm.constructMachineSet();
 
 % Part VII: Run the simulations defined in the specifications file,
 % located in the simSpec Directory. Note that SIMDEF lines must have the

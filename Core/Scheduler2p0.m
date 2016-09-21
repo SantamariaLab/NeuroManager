@@ -286,7 +286,8 @@ function actionsList = Scheduler2p0(simulatorData,...
             for i = 1:numSimulators
                 % Stop scheduling when hit an unavailable Simulator
                 if sortedSchedule(6, i) == 0
-                    break;
+                    continue;
+%                     break;
                 end
                 
                 % Get the simulation (if there is one left) started on

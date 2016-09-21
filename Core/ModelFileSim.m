@@ -187,69 +187,77 @@ END OF LICENSE
 % Defines the ModelFileSim class, which adds model file processing to the
 % Simulator abstract base class.
 classdef ModelFileSim < Simulator
+    properties (Access=private)
+        % The list of model files to upload
+        modelFileList; 
+    end
     properties
-        % The list of model files to upload (common to all simulators)
-        modelUploadFiles; 
-
         % Tells whether model files (if any) have been uploaded or not.
         % It's up to the first simulator to upload them and set the switch;
         % subsequent simulators will grab them from the simulator common
         % directory to avoid upload time.
-        simModelFilesUploaded;
+%         simModelFilesUploaded;
     end
     
     methods
-        function obj = ModelFileSim(id,...
-                                    addlStdFileList,...
-                                    addlCustFileList,...
-                                    modelFileList,...
-                                    machine,...
-                                    log, notificationSet)
-            obj = obj@Simulator(id,...
-                          addlStdFileList,...
-                          addlCustFileList,...
-                          machine,...
-                          log, notificationSet);
-                      
-            obj.setModelFilesUploaded(false);
-            obj.modelUploadFiles = modelFileList;
-            
-            % Upload Model Files for each simulator and do the 
-            % Post Model Files Upload
-             obj.uploadModelFiles();
-             obj.postModelFilesUpload();
+        function obj = ModelFileSim(id, machine, log, notificationSet)
+            obj = obj@Simulator(id, machine, log, notificationSet);
+%             obj.setModelFilesUploaded(false);
+%             obj.modelUploadFiles = modelFileList;
+        end
+
+        % ---
+        function list = getModelFileList(obj)
+            list = obj.modelFileList;
         end
         
-        % ----------------
-        function tfstate = modelFilesUploaded(obj)
-            tfstate = obj.simModelFilesUploaded;
+        % ---
+        function transferModelFiles(obj)
+            % Transfer model files into new simulation: clear the
+            % simulation model dir and copy from ModelRepository.
+            simulation = obj.getSimulation();
+            command = ['cd ' path2UNIX(simulation.getTargetModelDir()) ...
+                       '; rm ' path2UNIX(fullfile(simulation.getTargetModelDir(), '*')) ...
+                       '; cp ' path2UNIX(fullfile(obj.machine.getModelRepositoryPath(), '/*')) ...
+                       ' ' path2UNIX(simulation.getTargetModelDir())];
+            obj.machine.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
-        % ----------------
-        function setModelFilesUploaded(obj, tfstate)
-            obj.simModelFilesUploaded = tfstate;
-        end
+%         % ---
+%         function tfstate = modelFilesUploaded(obj)
+%             tfstate = obj.simModelFilesUploaded;
+%         end
         
-        % -------------
-        function uploadModelFiles(obj)
-        % Upload the model files to the machine's simulator common directory
-        % The Machine knows where the model files are on the host; here we
-        % just deal with their names. Why can't we just upload to the
-        % simulation common?  Because most of the simulators haven't been
-        % constructed yet. This method is only called once (for the first
-        % simulator).
-            if ~obj.modelFilesUploaded();
-                obj.machine.uploadModelSimulatorFiles(obj.modelUploadFiles, ...
-                                obj.machine.getSimulatorCommonFilesPath);
-                obj.setModelFilesUploaded(true);
-            end
-        end
+%         % ---
+%         function setModelFilesUploaded(obj, tfstate)
+%             obj.simModelFilesUploaded = tfstate;
+%         end
         
-        % -------------
-         function postModelFilesUpload(obj)
-         % Transfer files from simulator common to simulation common
-            obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath,...
-                        obj.getTargetCommonDir(), obj.modelUploadFiles);
-         end
+%         % -------------
+%         function uploadModelFiles(obj)
+%         % Upload the model files to the machine's modelrepository directory
+%         % The Machine knows where the model files are on the host; here we
+%         % just deal with their names. 
+%             if ~obj.modelFilesUploaded();
+%                 obj.machine.uploadModelSimulatorFiles(obj.modelUploadFiles, ...
+%                                 obj.machine.getSimulatorCommonFilesPath);
+%                 obj.setModelFilesUploaded(true);
+%             end
+%         end
+        
+%         % ---
+%          function postModelFilesUpload(obj)
+%          % Clear simulation common then transfer in files from model repository 
+%             obj.machine.remoteCopy(obj.machine.getSimulatorCommonFilesPath,...
+%                         obj.getSimulationCommonDir(), obj.modelUploadFiles);
+% 
+%             % Upload simulator-specific model files
+%             sourcedir = obj.machine.getModelRepositoryPath();                        
+%             destDir = obj.machine.getSimulationCommonDir();
+%             refreshList = SimMachine.listFilesInFolder(sourcedir);
+%             obj.machine.fileListToMachine(refreshList, sourcedir, destDir);
+%          end
     end 
 end
+
+

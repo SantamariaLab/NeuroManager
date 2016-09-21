@@ -185,10 +185,10 @@ END OF LICENSE
 
 % createHocOnlyNrnivsh
 % Creates the machine-specific nrnivsh.sh file in the rundir with mod file
-% library located off the inputdir. Assumes bash.
-% Assumes all hoc files will be located in the simulation's input directory
-function shellName = createHocOnlyNrnivsh(simCore, runDir, inputDir,...
-                                          outputDir, hocFile)
+% library located off the modeldir. Assumes bash.
+% Assumes all hoc files will be located in the simulation's model directory
+function shellName = createHocOnlyNrnivsh(simCore, runDir, ~,...
+                                          modelDir, outputDir, hocFile)
     % Create the machine- and simulation-dependent Neuron shell.
     f = fopen(fullfile(runDir, 'nrnivsh.sh'), 'w');
     fprintf(f, '#!/bin/bash\n');
@@ -202,7 +202,7 @@ function shellName = createHocOnlyNrnivsh(simCore, runDir, inputDir,...
                         fullfile(simCore.config.neuronDir,...
                                  simCore.config.libExt)...
                         ':$LD_LIBRARY_PATH']);
-    fprintf(f, '%s\n', ['export PYTHONPATH=' inputDir ':$PYTHONPATH']);
+    fprintf(f, '%s\n', ['export PYTHONPATH=' runDir ':$PYTHONPATH']);
     
     addlEnvLibLines = simCore.config.envAddlLibLines;
     if ~isempty(addlEnvLibLines)
@@ -216,7 +216,7 @@ function shellName = createHocOnlyNrnivsh(simCore, runDir, inputDir,...
     % implied load by "import neuron" seems to vary among machines.  Using
     % it here seems to ensure it happens during the "import neuron" and
     % thus the load_mechanisms is not necessary. 
-    mechanisms = fullfile(inputDir,...
+    mechanisms = fullfile(modelDir,...
                           simCore.config.compModLibExt,...
                           'libnrnmech.so');
     % If the library doesn't exist at this point, we assume that's because

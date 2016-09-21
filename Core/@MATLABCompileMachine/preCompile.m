@@ -186,45 +186,56 @@ END OF LICENSE
 % preCompile
 % Part of the MATLABCompileMachine class definition.
 % Also a Workflow Stage
-% ----------
-% This is not called on the xcompiling machine
-function preCompile(obj, targetBaseDir)
-% Refer to NeuroManagerStaging.xlsx
-    if(obj.xCompilationMachine == 0)
-        command = ['cd ' path2UNIX(targetBaseDir) ...
-                   '; mkdir temp; chmod 777 temp; mv *.m temp;'];
-        obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+% ---
+function compVersion = preCompile(obj, fileList)
+    compileDir = obj.xCompDir;
+    convCompileDir = path2UNIX(compileDir);
 
-        compileDir = fullfile(targetBaseDir, 'temp');
-        convCompileDir = path2UNIX(compileDir);
-        compileCommand = [...
-           path2UNIX(fullfile(obj.getMATLABCompilerDir(),...
-                                      obj.getMATLABCompiler()))...
-           ' -a ' convCompileDir ...
-           ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
-           '1> stdoutcompile.txt 2> stderrcompile.txt'];
-        namePrefix = '';
-    else
-        % (xcomp scratchdir is already made)
-        compileDir = obj.xCompilationScratchDir;
-        convCompileDir = path2UNIX(compileDir);
-        compileCommand = [...
-           path2UNIX(...
-                fullfile(obj.xCompilationMachine.getMATLABCompilerDir(),...
-                         obj.xCompilationMachine.getMATLABCompiler()))...
-           ' -a ' convCompileDir ...
-           ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
-           '1> stdoutcompile.txt 2> stderrcompile.txt'];
-        namePrefix = 'X';
+    % Log and return the compile version
+    compVersionStr = obj.getMATLABCompileVersion();
+    obj.log.write(['NeuroManager is MATLAB-compiling '...
+                   ' with MATLAB Compiler Version: ' compVersionStr]);
+	temp = regexp(compVersionStr, '^(\w.\w+.\w).', 'tokens');
+    compVersion = temp{1}{1};
+    
+    % Ensure the compilation directory path ends with 'NMComp' as the final
+    % directory name
+    temp = regexp(convCompileDir, '/(\w+)($|/$)', 'tokens');
+    endDir = temp{1}{1};
+    if ~strcmp(endDir, obj.requiredCompilationDirectoryName)
+        error(['Compilation directory ' convCompileDir ...
+               ' must be named ' obj.requiredCompilationDirectoryName '.']);
+    end
+    
+    % Ensure the compilation directory exists
+    if ~obj.checkForDirectory(convCompileDir);
+    	error(['Compilation directory ' convCompileDir ...
+               ' does not exist on compile machine.']);
+    end
+    
+    % Check for subdirectories of the compile directory
+    if obj.checkForSubdirectories(convCompileDir)
+    	error(['Compilation directory ' convCompileDir ...
+               ' on compile machine cannot have any subdirectories.']);
     end
 
+    % Clear the compilation directory
+    command = ['cd ' convCompileDir ...
+               '; rm -r ' convCompileDir '/*'];
+    obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+    
     % Create and upload a MATLAB compile shell file
-    % Since the host side uses the common Machine Scratch dir, we
-    % need to distinguish between Xcomp and normal comp being done
-    % on the same machine and use nameprefix to do that.
-    scratchCompileShellName = [obj.id 'ML' namePrefix 'CompShell.sh'];
+    compileCommand = [...
+       path2UNIX(...
+            fullfile(obj.getCompilerDir(),...
+                     obj.getCompiler()))...
+       ' -a ' convCompileDir ...
+       ' -m -R ''-nodisplay'' runSimulation.m -o runSimulation '...
+       '1> stdoutcompile.txt 2> stderrcompile.txt'];
+
+    
     obj.compileShellName = [obj.id 'MLCompShell.sh'];
-    mlCompShell = fullfile(obj.scratchDir, scratchCompileShellName);
+    mlCompShell = fullfile(obj.machineScratch, obj.compileShellName);
     mlCompShellTarget = fullfile(compileDir, obj.compileShellName);
 
     f = fopen(mlCompShell, 'w');
@@ -239,20 +250,16 @@ function preCompile(obj, targetBaseDir)
     fprintf(f, '%s\n', 'echo $?');
     fclose(f);
 
-    if(obj.xCompilationMachine == 0)
-        convMLCompShellTarget = path2UNIX(mlCompShellTarget);
-        obj.fileToMachine(mlCompShell, convMLCompShellTarget);
+    convMLCompShellTarget =...
+        path2UNIX(mlCompShellTarget);
+    obj.fileToMachine(mlCompShell, convMLCompShellTarget);
 
-        command = ['cd ' path2UNIX(compileDir) ...
-                   '; chmod +x ' obj.compileShellName];
-        obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-    else
-        convMLCompShellTarget =...
-            path2UNIX(mlCompShellTarget);
-        obj.xCompilationMachine.fileToMachine(mlCompShell, convMLCompShellTarget);
-
-        command = ['cd ' convCompileDir ...
-                   '; chmod +x ' obj.compileShellName];
-        obj.xCompilationMachine.issueMachineCommand(command, CommandType.FILESYSTEM);
-    end
+    command = ['cd ' convCompileDir ...
+               '; chmod +x ' obj.compileShellName];
+    obj.issueMachineCommand(command, CommandType.FILESYSTEM);
+    
+    % Bring up all the files to compile
+    obj.fileListToMachine(fileList,...
+                          obj.ML2CompileDir,...
+                          compileDir);
 end

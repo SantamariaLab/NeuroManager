@@ -186,11 +186,11 @@ END OF LICENSE
 % userSimulation.m
 % For use with SimNeuronSimpleSpike01
 function [result, errMsg] =...
-    userSimulation(~, ~, runDir, inputDir, outputDir, varargin)
+    userSimulation(~, ~, runDir, inputDir, modelDir, outputDir, varargin)
     
     % Run the simulation with no input arguments
     arguments = {};
-    status = runHocOnlySimulation(runDir, inputDir,...
+    status = runHocOnlySimulation(runDir, inputDir, modelDir, ...
                                   outputDir, 'runme.hoc', arguments);
 	data = 'dataS0R11';
 	dataFile = [data '.dat'];

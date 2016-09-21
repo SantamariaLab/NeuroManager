@@ -1,8 +1,8 @@
 classdef CloudConfig  < MachineConfig
     properties
         instanceName;
-        isWisp; % indicates need for removal of instance
-        cloudInfoFile; % Used for Wisp removal
+        isEphemeral;    % indicates need for removal of instance
+        cloudInfoFile;  % Used for Wisp removal
     end
     
     methods
@@ -54,7 +54,7 @@ classdef CloudConfig  < MachineConfig
                     error(['Infofile ' infoFile ' must specify flavor.']);
                 end
             end
-            obj.isWisp = false; % default
+            obj.isEphemeral = false; % default
             obj.cloudInfoFile = ''; % default
             obj.fsUserName = obj.userName;
             obj.jsUserName = obj.userName;
@@ -66,6 +66,21 @@ classdef CloudConfig  < MachineConfig
             obj.machineName = obj.instanceName;
             obj.id = obj.machineName;
             obj.commsID = obj.resourceName;
+        end
+        
+        % ---
+        function str = getInstanceName(obj)
+            str = obj.instanceName;
+        end
+        
+        % ---
+        function tf = isWisp(obj)
+            tf = obj.isEphemeral;
+        end
+        
+        % ---
+        function str = getCloudInfoFile(obj)
+            str = obj.cloudInfoFile;
         end
     end
 end

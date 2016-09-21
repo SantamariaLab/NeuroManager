@@ -216,14 +216,22 @@ disp(['NeuroManager Version: ' nm.getVersion()]);
 % which means that NeuroManager will run up to four simulations in parallel
 % on that machine.
 simulatorType = SimType.SIM_SINESIM;
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
-                       4, 'YourWorkDirectoryHere'); 
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'myCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
 
-% Part V: Test Communications and File Transfers
-nm.testCommunications();
+nm.addStandaloneServer('Server01Info.json', 4, 'YourWorkDirectoryHere'); 
+
+nm.printConfig();
+
+% Part V: Test communications, file transfers, and other compatibilities
+if ~nm.verifyConfig()
+    return;
+end
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(simulatorType);
+nm.constructMachineSet();
 
 % Part VII: Run the simulations defined in the specifications file,
 % located in the simSpec Directory.
