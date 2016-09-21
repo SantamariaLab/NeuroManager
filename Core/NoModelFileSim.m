@@ -187,29 +187,37 @@ END OF LICENSE
 % Forms a superclass for simulators that have no model files.
 classdef NoModelFileSim < Simulator
     methods
-        function obj = NoModelFileSim(id,...
-                                      addlStdFileList,...
-                                      addlCustFileList,...
-                                      machine,...
-                                      log, notificationSet)
-            obj = obj@Simulator(id,...
-                          addlStdFileList,...
-                          addlCustFileList,...
-                          machine,...
-                          log, notificationSet);
+        function obj = NoModelFileSim(id, machine, log, notificationSet)
+            obj = obj@Simulator(id, machine, log, notificationSet);
         end
         
-        % ----------
+        % -------------
+        function preUploadFiles(obj)
+            % Nothing to do in this class; but override in subclasses if
+            % you need to
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = {};
+        end
+        
+        % ---
+        function transferModelFiles(obj)
+            % Nothing to do because no model files
+        end            
+        
+        % ---
         function preRunModelProcPhaseH(obj) %#ok<*MANU>
             % Nothing to do because no model files
         end
         
-        % ----------
+        % ---
         function preRunModelProcPhaseP(obj)
             % Nothing to do because no model files
         end
         
-        % ----------
+        % ---
         function str = preRunModelProcPhaseD(obj)
             % Nothing to do because no model files
             str = '';

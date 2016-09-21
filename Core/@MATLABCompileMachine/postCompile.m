@@ -185,64 +185,11 @@ END OF LICENSE
 
 % postCompile.m
 % Part of the MATLABCompileMachine class definition.
-% ----------
-% This is not called by the xcompiling machine
-function postCompile(obj, targetBaseDir)
-% Refer to NeuroManagerStaging.xlsx
-    if(obj.xCompilationMachine == 0)
-        % from temp into base and into common
-        if ~obj.areSimulatorCommonFilesReady()
-            command = ['cd ' path2UNIX(fullfile(targetBaseDir, 'temp')) ';'...
-                       'cp -l runSimulation ..;cp run_runSimulation.sh ..;' ...
-                       'cp runSimulation run_runSimulation.sh '...
-                       path2UNIX(obj.getSimulatorCommonFilesPath())];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-        else
-            % common into base
-            command = ['cd '...
-                path2UNIX(obj.getSimulatorCommonFilesPath()) ...
-                '; cp -l runSimulation run_runSimulation.sh ' ...
-                path2UNIX(targetBaseDir) ';'];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM); 
-        end
-    else
-        % temp into base and into common
-        if ~obj.areSimulatorCommonFilesReady()
-            % Transfer relevant compiled files from xcomp machine to
-            % host and then to target and copy to Simulator Commons
-            transferDir = fullfile(obj.scratchDir, obj.id);
-            mkdir(transferDir);  % Process result sometime
-            for i = 1:length(obj.compilationFileTransferList)
-                obj.xCompilationMachine.fileFromMachine(transferDir,...
-                    fullfile(obj.xCompilationScratchDir,...
-                             obj.compilationFileTransferList{i}));
-            end
-
-            % Transfer relevant compiled files to target
-            obj.fileListToMachine(obj.compilationFileTransferList,...
-                                              transferDir, targetBaseDir);
-            % Change permissions
-            command = '';
-            for i = 1:length(obj.compilationFileTransferList)
-                command = [command 'chmod +x ' ...
-                       path2UNIX(fullfile(targetBaseDir,...
-                       obj.compilationFileTransferList{i})) '; ']; %#ok<AGROW>
-            end
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-
-            % Copy to target's Simulator Commons
-            command = ['cd ' path2UNIX(targetBaseDir) '; '];
-            for i = 1:length(obj.compilationFileTransferList)
-                command = [command 'cp ' obj.compilationFileTransferList{i} ' '...
-                       path2UNIX(obj.getSimulatorCommonFilesPath()) '; ']; %#ok<AGROW>
-            end
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-        else
-            % common into base
-            command = ['cd '...
-                path2UNIX(obj.getSimulatorCommonFilesPath()) ...
-                '; cp -l * ' path2UNIX(targetBaseDir) ';'];
-            obj.issueMachineCommand(command, CommandType.FILESYSTEM);
-        end
-    end 
+function postCompile(obj)
+    % Transfer relevant compiled files from xcomp machine to host 
+    for i = 1:length(obj.compilationFileTransferList)
+        obj.fileFromMachine(obj.MLCompiledDir,...
+            fullfile(obj.xCompDir,...
+                     obj.compilationFileTransferList{i}));
+    end
 end

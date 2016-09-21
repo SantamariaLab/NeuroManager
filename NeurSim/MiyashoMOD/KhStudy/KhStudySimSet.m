@@ -214,15 +214,20 @@ str = nm.getVersion();
 disp(['NeuroManager Version: ' str]);
 
 simulatorType = SimType.SIM_NEUR_PURKINJE_MIYASHO2001_KH;
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
-                           4, 'Server01 Working Directory'); 
-nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'General', ...
-                           4, 'Cluster01 Working Directory');
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
 
-nm.testCommunications();
-nm.constructMachineSet(SimType.SIM_NEUR_PURKINJE_MIYASHO2001_KH);
-
-result = nm.runFromFile('KhStudySimSpec.txt'); %#ok<*UNRCH>
+nm.addStandaloneServer('Server01Info.json', 4, 'Server01 Working Directory'); 
+nm.addClusterQueue('Cluster01Info.json', 'General', ...
+                   4, 'Cluster01 Working Directory');
+nm.printConfig();
+if ~nm.verifyConfig()
+    return;
+end
+nm.constructMachineSet();
+result = nm.runFromFile('KhStudySimSpec.txt'); 
 
 nm.removeMachineSet();
 nm.shutdown();

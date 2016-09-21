@@ -2,7 +2,7 @@
 #   since it is machine-dependent.
 # Produces time and voltage data files that are processed externally.
 
-def pythonsim(simid, inputdir, outputdir, currentstr, vinitstr, delaystr, stimdurationstr, timestepstr, simstopstr, recordintervalstr):
+def pythonsim(simid, rundir, inputdir, modeldir, outputdir, currentstr, vinitstr, delaystr, stimdurationstr, timestepstr, simstopstr, recordintervalstr):
 	import neuron
 	from neuron import h
 	Section = h.Section
@@ -13,8 +13,8 @@ def pythonsim(simid, inputdir, outputdir, currentstr, vinitstr, delaystr, stimdu
 	# inconsistent without the "-dll" option, we do it this way.
 	#neuron.load_mechanisms(".")  # SO NOT USING LOAD_MECHANISMS HERE
 	# local auto-modified version for no gui and control over certain ion 
-	#  channels is in the input dir
-	h.xopen(inputdir + '/' + simid + '.hoc') 
+	#  channels is in the run dir
+	h.xopen(rundir + '/' + simid + '.hoc') 
 
 	timefilepath = outputdir + '/' + 'timedata.txt'
 	timefile = h.File()

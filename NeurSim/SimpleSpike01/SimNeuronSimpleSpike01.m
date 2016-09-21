@@ -188,6 +188,10 @@ END OF LICENSE
 % to change input parameters, as evidenced by the use of the fixed 
 % parameters.hoc file. 
 classdef SimNeuronSimpleSpike01 < SimNeuron
+    properties(Access=private)
+        modFileList = {};
+        hocFileList = {};
+    end
     properties
         version;
     end
@@ -195,17 +199,34 @@ classdef SimNeuronSimpleSpike01 < SimNeuron
     methods
         function obj = SimNeuronSimpleSpike01(id, machine,...
                                               log, notificationSet)
-            addlCustFileList =  {};
-            modFileList = {'Khh.mod', 'Leak.mod', 'NaF.mod'};
+            obj = obj@SimNeuron(id, machine, log, notificationSet);
+            obj.modFileList = {'Khh.mod', 'Leak.mod', 'NaF.mod'};
             % The corresponding UserSimulation.m knows that runme.hoc
             % is the lead hoc file; but that can be changed by the user
-            hocFileList = {'runme.hoc', 'parameters.hoc', 'morphology.hoc',...
-                           'biomechs.hoc', 'simulation.hoc'};
-            obj = obj@SimNeuron(id, addlCustFileList, modFileList,...
-                                 hocFileList, machine, log, notificationSet);
+            obj.hocFileList = {'runme.hoc', 'parameters.hoc',...
+                               'morphology.hoc',...
+                               'biomechs.hoc', 'simulation.hoc'};
             obj.version = '1.0';  % Will be recorded in log
         end
+
+        % ---
+        function list = getHocFileList(obj)
+            list = getHocFileList@SimNeuron(obj);
+            list = [list obj.hocFileList];
+        end
         
+        % ---
+        function list = getModFileList(obj)
+            list = getModFileList@SimNeuron(obj);
+            list = [list obj.modFileList];
+        end
+        
+        % ---
+        function list = getModelFileList(obj)
+            list = getModelFileList@ModelFileSim(obj);
+            list = [list obj.modFileList obj.hocFileList];
+        end
+
         % -----------
         function preRunModelProcPhaseHModFileModification(obj, simulation)  %#ok<INUSD>
         % Create and/or modify simulation-dependent mod files in the
@@ -216,7 +237,7 @@ classdef SimNeuronSimpleSpike01 < SimNeuron
         
         function preRunModelProcPhaseHHocFileModification(obj, simulation)  %#ok<INUSD>
         % Create and/or modify simulation-dependent hoc files in the
-        % Machine Scratch directory, then ship them to the simulation input
+        % Machine Scratch directory, then ship them to the simulation model
         % directory. Abstract is in Sim_Neuron.
             % Nothing to do for this class
         end

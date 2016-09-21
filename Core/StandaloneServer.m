@@ -191,32 +191,22 @@ classdef StandaloneServer <  SimMachine & Server
     properties
     end
     methods
-        % name not used; assumed to be in the create....m file for the
-        % chosen server and passed into the md class
-        function obj = StandaloneServer(~,...
-                            hostID, hostOS, ~, ~, baseDir, scratchDir, ...
-                            simFileSourceDir, custFileSourceDir,... 
-                            modelFileSourceDir,... 
-                            simType, numSims,...
-                            xCompilationMachine,...
-                            xCompilationScratchDir,...
-                            auth, log, notificationSet, config,...
-                            ~, ~, ~, ~)
-            
-            obj = obj@Server(config, xCompilationMachine,...
-                             xCompilationScratchDir,...
-                             hostID, hostOS, '', auth);
-            obj = obj@SimMachine(config, hostID, baseDir, scratchDir,...
-                           simFileSourceDir, custFileSourceDir,...
-                           modelFileSourceDir,...
-                           simType, numSims,...
-                           auth, log, notificationSet);
+        function obj = StandaloneServer(hostID, hostOS, scratchDir, ...
+                                        simFileSourceDir, custFileSourceDir,... 
+                                        modelFileSourceDir,... 
+                                        simType,...
+                                        auth, log, notificationSet, config)
+            obj = obj@Server(config, hostID, hostOS, auth);
+            obj = obj@SimMachine(config, hostID, scratchDir,...
+                                 simFileSourceDir, custFileSourceDir,...
+                                 modelFileSourceDir,...
+                                 simType, auth, log, notificationSet);
         end
         
         % ----------
         function preUploadFiles(obj)
             preUploadFiles@SimMachine(obj);
-            % Nothing specific to do for this machine; see StagingSequence.xlsx
+            % Nothing specific to do for this machine
         end
         
         % ----------
@@ -233,6 +223,14 @@ classdef StandaloneServer <  SimMachine & Server
             % here we get it later from the running target MATLAB. See
             % Simulator.UpdateState().
             jobID = obj.getJobID(remoteRundir, jobRoot); 
+        end
+        
+        % ----------
+        function cancelJob(obj, jobID)
+            if jobID ~= 0
+                command = ['kill -9 ' num2str(jobID, '% 10.0f')];
+                obj.issueMachineCommand(command, CommandType.JOBSUBMISSION);
+            end
         end
         
         % ---------------
@@ -267,9 +265,8 @@ classdef StandaloneServer <  SimMachine & Server
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
 
-        % ----------
+        % ---
         function postRunJobProc(obj, simulation)
-            % See NeuroManagerStaging.xlsx
             simulatorBasedir = simulation.simulator.getTargetBaseDir();
             simulationOutputdir = simulation.getTargetOutputDir();
             command = ['mv ' path2UNIX(fullfile(simulatorBasedir, 'std*.txt '))...
@@ -277,7 +274,7 @@ classdef StandaloneServer <  SimMachine & Server
             obj.issueMachineCommand(command, CommandType.FILESYSTEM);
         end
         
-        % ----------
+        % ---
         % Concrete version for this machine type (see RunJobMachine for abstract)
         function runJobCleanup(obj, simBasedir)
         % Clean up target-side files related to running jobs on qsub machine

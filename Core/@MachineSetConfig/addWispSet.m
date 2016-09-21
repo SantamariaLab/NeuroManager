@@ -14,10 +14,10 @@ function addWispSet(obj, varargin)
     p.CaseSensitive = true;
     p.KeepUnmatched = false;
 
+    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'numWisps', @(x) isnumeric(x) && x>=0);
     addRequired(p, 'wispNameRoot', @ischar);
     addRequired(p, 'wispInfoFile', @ischar);
-    addRequired(p, 'simulatorType', @(x) isa(x, 'SimType'));
     addRequired(p, 'numSimulators', @(x) isnumeric(x) && x>=0);
     % Check for workdir existence is elsewhere since it is remote
     % and needs machine object for communications.
@@ -191,11 +191,11 @@ function addWispSet(obj, varargin)
         % (so need a better implementation -- not implemented yet)
         % Create a blank config and fill it in here rather from a single static
         % server info file
-        obj.MSConfig(i).isWisp = true;
+        obj.MSConfig(i).isEphemeral = true;
         obj.MSConfig(i).cloudInfoFile = cloudInfoFileName;
         obj.MSConfig(i).infoData = cloudInfo;
         obj.MSConfig(i).resourceName = cloudInfo.resourceName;
-        obj.MSConfig(i).resourceType = wispInfo.resourceType;
+        obj.MSConfig(i).resourceType = MachineType.CLOUDSERVER;
         % Pick out the desired image and stick it in here
         requestedImage = wispInfo.imageName;
         imageLocated = false;
@@ -219,6 +219,7 @@ function addWispSet(obj, varargin)
                             obj.MSConfig(i).imageData.matlab.compiler;
         obj.MSConfig(i).executable = ...
                             obj.MSConfig(i).imageData.matlab.executable;
+        obj.MSConfig(i).mcrVer = obj.MSConfig(i).imageData.matlab.mcrVer;
         obj.MSConfig(i).mcrDir = obj.MSConfig(i).imageData.matlab.mcrDir;
         obj.MSConfig(i).xCompDir = obj.MSConfig(i).imageData.matlab.xCompDir;
         obj.MSConfig(i).simCores = obj.MSConfig(i).imageData.simCores;
@@ -243,7 +244,7 @@ function addWispSet(obj, varargin)
         obj.MSConfig(i).assignedSimCoreName = assignedSimCoreName;
         MachineSetConfig.ProcessSimCore(obj.MSConfig(i));
 
-        % Need multiple checks on this; here and elsewhere IMPORTANT!!!
+        % work dir acceptability check is done during communications tests
         obj.MSConfig(i).workDir = workDir;
         obj.numMachines = i;
 

@@ -187,10 +187,11 @@ END OF LICENSE
 % For use with SimNeuronSimpleSpike02A
 % Assumes the lead hoc file is 'runme.hoc'.
 function [result, errMsg] =...
-        userSimulation(machineID, simID, runDir, inputDir, outputDir, varargin)
+        userSimulation(machineID, simID, ...
+                        runDir, inputDir, modelDir, outputDir, varargin)
     
     arguments = ''; 
-    status = runHocOnlySimulation(runDir, inputDir,...
+    status = runHocOnlySimulation(runDir, inputDir, modelDir, ...
                                   outputDir, 'runme.hoc', arguments);
 
 	% With this approach we do not use these input arguments here

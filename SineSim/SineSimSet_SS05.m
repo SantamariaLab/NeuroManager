@@ -212,29 +212,33 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData, 'useDualKey', true);
 % the machine class hierarchy.
 % Zero for the number of simulators means that the machine will not be used.
 simulatorType = SimType.SIM_SINESIM;
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
-                       2, 'WorkDirOnServer01');
-nm.addStandaloneServer(simulatorType, 'Server02Info.json', ...
-                       2, 'WorkDirOnServer02');
-nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
-                       2, 'WorkDirForQueue01');
-nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue02', ...
-                       2, 'WorkDirForQueue01');
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
+
+nm.addStandaloneServer('Server01Info.json', 2, 'WorkDirOnServer01');
+nm.addStandaloneServer('Server02Info.json', 2, 'WorkDirOnServer02');
+nm.addClusterQueue('Cluster01Info.json', 'Queue01', 2, 'WorkDirForQueue01');
+nm.addClusterQueue('Cluster01Info.json', 'Queue02', 2, 'WorkDirForQueue02');
 % Stampede requires a time limit in the job submission file, and here's
 % where to specify the time.  Creation of the job submission file is
 % handled internally through the machine class hierarchy.
-nm.addClusterQueue(simulatorType, 'StampedeInfo.json', 'Dev', ...
-                  1, 'WorkDirForDevQueueOnStampede',...
-                  'wallClockTime', '00:15:00');
-nm.addClusterQueue(simulatorType, 'StampedeInfo.json', 'Normal', ...
-                  2, 'WorkDirForNormalQueueOnStampede',...
-                  'wallClockTime', '00:15:00');
+nm.addClusterQueue('StampedeInfo.json', 'Dev', ...
+                   1, 'WorkDirForDevQueueOnStampede',...
+                   'wallClockTime', '00:15:00');
+nm.addClusterQueue('StampedeInfo.json', 'Normal', ...
+                   2, 'WorkDirForNormalQueueOnStampede',...
+                   'wallClockTime', '00:15:00');
+nm.printConfig();
 
-% Part V: Test Communications
-nm.testCommunications();
+% Part V: Test communications, file transfers, and other compatibilities
+if ~nm.verifyConfig()
+    return;
+end
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(simulatorType);
+nm.constructMachineSet();
 
 % Part VII: Run the simulations defined in the specifications file,
 % located in the simSpec Directory.

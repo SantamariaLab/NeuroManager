@@ -190,25 +190,41 @@ END OF LICENSE
 % Note that this approach does not use the arguments; they must be put into
 % the hoc files.  Parameter provided for symmetry with RunPythonSimulation.
 function result = runHocOnlySimulation(runDir, inputDir,...
-                                      outputDir, hocFile, ~)
+                                      modelDir, outputDir, hocFile, ~)
 
-    load('MachineData.dat', 'config', '-mat');
+    load(fullfile(runDir, 'MachineData.dat'), 'remoteConfig', '-mat');
     
 	% Get the proper SimCore configuration
     simCore = {};
-    for i = 1:length(config.simCores)
-        if strcmp(config.simCores{1,i}.name, config.assignedSimCoreName)
-            simCore = config.simCores{1,i};
+    for i = 1:length(remoteConfig.simCores)
+        if strcmp(remoteConfig.simCores{1,i}.name,...
+                  remoteConfig.assignedSimCoreName)
+            simCore = remoteConfig.simCores{1,i};
         end
     end
     if isempty(simCore)
-        % Deal with errors here and in the rest of the file 
-        % (not implemented yet)
+        % We need to pass around an error message FIX THIS
+        system(['touch ' outputDir '/SIMCOREINCOMPATIBILITY;']);
+        result = 1;
+        return;
+    else
+        % DEBUG ONLY
+        f = fopen(fullfile(outputDir, 'SIMCOREOK'), 'w');
+        fclose(f);
     end
 
     % Prepare shell file called nrnivsh.sh with machine-specific neuron call
     % Supplied as part of standard files.
-    nrnivShell = createHocOnlyNrnivsh(simCore, runDir, inputDir, outputDir, hocFile);
+    nrnivShell = createHocOnlyNrnivsh(simCore, runDir,...
+                                    inputDir, modelDir, outputDir, hocFile);
+    
+    % CHANGE APPROACH
+    if isempty(nrnivShell)
+        f = fopen(fullfile(outputDir, 'COULDNOTCREATENRNIVSHELL'), 'w');
+        fclose(f);
+        result = 1;
+        return
+    end
     copyfile(fullfile(runDir, nrnivShell), outputDir); % for documentation/debug
 
     % Run the simulation using the shell file we created. Simulations run

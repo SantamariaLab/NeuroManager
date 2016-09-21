@@ -192,13 +192,13 @@ classdef MachineState
         
         % Machine is constructing file structure and the first simulator,
         % including compilation.
-        COMPILING       = 1;
+        %COMPILING       = 1;
         
-        % Compilation has concluded but at least one of the machine's
-        % simulators is not ready for use (still copying or whatever)
-        INPREPARATION   = 2;
+        % Construction has started but at least one of the machine's
+        % simulators is not ready for use 
+        INPREPARATION   = 1;
         
         % All of the machine's simulators are ready for use
-        READY           = 3;
+        READY           = 2;
    end
 end

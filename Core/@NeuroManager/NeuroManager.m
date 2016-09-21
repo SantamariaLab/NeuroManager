@@ -188,7 +188,6 @@ END OF LICENSE
 % the SimSet on a Simulator Pool, and places the results in a separate
 % directory for each SimSet, labeled with the SimSet ID.  
 classdef NeuroManager < handle
-    % ====================
     properties
         nmMainDir;         % The installation path of NeuroManager
         simCoreDir;        % Where the NeuroManager and standard simulator files are located
@@ -221,6 +220,17 @@ classdef NeuroManager < handle
         % The SimSet to be processed
         nmSimSet;
         
+        % The configuration to use for creating the ML Compile machine
+        mLCompileConfig;
+        % MATLAB Compiled Files Transfer List - the list of files that need
+        % to be distributed to the machines after single-point compilation
+        MLCFTL; 
+        files2Compile;      % Not sure if need this
+        files2Upload;       % Not sure if need this
+        modelFiles2Upload;  % Not sure if need this 
+        compiledType = SimType.UNASSIGNED;  % Simulator type set by user
+        MLCompilerVersion = ''; % determined automatically during compilation
+        
         % The configuration of the machine set to set up
         machineSetConfig;
         
@@ -235,6 +245,10 @@ classdef NeuroManager < handle
         numMachines;
         % The host working location for machines to make files, etc
         machineScratchDir;
+        ML2CompileDir;  % Holds remote-destined-m-files for MATLAB compilation
+        MLCompiledDir;  % Holds MATLAB compilation products before upload
+        toUploadDir;    % Holds remote-destined-non-m-files before upload
+        toModelRepoDir; % Holds remote-destined model files before upload
         
         % The set of Simulators NeuroManager has available for running sims
         simulatorPool;
@@ -264,9 +278,8 @@ classdef NeuroManager < handle
         version;
     end
     
-    % ====================
     methods (Access = public)
-        % ----------------
+        % ---
         function obj = NeuroManager(varargin)
         % NeuroManager constructor
             obj.version = '0.981';
@@ -388,13 +401,26 @@ classdef NeuroManager < handle
             % Web page display controls
             obj.showWebPage = p.Results.showWebPage;
             
-            % Make the machine scratch directory
+            % Make the machine scratch directory and subdirectories
             obj.machineScratchDir = fullfile(obj.simResultsDir, 'MachineScratch');
             [status, ~, ~] =  mkdir(obj.machineScratchDir);
             if ~status
                 ME = MException('ClassdefNeuroManager:machineScratchDirMakeFailure', ...
                                 ['NeuroManager: Could not create Machine Scratch Directory '...
                                  obj.machineScratchDir '.']);
+                throw(ME);
+            end
+            obj.ML2CompileDir = fullfile(obj.machineScratchDir, 'ML2Compile');
+            [status1, ~, ~] = mkdir(obj.ML2CompileDir);               
+            obj.toUploadDir = fullfile(obj.machineScratchDir, 'ToUpload');
+            [status2, ~, ~] = mkdir(obj.toUploadDir);                 
+            obj.toModelRepoDir = fullfile(obj.machineScratchDir, 'ToModelRepo');
+            [status3, ~, ~] = mkdir(obj.toModelRepoDir);                 
+            obj.MLCompiledDir = fullfile(obj.machineScratchDir, 'MLCompiled');
+            [status4, ~, ~] = mkdir(obj.MLCompiledDir);               
+            if ~(status1 && status2 && status3 && status4)
+                ME = MException('ClassdefNeuroManager:machineScratchDirMakeFailure', ...
+                                ['NeuroManager: Could not create Machine Scratch SubDirectory.']);
                 throw(ME);
             end
             
@@ -470,7 +496,7 @@ classdef NeuroManager < handle
             obj.displayStatusWebPage('initial');
         end
         
-        % ----------------
+        % ---
         function result = runFromSimSpec(obj, simspec)
         % Runs the input simspec on the set of simulators built in the
         % NeuroManager constructor.
@@ -494,7 +520,7 @@ classdef NeuroManager < handle
             result = obj.nmRun(simset);
         end
         
-        % ----------------
+        % ---
         function result = runFromFile(obj, simspecFilename)
         % Runs the simspec on the set of simulators built in the
         % NeuroManager constructor.
@@ -521,49 +547,7 @@ classdef NeuroManager < handle
             result = obj.nmRun(simset);
         end
 
-        % ----------------
-        function constructMachineSet(obj, simType)
-        % Construct the set of machines and their simulators from a
-        % machinesetconfig.
-            % Update the webpage
-            obj.displayStatusWebPage('constructmachine');
-
-            % One host scratch dir for all machines, so all files must be
-            % uniquely named. 
-            obj.log.write(['Constructing machine set.']);
-            if obj.simNotificationSet.isEnabled()
-                notificationSubject = ['Re: NeuroManager Notice'];
-                obj.simNotificationSet.send(notificationSubject,...
-                 ['Constructing machine set.'], '');
-            end
-
-            configStr = obj.machineSetConfig.printToStr;
-            obj.log.write(configStr);
-            obj.machineSet = obj.makeMyMachines(obj.machineScratchDir,...
-                                                simType, ...
-                                                obj.auth);
-            obj.machineSetType = simType;
-            obj.numMachines = length(obj.machineSet);
-
-            % Sit here and poll the machines until they are all ready.
-            % The test drives machine state progression.
-            % This poll delay is hardwired at 10.0 seconds; the simulator
-            % poll delay later in the Run() method is the one set by the
-            % user (we don't want that used here because we want the
-            % machine setup to happen asap).
-             while ~obj.machineSetReady()
-                 pause(10);
-             end
-            obj.log.write(['Machine set ready.']);
-            if obj.simNotificationSet.isEnabled()
-                notificationSubject = ['Re: NeuroManager Notice'];
-                obj.simNotificationSet.send(notificationSubject,...
-                 ['Machine set ready.'], '');
-            end
-
-        end
-        
-        % -----------------
+        % ---
         function removeMachineSet(obj)
         % Remove all the machines in the machine set
             if obj.machineSetType ~= SimType.UNASSIGNED
@@ -579,7 +563,7 @@ classdef NeuroManager < handle
             end
         end
         
-        % -----------------
+        % ---
         function shutdown(obj)
         % Remove the remote machines and close up shop
         % This may turn into a destructor but not yet
@@ -614,27 +598,32 @@ classdef NeuroManager < handle
             path(obj.oldPath);
         end
         
-        % ----------------
+        % ---
         function tf = isSingleMachine(obj)
             tf = obj.singleMachine;
         end
 
+        % ---
         function version = getVersion(obj)
             version = obj.version;
         end
         
+        % ---
         function setSnapshotTimeStr(obj, str)
             obj.snapshotTimeStr = str;
         end
         
+        % ---
         function str = getSnapshotTimeStr(obj)
             str = obj.snapshotTimeStr;
         end
         
+        % ---
         function dir = getSimResultsDir(obj)
             dir = obj.simResultsDir;
         end 
         
+        % ---
         function setSimSpecFileDir(obj, dir)
                 newDir = pathConversion(dir, obj.hostMachineData.osType);
             if ~exist(newDir, 'dir')
@@ -644,54 +633,93 @@ classdef NeuroManager < handle
             obj.simSpecFileDir = newDir;
         end
         
+        % ---
         function dir = getSimSpecFileDir(obj)
             dir = obj.simSpecFileDir;
         end
         
+        % ---
         function log = getLog(obj)
             log = obj.log;
         end
         
-        % --- Interface for the config class
+        % Interface for the config class
+        % --- 
         function addStandaloneServer(obj, varargin)
-            obj.machineSetConfig.addStandaloneServer(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addStandaloneServer(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
+        % ---
         function addClusterQueue(obj, varargin)
-            obj.machineSetConfig.addClusterQueue(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addClusterQueue(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
+        % ---
         function addCloudServer(obj, varargin)
-            obj.machineSetConfig.addCloudServer(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addCloudServer(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end            
         
+        % ---
         function addWisp(obj, varargin)
-            obj.machineSetConfig.addWisp(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addWisp(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
+        % ---
         function addWispSet(obj, varargin)
-            obj.machineSetConfig.addWispSet(varargin{:});
+            if obj.machineSetType ~= SimType.UNASSIGNED
+                obj.machineSetConfig.addWispSet(obj.machineSetType, varargin{:});
+            else
+                error(['User must assign Simulator Type using the NeuroManager class method setSimulatorType() before using this method.']);
+            end
         end
         
+        % ---
         function removeWisps(obj)
             obj.machineSetConfig.removeWisps();
         end
         
+        % ---
         function terminateCloudInstance(obj, resourceName, instanceName)
             obj.machineSetConfig.terminateCloudInstance(resourceName, instanceName);
         end
         
+        % ---
         function printConfig(obj)
             obj.machineSetConfig.print();
         end
+        
+        % ---
+        function setSimulatorType(obj, type)
+            % if type valid
+            try
+                obj.machineSetType = type;
+            catch
+                error(['setSimulatorType error: ' type ' is not a valid SimType.']);
+            end
+        end
     end 
     
-    
-    % ====================
     methods (Access = private)
         result = nmRun(obj, simset) % function defn in separate file
-
-        % ---------------
+        preUploadFiles(obj, machine) % function defn in separate file
+        
+        % ---
         function addSimulatorToPool(obj, simulator)
         % Puts the input simulator into the simulator pool
         % Assumes the simulator is valid
@@ -699,7 +727,7 @@ classdef NeuroManager < handle
             obj.simulatorPool{obj.numSimulators} = simulator;
         end
         
-        % ---------------
+        % ---
         function result = machineSetReady(obj)
             % Boolean; true if all machines in the set are ready to go
             result = true;

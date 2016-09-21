@@ -57,5 +57,36 @@ classdef ClusterConfig  < MachineConfig
                 error(['Imagefile ' imageFile ' must specify jsIpAddress.']);
             end
         end
+
+        % ---
+        function qs = getQueues(obj)
+            qs = obj.queues;
+        end
+        
+        % ---
+        function qstr = getQueueString(obj)
+            qstr = obj.queueString;
+        end
+        
+        % ---
+        function str = getParEnvStr(obj)
+            str = obj.parEnvStr;
+        end
+        
+        % ---
+        function str = getResourceStr(obj)
+            str = obj.resourceStr;
+        end
+        
+        % ---
+        function num = getNumNodes(obj)
+            num = obj.numNodes;
+        end
+        
+        % ---
+        function time = getWallClockTime(obj)
+            time = obj.wallClockTime;
+        end
+        
     end
 end

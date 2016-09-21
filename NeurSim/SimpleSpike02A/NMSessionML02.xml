@@ -86,37 +86,47 @@
 	
 	<sessionscript>
 		<locationinfo>
-			<userinfo>
-				myNMStaticData
-			</userinfo>
+			<userstaticdatafilepath>
+				FULL_USERSTATICDATAFILE_DIRECTORY_GOES_HERE/userStaticData.ini
+			</userstaticdatafilepath>
 			<customdir>
-				NeurSim/SimpleSpike02A
+				FULL_CUSTOM_DIRECTORY_GOES_HERE
 			</customdir>
-			<modeldir>
-				NeurSim/SimpleSpike01
-			</modeldir>
+			<simspecdir>
+				FULL_SIMSPEC_DIRECTORY_GOES_HERE
+			</simspecdir>
 			<resultsdir>
-				NeurSim/SimpleSpike02A
+				FULL_RESULTS_DIRECTORY_GOES_HERE
 			</resultsdir>
 		</locationinfo>
 		
 		<machineset singlemachine="false" usedualkey="true" polldelay="21">
-			<machine>
-				<machinetype>MYSERVER01</machinetype>
+			<compilemachine>
+				<infofile>MyCompileMachineInfoFile.json</infofile>
+			</compilemachine>
+			<standaloneserver>
+				<infofile>MyServer01InfoFile.json</infofile>
 				<numsimulators>4</numsimulators>
-				<workdir>MYSERVER01_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
-			<machine>
-				<machinetype>MYSERVER02</machinetype>
-				<numsimulators>0</numsimulators>
-				<workdir>MYSERVER02_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
-			<machine>
-				<machinetype>MYSGECLUSTERQUEUE</machinetype>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
+			</standaloneserver>
+			<cloudserver>
+				<infofile>MyCloudServer01InfoFile.json</infofile>
 				<numsimulators>4</numsimulators>
-				<workdir>MYSGECLUSTERQUEUE_WORK_DIRECTORY_GOES_HERE</workdir>
-			</machine>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
+			</cloudserver>
+			<wispset>
+				<numwisps>2</numwisps>
+				<wispnameroot>myWispNameRoot</wispnameroot>
+				<infofile>MyCloudInfoFile.json</infofile>
+				<numsimulators>2</numsimulators>
+				<workdir>NMWorkingDirectoryFromImage</workdir>
+			</wispset>
+			<cluster>
+				<infofile>MyCluster01InfoFile.json</infofile>
+				<queue>QUEUE</queue>
+				<numsimulators>4</numsimulators>
+				<workdir>FULL_WORKING_DIRECTORY_HERE</workdir>
+			</cluster>
 		</machineset>
 	</sessionscript>
-	
 </nmsession>

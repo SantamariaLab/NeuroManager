@@ -207,57 +207,28 @@ classdef MachineSetConfig < handle
             obj.log = log;
         end
         
-        
-        % -----------
-        function [type, numSimulators, machineName, config,...
-                  queueData, parEnvStr, resourceStr, numNodes, workDir,...
-                  wallClockTime, ipAddr, deleteInstanceWhenDone] =...
-                                                    getMachine(obj, index)
+        % ---
+        function config = getMachine(obj, index)
             if ((index > obj.numMachines) || (index < 1))
-                type = MachineType.UNASSIGNED;
-                numSimulators = 0;
-                machineName = '';
                 config = 0;
-                queueData = 0;
-                parEnvStr = '';
-                resourceStr = '';
-                numNodes = 1;
-                workDir = '';
-                wallClockTime = '';
-                ipAddr = '';
-                deleteInstanceWhenDone = false;
                 return;
             end
-            
-            switch obj.MSConfig(index).resourceType;
-                case 'STANDALONESERVER'
-                    type = MachineType.STANDALONESERVER;
-                case 'CLOUDSERVER'
-                    type = MachineType.CLOUDSERVER;
-                case 'SGECLUSTER'
-                    type = MachineType.SGECLUSTER;
-                case 'SLURMCLUSTER'
-                    type = MachineType.SLURMCLUSTER;
-            end
-            numSimulators = obj.MSConfig(index).getNumSimulators();
-            machineName = obj.MSConfig(index).getMachineName();
             config = obj.MSConfig(index);
-            queueData = '';
-            parEnvStr = '';
-            resourceStr = '';
-            numNodes = 0;
-            workDir = obj.MSConfig(index).getWorkDir();
-            wallClockTime = 0;
-            ipAddr = obj.MSConfig(index).getIpAddress();
-            deleteInstanceWhenDone = false;
         end
         
-        % -----------
+        % ---
         function num = getNumMachines(obj)
             num = obj.numMachines;
         end
         
-        % -----------
+        % ---
+        function tf = checkWorkDir(obj, directory)
+            % Ensure the directory exists and has no visible subdirectories 
+            tf = (obj.checkForDirectory(directory) && ...
+                  ~obj.checkForSubdirectories(directory));
+        end
+        
+        % ---
         function print(obj)
             fprintf('%s\n', 'MachineSetConfig:');
             for i = 1:obj.numMachines
@@ -271,13 +242,13 @@ classdef MachineSetConfig < handle
             fprintf('%s\n', '--------------------');
         end
 
-        % -----------
+        % ---
         function str = printToStr(obj)
             str = '';
             str = [str sprintf('%s\n', 'MachineSetConfig:')];
             for i = 1:obj.numMachines
                 str = [str ...
-                    sprintf('%u: %s %s %s\t\t %u %s %s\n', i,...
+                    sprintf('%u: %s %s %s\t\t %u %s\n', i,...
                     char(obj.MSConfig(i).getResourceType()),...
                     obj.MSConfig(i).getResourceName(),...
                     obj.MSConfig(i).getMachineName(),...

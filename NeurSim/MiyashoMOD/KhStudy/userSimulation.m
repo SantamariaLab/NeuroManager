@@ -188,7 +188,8 @@ END OF LICENSE
 % little plotting afterwards. Must be used with the
 % Sim_ActivePKFreqAnalysis simulator class.
 function [result, errMsg] =...
-    userSimulation(machineID, simID, runDir, inputDir, outputDir, varargin)
+    userSimulation(machineID, simID, ...
+                   runDir, inputDir, modelDir, outputDir, varargin)
     % Convert the input parameters into the simulation names; these are all
     % strings and so will need conversion if you want to use them here.
     current = varargin{1};
@@ -207,11 +208,14 @@ function [result, errMsg] =...
     
     % Simulation-specific hoc file prep
     % catfile (the biomech file) was uploaded for this simulation
-    catFilename = fullfile(inputDir, [simID '_Biomech.hoc']);
+    catFilename = fullfile(modelDir, [simID '_Biomech.hoc']);
     % The new consolidated hoc file is named with the simulation ID, which
     % is what our Python function will be expecting.
-    hocNew = fullfile(inputDir, [simID '.hoc']);
+    hocNew = fullfile(modelDir, [simID '.hoc']);
     system(['cat purkinje_MORPH.hoc ' catFilename ' > ' hocNew]);
+
+    % Copy the combined file into the rundir for simulation
+    copyfile(hocNew, runDir);
      
     % Copy the hoc files into the output dir for documentation/verification
     % purposes (will automatically be downloaded).
@@ -225,9 +229,10 @@ function [result, errMsg] =...
     % Note that the Kh values are carried by the biomech hoc file and 
     % are not used by the PySim.py, and so do not need to be inserted here.
     % We do use the values, however, for the plot titles below.
-    arguments = {simID, inputDir, outputDir, current, vInit, delay,...
+    arguments = {simID, runDir, inputDir, modelDir, outputDir, ...
+                 current, vInit, delay,...
                  stimDuration, timeStep, simtStop, recordInterval};
-    status = runPythonSimulation(runDir, inputDir, outputDir, ...
+    status = runPythonSimulation(runDir, inputDir, modelDir, outputDir, ...
                                  'PySim.py', 'pythonsim', arguments);
     
     % --

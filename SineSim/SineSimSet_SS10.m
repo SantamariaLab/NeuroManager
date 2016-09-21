@@ -203,7 +203,7 @@ nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir, 'SineSim');
 nmDirectorySet.simSpecFileDir = nmDirectorySet.customDir;
 nmDirectorySet.resultsDir = nmDirectorySet.customDir;
 
-% Part III: Create the NeuroManager object and show its version
+% Part III: Create the NeuroManager object
 % email and text message data for the user is specified in myNMStaticData.m
 % as used above.
 % NotificationsType: 'EMAIL' indicates email only; 'TEXT' indicates text
@@ -216,39 +216,42 @@ nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
 
 % Part IV: Create a machine set configuration
 simulatorType = SimType.SIM_SINESIM;
+nm.setSimulatorType(simulatorType);
+MLCompileMachineInfoFile = 'MyCompileMachineInfoFile.json';
+nm.setMLCompileServer(MLCompileMachineInfoFile);
+nm.doMATLABCompilation();
+
 % The traditional servers and clusters
-nm.addStandaloneServer(simulatorType, 'Server01Info.json', ...
-                       2, 'WorkDirOnServer01');
-nm.addStandaloneServer(simulatorType, 'Server02Info.json', ...
-                       2, 'WorkDirOnServer02');
-nm.addClusterQueue(simulatorType, 'Cluster01Info.json', 'Queue01', ...
-                       2, 'WorkDirForQueue01');
+nm.addStandaloneServer('Server01Info.json', 2, 'WorkDirOnServer01');
+nm.addStandaloneServer('Server02Info.json', 2, 'WorkDirOnServer02');
+nm.addClusterQueue('Cluster01Info.json', 'Queue01', 2, 'WorkDirForQueue01');
 
 % Add an already-existing cloud server
-nm.addCloudServer(simulatorType, 'CloudServer01Info.json',...
-                  2, 'WorkDir for CloudServer01');
+nm.addCloudServer('CloudServer01Info.json', 2, 'WorkDir for CloudServer01');
 
 % Add Wisps, or ephemeral servers
 wispNameRoot = 'myWisp';
 % This file will be looked for on the MATLAB path.
 wispInfoFile = 'mySineSimWispInfo.json';
 % Add a single Wisp with two Simulators
-nm.addWisp('singleWisp', wispInfoFile, simulatorType, 2, ...
+nm.addWisp('singleWisp', wispInfoFile, 2, ...
            'WorkDir associated with image specified in the wispInfoFile');
 
 % Add a WispSet of 3 wisps, each with three Simulators for a total of 9
 % Simulators due to this set
 numWisps = 3;
-nm.addWispSet(numWisps, wispNameRoot, wispInfoFile, ...
-              simulatorType, 3, ...
+nm.addWispSet(numWisps, wispNameRoot, wispInfoFile, 3, ...
               'WorkDir associated with image specified in the wispInfoFile');
+nm.printConfig();
 
-                   
-% Part V: Test Communications
-nm.testCommunications();
+% Part V: Test communications, file transfers, and other compatibilities
+if ~nm.verifyConfig()   
+    nm.removeWisps();
+    return;
+end
 
 % Part VI: Build the Simulators on the machines
-nm.constructMachineSet(simulatorType);
+nm.constructMachineSet();
 
 % Part VII: Create the SimSets in one of two ways: 1) Create a text file
 % just like previous examples (FromFile = true); 2) Create a SimSpec and

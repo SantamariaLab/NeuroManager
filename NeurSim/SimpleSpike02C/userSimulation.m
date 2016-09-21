@@ -186,7 +186,8 @@ END OF LICENSE
 % userSimulation.m
 % For use with SimNeuronSimpleSpike02C
 function [result, errmsg] =...
-        userSimulation(~, simID, runDir, inputDir, outputDir, varargin)
+        userSimulation(~, simID, ...
+                    runDir, inputDir, modelDir, outputDir, varargin)
     
     currentStr = varargin{1};
     durationStr = varargin{2};
@@ -226,14 +227,14 @@ function [result, errmsg] =...
     % We also want to save the uploaded mod file for documentation and
     % verification that what we intended and what the simulation used are
     % the same.
-    modfile = fullfile(inputDir, 'Leak.mod');
+    modfile = fullfile(modelDir, 'Leak.mod');
     copyfile(modfile, outputDir); 
         
     % With the above approach we do not use the input arguments in the
     % following call since the parameters.hoc carry them. However we do use
     % them for the plot titles (below).
     arguments = ''; 
-    status = runHocOnlySimulation(runDir, inputDir,...
+    status = runHocOnlySimulation(runDir, inputDir, modelDir, ...
                          outputDir, 'runme.hoc', arguments);
 
     if status == 0 % i.e, successful return from the simulation
