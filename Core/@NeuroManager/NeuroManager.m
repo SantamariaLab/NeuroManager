@@ -217,6 +217,9 @@ classdef NeuroManager < handle
         % The full pathname of the SimSpec file
         simSpecFullPath;
         
+        % The max number of parameters available in the SimSpec file
+        maxNumSimSpecParams;
+        
         % The SimSet to be processed
         nmSimSet;
         
@@ -317,6 +320,7 @@ classdef NeuroManager < handle
                                                  obj.hostMachineData.osType);
             obj.curlDir = pathConversion(p.Results.curlDir,...
                                                  obj.hostMachineData.osType);
+                                             
             % Add the custom directory to the
             % MATLAB search path; that is where the user's
             % UserSimulation function must be located as well as other
@@ -359,6 +363,8 @@ classdef NeuroManager < handle
                             'NeuroManager: Error in NeuroManager constructor: invalid notificationstype.');
                     throw(ME);
             end
+            
+            obj.maxNumSimSpecParams = p.Results.maxNumSimSpecParams;
 
             % Create the log (must be done before the SimSets and
             % before any Notification is sent)
@@ -378,9 +384,12 @@ classdef NeuroManager < handle
             obj.log.write(['CustomSim Directory: ' obj.customSimDir]);
             obj.log.write(['ModelFile Directory: ' obj.modelFileDir]);
             obj.log.write(['LocalMachine Directory: ' obj.localMachineDir]);
-            obj.log.write(['SimResultsBase Directory: ' obj.simResultsBaseDir]);
+            obj.log.write(['SimResultsBase Directory: ' ...
+                           obj.simResultsBaseDir]);
             obj.log.write(['SimResults Directory: ' obj.simResultsDir]);
             obj.log.write(['cURL Directory: ' obj.curlDir]);
+            obj.log.write(['Max number of SimSpec Parameters: ' ...
+                           num2str(obj.maxNumSimSpecParams)]);
 
             % Tell Notifications about the new log
             obj.simNotificationSet.setLog(obj.log);
@@ -514,7 +523,8 @@ classdef NeuroManager < handle
             % Make the SimSet from the simspec
             obj.log.write(['Constructing SimSet from supplied simspec.']);
             simset = SimSet('', simspec, obj.simResultsDir,...
-                                  obj.log, obj.simNotificationSet);
+                            obj.maxNumSimSpecParams, ...
+                            obj.log, obj.simNotificationSet);
             obj.log.write('SimSet constructed.'); % NEED ERROR MSG IF FAILS
 
             result = obj.nmRun(simset);
@@ -541,7 +551,8 @@ classdef NeuroManager < handle
             obj.log.write(['Constructing SimSet from file '...
                            obj.simSpecFullPath    '.']);
             simset = SimSet(obj.simSpecFullPath, 0, obj.simResultsDir,...
-                                  obj.log, obj.simNotificationSet);
+                            obj.maxNumSimSpecParams, ...
+                            obj.log, obj.simNotificationSet);
             obj.log.write('SimSet constructed.'); % NEED ERROR MSG IF FAILS
 
             result = obj.nmRun(simset);

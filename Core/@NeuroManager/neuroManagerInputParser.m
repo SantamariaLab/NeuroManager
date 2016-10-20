@@ -233,7 +233,10 @@ function p = neuroManagerInputParser(obj) %#ok<INUSD>
     addParamValue(p, 'smtpServer',  '',                 @ischar);
     addParamValue(p, 'pollDelay',   defaultPollDelay, ...
                             @(x) isnumeric(x) && (x > 10) && (x <= 300));
-                        
+    defaultMaxNumSimSpecParams = 10;
+    addParamValue(p, 'maxNumSimSpecParams', defaultMaxNumSimSpecParams, ...
+                                            @(x) isnumeric(x) && (x >= 1));
+    
     defaultLogEchoFlag = true;
     addParamValue(p, 'logEchoFlag', defaultLogEchoFlag,   @islogical);
     

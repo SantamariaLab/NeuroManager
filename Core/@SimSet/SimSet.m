@@ -221,7 +221,7 @@ classdef SimSet < handle
         % The maximum number of parameters on a simspec line
         % This location will change later to support variable numbers
         % defined probably in the Simulator.
-        MAX_PARAMS = 10;    
+        MAX_PARAMS;    
 
         % Handle supplied by NeuroManager for making log entries.
         log;
@@ -239,8 +239,8 @@ classdef SimSet < handle
     end
     
     methods
-        function obj = SimSet(source, simspec, resultsBasedir,...
-                                      log, notificationSet)
+        function obj = SimSet(source, simspec, resultsBasedir, ...
+                                      maxNumParams, log, notificationSet)
         % If source is empty, uses the simspec; otherwise uses the source
         % file. This approach is clumsy but MATLAB doesn't support
         % overloading by signature.
@@ -259,6 +259,7 @@ classdef SimSet < handle
                 obj.source = source;
                 obj.nmResultsDir = resultsBasedir;
                 obj.totalNumSims = 0; % TEMPORARY
+                obj.MAX_PARAMS = maxNumParams;
                 obj.log = log;
                 obj.notificationSet = notificationSet;
                 obj.sims = Simulation.empty(0);
