@@ -228,7 +228,8 @@ classdef SimNeurPurkinjeMiyasho2001Kh < SimNeurPurkinjeMiyasho2001
             copyfile(sourceBiomechFile, scratchBiomechFile);
             f = fopen(scratchBiomechFile, 'a');
             fprintf(f, '%s\n',...   
-                ['/* The following lines added by the PreRunModelProcPhaseHHocFileModification method']);
+                ['/* The following lines added by the ' ...
+                 'PreRunModelProcPhaseHHocFileModification method']);
             fprintf(f, '%s\n',...   
                 ['    of the Sim_Neur_Purkinje_Miyasho2001_Kh class. */']);
             fprintf(f, '%s\n',   ['soma {']);
