@@ -285,7 +285,8 @@ classdef SimSet < handle
                 % future editing.
                 if (~isempty(obj.source))
                     [~, name, ext] = fileparts(obj.source);
-                    newSource = [obj.baseDir name '_COPY_DO_NOT_EDIT' ext];
+					copyName = [name '_COPY_DO_NOT_EDIT' ext];
+                    newSource = fullfile(obj.baseDir, copyName);
                     [result, errmsg] = copyfile(obj.source, newSource);
                     fileattrib(newSource, '-w');
                     % Handle bad copies here 
@@ -293,7 +294,7 @@ classdef SimSet < handle
                     if result
                         obj.log.write([obj.source ...
                             ' copied to SimSet Base Directory as '...
-                            [name ext] '.']);
+                            copyName '.']);
                     else
                         % Policy is to fail easily before simulations begin to
                         % ensure proper setup and provenance.
