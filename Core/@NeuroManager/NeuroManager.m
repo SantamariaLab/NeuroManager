@@ -201,6 +201,7 @@ classdef NeuroManager < handle
         simResultsBaseDir; % Where user wants the results tree to be attached
         simResultsDir;     % The pathname of the results tree (automatically generated)
         curlDir;           % The path of the directory containing the cURL executable
+        sessionID;         % The dateTime string associated with this session's data
 
         oldPath;    % Retains user's old MATLAB search path for the duration
         
@@ -334,8 +335,9 @@ classdef NeuroManager < handle
             % Construct the SimDateTime directory for the SimSets to
             % use for results
             formatOut = 'yyyy-mm-dd_HHMMSS';
+            obj.sessionID = datestr(now, formatOut);
             obj.simResultsDir = fullfile(obj.simResultsBaseDir, ...
-                                     ['SimResults_' datestr(now, formatOut)]);
+                                     ['SimResults_' obj.sessionID]);
             [status, ~, ~] = mkdir(obj.simResultsDir);
             if ~status
                 ME = MException('ClassdefNeuroManager:simResultsDirMakeFailure', ...
@@ -647,6 +649,11 @@ classdef NeuroManager < handle
         % ---
         function dir = getSimSpecFileDir(obj)
             dir = obj.simSpecFileDir;
+        end
+        
+        % ---
+        function id = getSessionID(obj)
+            id = obj.sessionID;
         end
         
         % ---
