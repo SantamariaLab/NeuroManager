@@ -309,6 +309,8 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
                 obj.mSimulators{i}.constructRemoteAspect();
             end
             obj.state = MachineState.READY;
+            
+            
         end
         
         % ---
