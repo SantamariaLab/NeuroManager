@@ -200,8 +200,8 @@ classdef ModelFileSim < Simulator
     end
     
     methods
-        function obj = ModelFileSim(id, machine, log, notificationSet)
-            obj = obj@Simulator(id, machine, log, notificationSet);
+        function obj = ModelFileSim(id, machine, dbH, log, notificationSet)
+            obj = obj@Simulator(id, machine, dbH, log, notificationSet);
 %             obj.setModelFilesUploaded(false);
 %             obj.modelUploadFiles = modelFileList;
         end

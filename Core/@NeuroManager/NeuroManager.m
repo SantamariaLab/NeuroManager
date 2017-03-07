@@ -278,6 +278,13 @@ classdef NeuroManager < handle
         % Notifications to the user are handled through this object
         simNotificationSet;
         
+        % Optional investigation database use
+        investigationDir = '';
+        % handle of database object (for now, constructed outside NM)
+        dbH = 0;  
+        % sessionIndex
+        sessionIndex;
+        
         % NeuroManager Version; synced with GIT repository
         version;
     end
@@ -610,7 +617,24 @@ classdef NeuroManager < handle
             % Restore the old MATLAB search path
             path(obj.oldPath);
         end
-        
+
+        % ---
+        function attachInvestigationDatabase(obj, investigationDir, dbH)
+            % check for existence (not implemented yet)
+            obj.investigationDir = investigationDir;
+            % Assume not null
+            obj.dbH = dbH;
+            obj.log.write(['Investigation database attached with ' ...
+                'investigationDir = ' investigationDir ' and ' ...
+                'database name = ' obj.dbH.getDatabaseName()]);
+            % Add the session to the database
+            obj.sessionIndex = ...
+                obj.dbH.addSession(obj.sessionID, obj.customSimDir, ...
+                                   obj.simSpecFileDir, obj.modelFileDir, ...
+                                   obj.simResultsDir);
+            obj.log.write(['Added session ' obj.sessionID ' to database.']);
+        end
+                
         % ---
         function tf = isSingleMachine(obj)
             tf = obj.singleMachine;
@@ -654,6 +678,10 @@ classdef NeuroManager < handle
         % ---
         function id = getSessionID(obj)
             id = obj.sessionID;
+        end
+        % ---
+        function id = getSessionIndex(obj)
+            id = obj.sessionIndex;
         end
         
         % ---

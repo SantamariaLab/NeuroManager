@@ -228,8 +228,8 @@ classdef SimNeuron < ModelFileSim
     end
     
     methods
-        function obj = SimNeuron(id, machine, log, notificationSet)
-            obj = obj@ModelFileSim(id, machine, log, notificationSet);
+        function obj = SimNeuron(id, machine, dbH, log, notificationSet)
+            obj = obj@ModelFileSim(id, machine, dbH, log, notificationSet);
         end
         % Future: Make this work at this level so that it can work with
         % ModelDB downloaded mod and hoc files without modification.

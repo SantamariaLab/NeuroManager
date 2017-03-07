@@ -334,6 +334,18 @@ classdef Simulation < handle
             end
         end
         
+%         % ---
+%         function addToDB(obj, simulatorIndex)
+%             if obj.dbH~=0
+%                 obj.simulatorIndex = ...
+%                     obj.dbH.addSimulationRun(simulatorIndex, obj.getID(), ...
+%                                          obj.type, obj.version);
+%             else
+%                 obj.simulatorIndex = 0;
+%             end
+%         end
+        
+        
         % --------------
         function clearForResubmit(obj)
                 obj.jobID = 0;
