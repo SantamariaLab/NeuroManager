@@ -189,9 +189,11 @@ END OF LICENSE
 % simulation type.
 classdef Simulation < handle
     properties
-        % The ID of this simulation as defined in the SimSpec for this SimSet
-        id;
-      
+        % The unique identifying info of this simulation 
+        id;         % defined in the SimSpec for this SimSet
+        sessionID;  % defined by nm object
+        simSetID;   % defined by the SimSpec
+        
         type; % The simulation type from SimType.m
         
         % The full pathname of this simulation's base directory on the host
@@ -266,9 +268,12 @@ classdef Simulation < handle
     
     methods
         % ----------------
-        function obj = Simulation(simsetDir, id, type, notify, params)
+        function obj = Simulation(simsetDir, id, sessionID, simSetID, ...
+                                  type, notify, params)
             if (nargin == 0)
                 obj.id = '';
+                obj.sessionID = '';
+                obj.simSetID = '';
                 obj.type = SimType.UNASSIGNED;
                 obj.notifySwitch = false;
                 obj.params = {}; 
@@ -300,6 +305,8 @@ classdef Simulation < handle
                 % Set the variables
                 % (not checking yet for validity)
                 obj.id = id;
+                obj.sessionID = sessionID;
+                obj.simSetID = simSetID;
                 obj.type = type;
                 obj.notifySwitch = notify;
                 obj.params = params; 
@@ -663,6 +670,17 @@ classdef Simulation < handle
                 fullfile(obj.targetOutputDir, 'FAILED');
             obj.resultsFile =...
                 fullfile(obj.targetOutputDir, 'SimulationResults.txt');
+        end
+        
+        
+        % ---
+        function id = getSessionID(obj)
+            id = obj.sessionID;
+        end
+        
+        % --- 
+        function id = getSimSetID(obj)
+            id = obj.simSetID;
         end
         
         % ----------------
