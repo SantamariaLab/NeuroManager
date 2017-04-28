@@ -1,6 +1,6 @@
-% investigationDB - a class that provides an interface to a database associated
-% with a NeuroManager-based investigation. (investigation is a series of
-% sessions combined into one).
+% investigationDB - a class that provides a minimal interface to a database
+% associated with a NeuroManager-based investigation. (investigation is a
+% series of sessions combined into one).
 classdef investigationDB < handle
     properties
         dbSource;
@@ -9,19 +9,64 @@ classdef investigationDB < handle
         dbUserName;
         dbPassword;
         tableList;
+        createSessionsTableCmd = ['CREATE TABLE sessions (' ...
+            'sessionIDX int(11) NOT NULL AUTO_INCREMENT, ' ...
+            'dateTime char(20), ' ...
+            'customDir text, ' ...
+            'simSpecFileDir varchar(400), ' ...
+            'modelFileDir varchar(400), ' ...
+            'simResultsDir varchar(400), ' ...
+            'PRIMARY KEY (sessionIDX)) ENGINE=InnoDB'];
+        createMachinesTableCmd = (['CREATE TABLE machines (' ...
+            'machineIDX int(11) NOT NULL AUTO_INCREMENT, ' ...
+            'name char(100), ' ...
+            'resourceType char(100), ' ...
+            'PRIMARY KEY (machineIDX)) ENGINE=InnoDB']);
+        createSimulatorsTableCmd = (['CREATE TABLE simulators (' ...
+            'simulatorIDX int(11) NOT NULL AUTO_INCREMENT, ' ...
+            'machineIDX int(11) NOT NULL, ' ...
+            'name char(200), ' ...
+            'type char(200), ' ... 
+            'version char(200), ' ...
+            'FOREIGN KEY (machineIDX) REFERENCES machines(machineIDX), ' ...
+            'PRIMARY KEY (simulatorIDX)) ENGINE=InnoDB']);
+        createExpDataSetsTableCmd = (['CREATE TABLE expDataSets (' ...
+            'expDataSetIDX int(11) NOT NULL AUTO_INCREMENT, ' ... 
+            'expSpecimenID int(11), ' ... 
+            'expExperimentID int(11), ' ... 
+            'samplingRate double, ' ...
+            'expP1 char(100), ' ... 
+            'expP2 double, ' ... 
+            'expP3 double, ' ... 
+            'expP4 double, ' ... 
+            'expP5 double, ' ... 
+            'expP6 double, ' ... 
+            'expP7 double, ' ... 
+            'PRIMARY KEY (expDataSetIDX)) ENGINE=InnoDB']);
+
+        createComparisonsTableCmd = (['CREATE TABLE comparisons (' ...
+          'cmpIDX int(11) NOT NULL AUTO_INCREMENT, ' ...
+          'runIDX int(11) NOT NULL, ' ...
+          'cmpType char(100), ' ...
+          'score1 double, ' ...
+          'score2 double, ' ...
+          'score3 double, ' ...
+          'score4 double, ' ...
+          'score5 double, ' ...
+          'FOREIGN KEY (runIDX) REFERENCES simulationRuns(runIDX), ' ...
+          'PRIMARY KEY (cmpIDX)) ENGINE=InnoDB']);
+    end
+    properties (Abstract)
+        createSimFeatureExtractionsCmd;
+        createIpvsTableCmd;
+        createSimulationRunsTableCmd;
     end
     
     methods (Abstract)
-        createTable(obj)
-%         addSession(obj)
-%         addMachine(obj)
-%         addSimulator(obj)
-        addExpDataSet(obj)
-        getExpDataSet(obj)
         addIPV(obj)
         addSimulationRun(obj)
-        getIPVFromRunIDX(obj)
-        getRunDataFromRunIDX(obj)
+%         getIPVFromRunIDX(obj)
+%         getRunDataFromRunIDX(obj)
     end
     
     methods
@@ -37,9 +82,43 @@ classdef investigationDB < handle
             obj.dbConn = ...
                database.ODBCConnection(dataSourceName, ...
                                        obj.dbUserName, obj.dbPassword);            
+            % These must be added in order of table creation due to the
+            % requirements of foreign key constraints; dropping will be 
+            % done in reverse order. Sub classes can extend this as desired
+            obj.tableList = {'sessions', 'machines', 'simulators', ...
+                             'expDataSets', 'ipvs', ...
+                             'simFeatureExtractions',  ...
+                             'simulationRuns', 'comparisons'};
         end
 
-        function dropTable(tableName)
+        %% createTable
+        function result = createTable(obj, tableName)
+            switch(tableName)
+                case 'sessions'
+                    mySQLcmd = obj.createSessionsTableCmd;
+                case 'machines'
+                    mySQLcmd = obj.createMachinesTableCmd;
+                case 'simulators'
+                    mySQLcmd = obj.createSimulatorsTableCmd;
+                case 'simFeatureExtractions'
+                    mySQLcmd = obj.createSimFeatureExtractionsCmd;
+                case 'expDataSets'
+                    mySQLcmd = obj.createExpDataSetsTableCmd;
+                case 'ipvs'
+                    mySQLcmd = obj.createIpvsTableCmd;
+                case 'simulationRuns'
+                    mySQLcmd = obj.createSimulationRunsTableCmd;
+                case 'comparisons'
+                    % Create comparisons table
+                    mySQLcmd = obj.createComparisonsTableCmd;
+                otherwise
+                    error(['Bad tablename received by createTable:' tableName])
+            end
+            exec(obj.dbConn, mySQLcmd);
+            result = true;
+        end
+        
+        function dropTable(obj, tableName)
             mySQLcmd = ['DROP TABLE ' tableName];
             exec(obj.dbConn, mySQLcmd);
         end
@@ -50,22 +129,23 @@ classdef investigationDB < handle
             mySQLcmd = ['SET FOREIGN_KEY_CHECKS=0;'];
             exec(obj.dbConn, mySQLcmd);
             for i=length(obj.tableList):-1:1
-                dropTable(obj.tableList{i})
+                obj.dropTable(obj.tableList{i});
             end
             mySQLcmd = ['SET FOREIGN_KEY_CHECKS=1;'];
             exec(obj.dbConn, mySQLcmd);
         end
 
         function result = initialize(obj)
-            result = obj.dropAllTables();
-            if result
-                result = obj.createAllTables();
-            end
+            obj.dropAllTables();
+            result = obj.createAllTables();
         end
         
-        function createAllTables(obj)
+        function result = createAllTables(obj)
             for i=1:length(obj.tableList)
-                createTable(obj.tableList{i});
+                result = obj.createTable(obj.tableList{i});
+                if ~result
+                    return;
+                end
             end
         end
         
@@ -165,6 +245,198 @@ classdef investigationDB < handle
                 close(curs);
             end
         end
+
+        %% addExpDataSet 
+        % Do nothing if the addition has already been done.
+        function expDataSetIndex = ...
+                    addExpDataSet(obj, specNum, expNum, sampRate, ...
+                                  stimulusType, expP2, expP3, expP4, ...
+                                  expP5, expP6, expP7)
+            % Test for existence
+            selStr = ['SELECT * FROM expDataSets WHERE ' ...
+                      'expSpecimenID=' num2str(specNum) ' AND ' ...
+                      'expExperimentID=' num2str(expNum)];
+            curs = exec(obj.dbConn, selStr);
+            curs = fetch(curs);
+            % If doesn't exist, add the entry
+            if iscell(curs.Data) && strcmp(curs.Data{1}, 'No Data')
+                close(curs);
+
+                % Add the entry
+                colnames = {'expDataSetIDX', 'expSpecimenID', ...
+                            'expExperimentID', 'samplingRate', ...
+                            'expP1', 'expP2', 'expP3', 'expP4', ...
+                            'expP5', 'expP6', 'expP7'};
+                coldata = {num2str(specNum), num2str(expNum), ...
+                           num2str(sampRate), stimulusType, ...
+                           num2str(expP2), num2str(expP3), num2str(expP4), ...
+                           num2str(expP5), num2str(expP6), num2str(expP7)};
+                columnStr = [strjoin(colnames, ', ') ...
+                             ') values(0, ''' strjoin(coldata, ''', ''') ''''];
+                insertStr = ['insert into expDataSets (' columnStr ')'];
+                exec(obj.dbConn, insertStr);
+
+                q = ['select expDataSetIDX from expDataSets ' ...
+                      'WHERE expDataSetIDX = @@IDENTITY'];
+                curs = exec(obj.dbConn, q);
+                curs = fetch(curs);
+                expDataSetIndex = curs.Data.expDataSetIDX;
+                close(curs);
+            else
+                % If it does exist, return the existing index
+                expDataSetIndex = curs.Data.expDataSetIDX;
+                close(curs);
+            end
+        end
+
+        %% addComparison 
+        function compIndex = addComparison(obj, runIndex, cmpType, ...
+                                    score1, score2, score3, score4, score5)
+                %% Massage the results for database insertion
+                if isnan(score1)
+                    score1Str = 'NULL';
+                else
+                    % precision is important to get by MySQL input
+                    score1Str = num2str(score1, 14);
+                end 
+                if isnan(score2)
+                    score2Str = 'NULL';
+                else
+                    score2Str = num2str(score2);
+                end 
+                if isnan(score3)
+                    score3Str = 'NULL';
+                else
+                    score3Str = num2str(score3);
+                end 
+                if isnan(score4)
+                    score4Str = 'NULL';
+                else
+                    score4Str = num2str(score4);
+                end 
+                if isnan(score5)
+                    score5Str = 'NULL';
+                else
+                    score5Str = num2str(score5);
+                end 
+                
+%                 if isinf(results{i}.score1)
+%                     score1Str = 'Double.MAX_VALUE';
+%                 end
+                % ADD MORE OF THOSE 
+                % (not implemented yet)
+
+                %% Add the comparison to the database
+                colnames = {'cmpIDX', 'runIDX', ...
+                            'cmpType', ...
+                            'score1', 'score2', 'score3', ...
+                            'score4', 'score5'};
+                coldata = {num2str(runIndex), ...
+                           ['''' cmpType ''''], ...
+                           score1Str, score2Str, score3Str, ...
+                           score4Str, score5Str};
+                insertStr = ['insert into comparisons (' ...
+                             strjoin(colnames, ', ') ') values(0, ' ...
+                             strjoin(coldata, ', ') ')'];
+                curs = exec(obj.dbConn, insertStr);
+                close(curs);
+            
+                q = ['select cmpIDX from comparisons ' ...
+                     'WHERE cmpIDX = @@IDENTITY'];
+                curs = exec(obj.dbConn, q);
+                curs = fetch(curs);
+                compIndex = curs.Data.cmpIDX;
+                close(curs);
+        end        
+
+        %% getIPVFromRunIDX 
+        function ipvData = getIPVFromRunIDX(obj, runIDX)
+            q = ['SELECT ipvs.* FROM (ipvs INNER JOIN simulationRuns ' ...
+                 'ON ipvs.ipvIDX=simulationRuns.ipvIDX) ' ...
+                 'WHERE simulationRuns.runIDX=' num2str(runIDX) ';'];
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            ipvData = curs.Data;
+            ipvData.stimulusType = ipvData.stimulusType{1};
+            close(curs);
+        end
+        
+        %% getRunDataFromRunIDX 
+        function runData = getRunDataFromRunIDX(obj, runIDX)
+            q = ['SELECT simulationRuns.* FROM simulationRuns ' ...
+                 'WHERE simulationRuns.runIDX=' num2str(runIDX) ';'];
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            runData = curs.Data;
+            runData.simSetID = runData.simSetID{1}; 
+            runData.simID = runData.simID{1}; 
+            runData.state = runData.state{1}; 
+            runData.simSpecFilename = runData.simSpecFilename{1}; 
+            runData.resultsDir = runData.resultsDir{1}; 
+            runData.stimulusFilename = runData.stimulusFilename{1}; 
+            runData.voltageFilename = runData.voltageFilename{1}; 
+            runData.timeFilename = runData.timeFilename{1}; 
+            runData.result = runData.result{1}; 
+            close(curs);
+        end        
+        
+        %% getExpDataSet
+        function expDataSet = getExpDataSet(obj, specNum, expNum)
+            setdbprefs('DataReturnFormat','structure');
+            whereStr = ...
+                ['where expDataSets.expSpecimenID=' num2str(specNum) ...
+                 ' and expDataSets.expExperimentID=' num2str(expNum)];
+            curs = exec(obj.dbConn, ...
+                        ['select * from expDataSets ' whereStr]);
+            curs = fetch(curs);
+            expDataSet = curs.Data;
+            close(curs);
+        end
+        
+        %% getAllExpDataSets
+        function expDataSetList = getAllExpDataSets(obj)
+            setdbprefs('DataReturnFormat','structure');
+            whereStr = '';
+%                 ['where expDataSets.expSpecimenID=' num2str(specNum) ...
+%                  ' and expDataSets.expExperimentID=' num2str(expNum)];
+            curs = exec(obj.dbConn, ...
+                        ['select * from expDataSets ' whereStr]);
+            curs = fetch(curs);
+            expDataSetList = curs.Data;
+            close(curs);
+        end
+  
+        %% getSessionComparisons 
+        function comps = getSessionComparisons(obj, sessionID)
+            q = ['SELECT comparisons.runIDX,' ...
+                 'comparisons.score1, ' ...
+                 'comparisons.score2, ' ...
+                 'comparisons.score3, ' ...
+                 'comparisons.score4, ' ...
+                 'comparisons.score5, ' ...
+                 'simulationRuns.simID ' ...
+                 'FROM ((comparisons INNER JOIN simulationRuns ON ' ...
+                 'comparisons.runIDX=simulationRuns.runIDX) INNER JOIN ' ...
+                 'sessions ON simulationRuns.sessionIDX=sessions.sessionIDX) ' ...
+                 'WHERE sessions.dateTime="' sessionID '";'];
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            temp = curs.Data;
+            close(curs);
+            for i=1:length(temp.runIDX)
+                comps(i).runIDX = temp.runIDX(i); %#ok<*AGROW>
+                comps(i).score1 = temp.score1(i);
+                comps(i).score2 = temp.score2(i);
+                comps(i).score3 = temp.score3(i);
+                comps(i).score4 = temp.score4(i);
+                comps(i).score5 = temp.score5(i);
+                comps(i).simID = temp.simID(i);
+            end
+        end
+        
         
         %% updateSessionSimSpecDir
         function updateSessionSimSpecDir(obj, sessionIndex, newDir)

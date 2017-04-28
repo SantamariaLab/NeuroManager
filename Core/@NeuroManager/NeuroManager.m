@@ -232,7 +232,7 @@ classdef NeuroManager < handle
         files2Compile;      % Not sure if need this
         files2Upload;       % Not sure if need this
         modelFiles2Upload;  % Not sure if need this 
-        compiledType = SimType.UNASSIGNED;  % Simulator type set by user
+        compiledType;  % Simulator type set by user
         MLCompilerVersion = ''; % determined automatically during compilation
         
         % The configuration of the machine set to set up
@@ -335,7 +335,7 @@ classdef NeuroManager < handle
             % simulation files. 
             % Add it to the MATLAB search path and preserve old
             obj.oldPath = addpath(obj.customSimDir);
-
+            obj.compiledType = SimType.UNASSIGNED;
             obj.simSpecFullPath = '';  % Set in RunFromFile()
             obj.nmSimSet = SimSet();   % actually assigned in nmRun()
             
