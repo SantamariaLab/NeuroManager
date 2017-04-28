@@ -13,9 +13,9 @@ classdef investigationDB < handle
     
     methods (Abstract)
         createTable(obj)
-        addSession(obj)
-        addMachine(obj)
-        addSimulator(obj)
+%         addSession(obj)
+%         addMachine(obj)
+%         addSimulator(obj)
         addExpDataSet(obj)
         getExpDataSet(obj)
         addIPV(obj)
@@ -68,6 +68,104 @@ classdef investigationDB < handle
                 createTable(obj.tableList{i});
             end
         end
+        
+        %% addSession 
+        function sessionIndex = ...
+                   addSession(obj, sessionID, customDir, simSpecFileDir, ...
+                              modelFileDir, simResultsDir)
+            colnames = {'sessionIDX', 'dateTime', 'customDir', ...
+                        'simSpecFileDir', 'modelFileDir', 'simResultsDir'};
+            coldata = {sessionID, ...
+                       strrep(customDir,        '\', '/'), ...
+                       strrep(simSpecFileDir,   '\', '/'), ...
+                       strrep(modelFileDir,     '\', '/'), ...
+                       strrep(simResultsDir,    '\', '/')};
+            insertStr = ['insert into sessions (' ...
+                         strjoin(colnames, ', ') ') values(0, ''' ...
+                         strjoin(coldata, ''', ''') ''')'];
+            exec(obj.dbConn, insertStr);
+            
+            % Get the new session's automatically assigned index
+            % Reference:
+            % https://www.mathworks.com/matlabcentral/answers/
+            % 93959-how-can-the-primary-key-of-the-last-record-that-was-inserted-
+            % into-a-database-using-the-fastinsert-co
+            q = ['select sessionIDX from sessions ' ...
+                  'WHERE sessionIDX = @@IDENTITY'];
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            temp = curs.Data;
+            sessionIndex = temp.sessionIDX;
+            close(curs);
+        end
+        
+        %% addMachine 
+        function machineIndex = addMachine(obj, name, resourceType)
+            % Check for duplicates
+            selStr = ['SELECT * FROM machines WHERE ' ...
+                      'name=' ['"' name '"'] ' AND ' ...
+                      'resourceType=' ['"' resourceType '"']];
+            curs = exec(obj.dbConn, selStr);
+            curs = fetch(curs);
+            % If doesn't exist, add the entry
+            if iscell(curs.Data) && strcmp(curs.Data{1}, 'No Data')
+                close(curs);
+                colnames = {'machineIDX', 'name', 'resourceType'};
+                coldata = {name, resourceType};
+                insertStr = ['insert into machines (' ...
+                             strjoin(colnames, ', ') ') values(0, ''' ...
+                             strjoin(coldata, ''', ''') ''')'];
+                exec(obj.dbConn, insertStr);
+
+                % Get the new index
+                q2 = ['select machineIDX from machines ' ...
+                      'WHERE machineIDX=@@IDENTITY'];
+                curs = exec(obj.dbConn, q2);
+                curs = fetch(curs);
+                temp = curs.Data;
+                machineIndex = temp.machineIDX;
+                close(curs);
+            else
+                % Already exists, so just return the existing index
+                machineIndex = curs.Data.machineIDX;
+                close(curs);
+            end
+        end
+
+        %% addSimulator 
+        function simIDX = addSimulator(obj, machineIndex, name, type, version)
+            % Check for duplicates
+            selStr = ['SELECT * FROM simulators WHERE ' ...
+                      'name=' ['"' name '"'] ' AND ' ...
+                      'type=' ['"' char(type) '"'] ' AND ' ...
+                      'version=' ['"' version '"']];
+            curs = exec(obj.dbConn, selStr);
+            curs = fetch(curs);
+            % If doesn't exist, add the entry
+            if iscell(curs.Data) && strcmp(curs.Data{1}, 'No Data')
+                close(curs);
+                colnames = {'simulatorIDX', 'machineIDX', 'name', ...
+                            'type', 'version'};
+                machineIndexStr = num2str(machineIndex);
+                coldata = {machineIndexStr, name, char(type), version};
+                insertStr = ['insert into simulators (' ...
+                             strjoin(colnames, ', ') ') values(0, ''' ...
+                             strjoin(coldata, ''', ''') ''')'];
+                exec(obj.dbConn, insertStr);
+                
+                q = ['select simulatorIDX from simulators ' ...
+                     'WHERE simulatorIDX=@@IDENTITY'];
+                curs = exec(obj.dbConn, q);
+                curs = fetch(curs);
+                simIDX = curs.Data.simulatorIDX;
+                close(curs);
+            else
+                % Already exists, so just return the existing index
+                simIDX = curs.Data.simulatorIDX;
+                close(curs);
+            end
+        end
+        
         
         function name = getDataSourceName(obj)
             name = obj.dbSource;
