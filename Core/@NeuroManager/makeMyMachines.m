@@ -223,7 +223,7 @@ function mset = makeMyMachines(obj, scratchDir, inSimType, auth)
                                 config); 
                 mset{validMachineCount} = mHandle; %#ok<AGROW>
                 if obj.dbH~=0
-                    mHandle.addToDB(obj.sessionIndex);
+                    mHandle.addToDB(type);
                 end
             else
                 error(['Machine' name 'does not have SimCore ' ...

@@ -187,8 +187,8 @@ END OF LICENSE
 % Forms a superclass for simulators that have no model files.
 classdef NoModelFileSim < Simulator
     methods
-        function obj = NoModelFileSim(id, machine, dbH, log, notificationSet)
-            obj = obj@Simulator(id, machine, dbH, log, notificationSet);
+        function obj = NoModelFileSim(id, machine, type, dbH, log, notificationSet)
+            obj = obj@Simulator(id, machine, type, dbH, log, notificationSet);
         end
         
         % -------------

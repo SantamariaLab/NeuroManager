@@ -6,7 +6,7 @@ function preUploadFiles(obj, machine)
     % place for upload
     simulatorID = 'dummy4compile';
     type = obj.machineSetType;
-    dummySim  = type.constrFunc(simulatorID, machine,...
+    dummySim  = type.constrFunc(simulatorID, machine, type,...
                                 obj.dbH, obj.log, obj.simNotificationSet);
    
     % Query the simulator for the files to compile and to upload

@@ -260,9 +260,9 @@ classdef Simulator < handle
    
     methods
         % Machine makes the simulator so the caller's handle goes in machine.
-        function obj = Simulator(id, machine, dbH, log, notificationSet)
+        function obj = Simulator(id, machine, type, dbH, log, notificationSet)
             obj.id = id;
-            obj.type = SimType.UNASSIGNED; 
+            obj.type = type; 
             
             % List defined in SimType.m
 %     	    obj.simCoreCompatibilityList = type.simCoreList;
@@ -324,8 +324,11 @@ classdef Simulator < handle
         function addToDB(obj, machineIndex)
             if obj.dbH~=0
                 obj.simulatorIndex = ...
-                    obj.dbH.addSimulator(machineIndex, obj.getID(), ...
+                    obj.dbH.addSimulator(machineIndex, obj.id, ...
                                          obj.type, obj.version);
+                obj.log.write(['Added simulator ' obj.id ...
+                           ' to database ' obj.dbH.getDatabaseName() '.']);
+
             else
                 obj.simulatorIndex = 0;
             end

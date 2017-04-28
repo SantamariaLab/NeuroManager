@@ -8,10 +8,11 @@ classdef investigationDB < handle
         dbConn;
         dbUserName;
         dbPassword;
+        tableList;
     end
     
     methods (Abstract)
-        initialize(obj)
+        createTable(obj)
         addSession(obj)
         addMachine(obj)
         addSimulator(obj)
@@ -37,6 +38,36 @@ classdef investigationDB < handle
                database.ODBCConnection(dataSourceName, ...
                                        obj.dbUserName, obj.dbPassword);            
         end
+
+        function dropTable(tableName)
+            mySQLcmd = ['DROP TABLE ' tableName];
+            exec(obj.dbConn, mySQLcmd);
+        end
+        
+        % Dropping done in reverse order because of foreign key
+        % requirements
+        function dropAllTables(obj)
+            mySQLcmd = ['SET FOREIGN_KEY_CHECKS=0;'];
+            exec(obj.dbConn, mySQLcmd);
+            for i=length(obj.tableList):-1:1
+                dropTable(obj.tableList{i})
+            end
+            mySQLcmd = ['SET FOREIGN_KEY_CHECKS=1;'];
+            exec(obj.dbConn, mySQLcmd);
+        end
+
+        function result = initialize(obj)
+            result = obj.dropAllTables();
+            if result
+                result = obj.createAllTables();
+            end
+        end
+        
+        function createAllTables(obj)
+            for i=1:length(obj.tableList)
+                createTable(obj.tableList{i});
+            end
+        end
         
         function name = getDataSourceName(obj)
             name = obj.dbSource;
@@ -55,19 +86,19 @@ classdef investigationDB < handle
             pw = obj.dbPassword;
         end
 
-        function save(obj, userName, dir, annotation)
+        function [status,cmdout] = save(obj, userName, dir, annotation)
             savePath = fullfile(dir, [obj.dbName annotation '.sql']);
             command = ['mysqldump -u ' userName ...
                        ' --password=' obj.dbPassword ' ' ...
                        obj.dbName ' > ' savePath];
-            [~, ~] = system(command);
+            [status,cmdout] = system(command);
         end
 
-        function load(obj, userName, dumpPath)
+        function [status,cmdout] = load(obj, userName, dumpPath)
             command = ['mysql -u ' userName ...
                        ' --password=' obj.dbPassword ' ' ...
                        obj.dbName ' < ' dumpPath];
-            [~, ~] = system(command);
+            [status,cmdout] = system(command);
         end
 
         function conn = getConn(obj)

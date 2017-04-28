@@ -318,11 +318,13 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             
         end
         
-        function addToDB(obj, sessionIndex)
+        function addToDB(obj, resourceType)
             if obj.dbH~=0
                 obj.machineIndex = ...
-                    obj.dbH.addMachine(sessionIndex, obj.getID(), ...
-                                       'tempGenericDescription');
+                    obj.dbH.addMachine(obj.getID(), char(resourceType));
+                obj.log.write(['Added machine ' obj.getID() ...
+                               ' to database ' obj.dbH.getDatabaseName() '.']);
+
             for i = 1:obj.numSimulators
                 if obj.dbH~=0
                     obj.mSimulators{i}.addToDB(obj.machineIndex);
@@ -419,7 +421,7 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
                       ['Received improper SimType: ' char(type) '.']);
             end
             simulator = type.constrFunc(simulatorID, obj,...
-                                        dbH, log, notificationSet);
+                                        type, dbH, log, notificationSet);
         end
 
         % ----------------
