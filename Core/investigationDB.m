@@ -166,6 +166,15 @@ classdef investigationDB < handle
             end
         end
         
+        %% updateSessionSimSpecDir
+        function updateSessionSimSpecDir(obj, sessionIndex, newDir)
+            % Update the entry
+            colnames = {'simSpecFileDir'};
+            coldata = {newDir};
+            whereStr = ['WHERE sessionIDX=' num2str(sessionIndex)];
+            update(obj.dbConn, 'sessions', colnames, coldata, whereStr);
+        end
+            
         
         function name = getDataSourceName(obj)
             name = obj.dbSource;

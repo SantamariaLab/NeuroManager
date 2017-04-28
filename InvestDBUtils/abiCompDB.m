@@ -212,6 +212,7 @@ classdef abiCompDB < investigationDB
         end
         
         %% addIPV 
+        % This could be genericized someday but might lose clarity
         function ipvIndex = ...
                     addIPV(obj, expDataSetIndex, ...
                            tstop, tstep, taum, refrac, alpha, rM, ...
@@ -503,15 +504,6 @@ classdef abiCompDB < investigationDB
             end
         end
         
-        %% updateSessionSimSpecDir
-        function updateSessionSimSpecDir(obj, sessionIndex, newDir)
-            % Update the entry
-            colnames = {'simSpecFileDir'};
-            coldata = {newDir};
-            whereStr = ['WHERE sessionIDX=' num2str(sessionIndex)];
-            update(obj.dbConn, 'sessions', colnames, coldata, whereStr);
-        end
-            
         %% updateSimulationRun
 %         function updateSimulationRun(obj, 
     end
