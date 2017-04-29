@@ -1,4 +1,4 @@
-% abiCompDB - a subclass for dealing with the ABI database (and the FLIF ?)
+% abiCompDB - a subclass for dealing with the ABI database
 
 classdef abiCompDB < investigationDB
     methods (Access=protected)
@@ -158,6 +158,72 @@ classdef abiCompDB < investigationDB
             close(curs);
         end
         
+        %% addSimFeatureExtraction
+        % This approach depends on featDat matching the table definition;
+        % also puts the fx key into the identified simulationRun.
+        function fxIDX = ...
+                addSimFeatureExtraction(obj, featDat, runIDX)
+            try
+                featDat = rmfield(featDat, 'spikeData');
+            catch
+            end
+            try
+                featDat = rmfield(featDat, 'simID');
+            catch
+            end
+            fns = fieldnames(featDat);
+            colnames = cell(length(fns)+1, 1);
+            colnames{1} = 'fxIDX';
+            coldata = cell(length(fns),1);
+            for i = 1:length(fns)
+                colnames{i+1} = fns{i};
+                temp = featDat.(fns{i});
+                if ischar(temp)
+                    coldata{i} = temp;
+                elseif isempty(temp)
+                    coldata{i} = 'NULL';
+                else
+                    coldata{i} = num2str(temp);
+                end
+            end
+            columnStr = [strjoin(colnames, ', ') ...
+                         ') values(0, ' strjoin(coldata, ', ')];
+            insertStr = ['insert into simFeatureExtractions (' columnStr ')'];
+            exec(obj.dbConn, insertStr);
+            
+            q = ['select fxIDX from simFeatureExtractions ' ...
+                 'WHERE fxIDX = @@IDENTITY'];
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            temp = curs.Data;
+            fxIDX = temp.fxIDX;
+            close(curs);
+            
+            % Update the corresponding simulationRun with the foreign key
+            update(obj.dbConn, 'simulationRuns', {'fxIDX','state'}, ...
+                   {fxIDX,'FULLYPROCESSED'}, ...
+                   ['WHERE runIDX=' num2str(runIDX)]);
+
+        end
+
+        %% updateSimulationRun
+        function updateSimulationRun(obj, runIDX, simulatorIDX, ...
+                        resultsDir, stimulusFilename, voltageFilename, ...
+                        spikeMarkerFilename, timeFilename, fxFilename, ...
+                        simTime, simResult)
+            colnames  = {'simulatorIDX', 'resultsDir', ...
+                         'stimulusFilename', 'voltageFilename', ...
+                         'spikeMarkerFilename', 'timeFilename', ...
+                         'fxFilename', 'runtime', 'result'};
+            coldata   = {simulatorIDX, resultsDir, ...
+                         stimulusFilename, voltageFilename, ...
+                         spikeMarkerFilename, timeFilename, ...
+                         fxFilename, simTime, simResult};
+            whereStr  = ['WHERE runIDX=' num2str(runIDX)];
+            update(obj.dbConn, 'simulationRuns', ...
+                   colnames, coldata, whereStr);
+        end
+                                
         %% delete
         function delete(obj)
             delete@investigationDB(obj);
