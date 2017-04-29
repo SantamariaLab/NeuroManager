@@ -9,9 +9,6 @@ classdef investigationDB < handle
         dbUserName;
         dbPassword;
         tableList;
-    end
-
-    properties (Access=protected)
         createSessionsTableCmd;
         createMachinesTableCmd;
         createSimulatorsTableCmd;
@@ -34,32 +31,6 @@ classdef investigationDB < handle
         setSimFeatureExtractionsCmd(obj)
         setIpvsTableCmd(obj)
         setSimulationRunsTableCmd(obj)
-    end
-
-    methods
-        %% Constructor
-        function obj = investigationDB(dataSourceName, databaseName, ...
-                                       userName, password)
-            obj.dbSource = dataSourceName;
-            obj.dbName = databaseName;
-            obj.dbUserName = userName;
-            obj.dbPassword = password;
-            obj.dbConn = ...
-               database.ODBCConnection(dataSourceName, ...
-                                       obj.dbUserName, obj.dbPassword);            
-            % These must be added in order of table creation due to the
-            % requirements of foreign key constraints; dropping will be 
-            % done in reverse order. Sub classes can extend this as
-            % desired.
-            obj.tableList = {'sessions', 'machines', 'simulators', ...
-                             'expDataSets', 'ipvs', ...
-                             'simFeatureExtractions',  ...
-                             'simulationRuns', 'comparisons'};
-            obj.setBasicTableCreateCmds();
-            obj.setIpvsTableCreateCmd();
-            obj.setSimFeatureExtractionsTableCreateCmd();
-            obj.setSimulationRunsTableCreateCmd();
-        end
 
         %% createTable
         function result = createTable(obj, tableName)
@@ -88,6 +59,7 @@ classdef investigationDB < handle
             result = true;
         end
         
+        %% dropTable
         function dropTable(obj, tableName)
             mySQLcmd = ['DROP TABLE ' tableName];
             exec(obj.dbConn, mySQLcmd);
@@ -105,11 +77,7 @@ classdef investigationDB < handle
             exec(obj.dbConn, mySQLcmd);
         end
 
-        function result = initialize(obj)
-            obj.dropAllTables();
-            result = obj.createAllTables();
-        end
-        
+        %% createAllTables
         function result = createAllTables(obj)
             for i=1:length(obj.tableList)
                 result = obj.createTable(obj.tableList{i});
@@ -117,6 +85,39 @@ classdef investigationDB < handle
                     return;
                 end
             end
+        end
+        
+    end
+
+    methods
+        %% Constructor
+        function obj = investigationDB(dataSourceName, databaseName, ...
+                                       userName, password)
+            obj.dbSource = dataSourceName;
+            obj.dbName = databaseName;
+            obj.dbUserName = userName;
+            obj.dbPassword = password;
+            obj.dbConn = ...
+               database.ODBCConnection(dataSourceName, ...
+                                       obj.dbUserName, obj.dbPassword);            
+            % These must be listed in order of table creation due to the
+            % requirements of foreign key constraints; dropping will be 
+            % done in reverse order. Sub classes can extend this as
+            % desired.
+            obj.tableList = {'sessions', 'machines', 'simulators', ...
+                             'expDataSets', 'ipvs', ...
+                             'simFeatureExtractions',  ...
+                             'simulationRuns', 'comparisons'};
+            obj.setBasicTableCreateCmds();
+            obj.setIpvsTableCreateCmd();
+            obj.setSimFeatureExtractionsTableCreateCmd();
+            obj.setSimulationRunsTableCreateCmd();
+        end
+
+        %% initialize
+        function result = initialize(obj)
+            obj.dropAllTables();
+            result = obj.createAllTables();
         end
         
         %% addSession 
@@ -262,7 +263,7 @@ classdef investigationDB < handle
         %% addComparison 
         function compIndex = addComparison(obj, runIndex, cmpType, ...
                                     score1, score2, score3, score4, score5)
-                %% Massage the results for database insertion
+                % Massage the results for database insertion
                 if isnan(score1)
                     score1Str = 'NULL';
                 else
@@ -293,7 +294,7 @@ classdef investigationDB < handle
                 % Handle infinities
                 % (not implemented yet)
                 
-                %% Add the comparison to the database
+                % Add the comparison to the database
                 colnames = {'cmpIDX', 'runIDX', ...
                             'cmpType', ...
                             'score1', 'score2', 'score3', ...
@@ -400,8 +401,6 @@ classdef investigationDB < handle
         function expDataSetList = getAllExpDataSets(obj)
             setdbprefs('DataReturnFormat','structure');
             whereStr = '';
-%                 ['where expDataSets.expSpecimenID=' num2str(specNum) ...
-%                  ' and expDataSets.expExperimentID=' num2str(expNum)];
             curs = exec(obj.dbConn, ...
                         ['select * from expDataSets ' whereStr]);
             curs = fetch(curs);
@@ -447,24 +446,17 @@ classdef investigationDB < handle
             update(obj.dbConn, 'sessions', colnames, coldata, whereStr);
         end
             
-        
+        %% getDataSourceName
         function name = getDataSourceName(obj)
             name = obj.dbSource;
         end
         
+        %% getDatabaseName
         function name = getDatabaseName(obj)
             name = obj.dbName;
         end
         
-        function name = getUserName(obj)
-            name = obj.dbUserName;
-        end
-        
-        % just temporary
-        function pw = getPassword(obj)
-            pw = obj.dbPassword;
-        end
-
+        %% save
         function [status,cmdout] = save(obj, userName, dir, annotation)
             savePath = fullfile(dir, [obj.dbName annotation '.sql']);
             command = ['mysqldump -u ' userName ...
@@ -472,26 +464,29 @@ classdef investigationDB < handle
                        obj.dbName ' > ' savePath];
             [status,cmdout] = system(command);
         end
-
+        
+        %% load
         function [status,cmdout] = load(obj, userName, dumpPath)
             command = ['mysql -u ' userName ...
                        ' --password=' obj.dbPassword ' ' ...
                        obj.dbName ' < ' dumpPath];
             [status,cmdout] = system(command);
         end
-
+        
+        %% getConn
         function conn = getConn(obj)
             conn = obj.dbConn;
         end
-
+        
+        %% closeConn
         function closeConn(obj)
             close(obj.dbConn);
         end
-
+        
+        %% delete
         function delete(obj)
             close(obj.dbConn);
         end
-        
         
     end
 end
