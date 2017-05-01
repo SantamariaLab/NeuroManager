@@ -2,7 +2,6 @@
 % explores every combination of input parameters
 % limit 5 dimensions
 % all cell arrays for handling both numbers and strings in input
-% NOT WORKING YET
 classdef explicitGrid < metaheuristic
     properties
     end

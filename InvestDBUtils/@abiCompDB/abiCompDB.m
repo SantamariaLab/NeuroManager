@@ -163,14 +163,6 @@ classdef abiCompDB < investigationDB
         % also puts the fx key into the identified simulationRun.
         function fxIDX = ...
                 addSimFeatureExtraction(obj, featDat, runIDX)
-            try
-                featDat = rmfield(featDat, 'spikeData');
-            catch
-            end
-            try
-                featDat = rmfield(featDat, 'simID');
-            catch
-            end
             fns = fieldnames(featDat);
             colnames = cell(length(fns)+1, 1);
             colnames{1} = 'fxIDX';
@@ -178,12 +170,20 @@ classdef abiCompDB < investigationDB
             for i = 1:length(fns)
                 colnames{i+1} = fns{i};
                 temp = featDat.(fns{i});
-                if ischar(temp)
+                if islogical(temp)
+                    if(temp)
+                        coldata{i} = '1';
+                    else
+                        coldata{i} = '0';
+                    end
+                elseif ischar(temp)
                     coldata{i} = temp;
                 elseif isempty(temp)
                     coldata{i} = 'NULL';
-                else
+                elseif isnumeric(temp)
                     coldata{i} = num2str(temp);
+                else
+                    coldata{i} = 'NULL';
                 end
             end
             columnStr = [strjoin(colnames, ', ') ...
@@ -203,7 +203,6 @@ classdef abiCompDB < investigationDB
             update(obj.dbConn, 'simulationRuns', {'fxIDX','state'}, ...
                    {fxIDX,'FULLYPROCESSED'}, ...
                    ['WHERE runIDX=' num2str(runIDX)]);
-
         end
 
         %% updateSimulationRun

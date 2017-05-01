@@ -1,10 +1,11 @@
 classdef Cmp03 < Comparator
     properties
-        name;
     end
     methods
         function obj = Cmp03(expDBConn, simDB)
             obj = obj@Comparator(expDBConn, simDB);
+            obj.numScoresUsed = 3;
+            obj.name = 'CMP03';  
         end
         
         % This comparator type compares only one specimen/exp with each
@@ -15,63 +16,32 @@ classdef Cmp03 < Comparator
         %       hasSpikes T/F, latency, mean_isi (score2)
         %       hasSpikes T/F, latency, mean_isi, adaptation  (score3)
         % Measure: L2 norm
-        function results = compare(obj, specIDList, expIDList, ...
-                                        simList, addToDatabase)
+        function results = compare(obj, specIDList, expIDList, simList)
             specID = specIDList{1};
             expID = expIDList{1};
-            obj.name = 'CMP03';   % TEMPORARY APPROACH
             
             %% Get the experimental features for comparison
-            q = ['SELECT experimentFXs.hasSpikes, ' ...
-                 'experimentFXs.latency, experimentFXs.ISIMean, ' ...
-                 'experimentFXs.numSpikes, experimentFXs.adaptation ' ...
-                 'FROM ((experimentFXs INNER JOIN experiments ' ...
-                 'ON experimentFXs.expFXIDX=experiments.expFXIDX) ' ...
-                 'INNER JOIN specimens ' ...
-                 'ON experiments.specIDX=specimens.specIDX) ' ...
-                 'WHERE specimens.abiSpecimenID=' specID ...
-                 ' AND experiments.abiExpID=' expID ';'];
-            setdbprefs('DataReturnFormat','structure');
-            curs = exec(obj.expDBConn, q);
-            curs = fetch(curs);
-            temp = curs.Data
-            expHasSpikes = temp.hasSpikes;
-            expMeanISI = temp.ISIMean;
-            expStimulusLatency = temp.latency;
-            expAdaptation = temp.adaptation;
+            expFX = obj.getExpExpFXData(specID, expID);
+            expHasSpikes = expFX.hasSpikes;
+            expMeanISI = expFX.ISIMean;
+            expStimulusLatency = expFX.latency;
+            expAdaptation = expFX.adaptation;
             
             %% Do the comparison for each simulation in the list
             for i=1:size(simList,1)
                 %% Get the simulation features
-                q = [ ...
-                 'SELECT simFeatureExtractions.hasSpikes, ' ...
-                 'simFeatureExtractions.stimulusLatency, ' ...
-                 'simFeatureExtractions.mean_isi, ' ...
-                 'simFeatureExtractions.adaptation, ' ...
-                 'simulationRuns.runIDX ' ...
-                 'FROM ((simFeatureExtractions INNER JOIN simulationRuns ' ...
-                 'ON simFeatureExtractions.fxIDX=simulationRuns.fxIDX) ' ...
-                 'INNER JOIN sessions ' ...
-                 'ON simulationRuns.sessionIDX=sessions.sessionIDX) ' ...
-                 'WHERE sessions.dateTime=' '"' simList{i,1}.sessionID '"' ...
-                 ' AND simulationRuns.simID=' '"' simList{i,1}.simID '" ' ...
-                 ' AND simulationRuns.simSetID=' '"' simList{i,1}.simSetID '" ' ...
-                 ';'];
-                setdbprefs('DataReturnFormat','structure');
-                curs = exec(obj.simDB.getConn(), q);
-                curs = fetch(curs);
-                temp = curs.Data;
-
-                simHasSpikes = temp.hasSpikes;
+                simFX = obj.simDB.getSimFeatureExtraction(...
+                                    simList{i}.sessionID, ...
+                                    simList{i}.simSetID, simList{i}.simID);
+                simHasSpikes = simFX.hasSpikes;
                 % have to convert to seconds for the comparison
-                simStimulusLatency = temp.stimulusLatency/1000.0;
+                simStimulusLatency = simFX.stimulusLatency/1000.0;
                 % have to convert to seconds for the comparison
-                simMeanISI = temp.mean_isi/1000.0;
-                simAdaptation = temp.adaptation;
-                runIndex = temp.runIDX;
+                simMeanISI = simFX.mean_isi/1000.0;
+                simAdaptation = simFX.adaptation;
+                runIndex = simFX.runIDX;
 
                 %% Perform the subclass-specific comparisons
-%                 results{i} = struct; %#ok<*AGROW>
                 results{i} = simList{i,1}; %#ok<*AGROW>
                 % This comparator requires spikes in both
                 if ~(expHasSpikes && simHasSpikes)
@@ -105,7 +75,6 @@ classdef Cmp03 < Comparator
                                 / expMeanISI * 1.0 ...
                               )^2 / 3.0 ...
                              );
-
                 end
                 results{i}.score4 = NaN;
                 results{i}.score5 = NaN;
@@ -123,13 +92,11 @@ classdef Cmp03 < Comparator
                       ]);
 
                 %% Add the results to the investigation database  
-                if addToDatabase
-                    results{i}.compIndex = ...
-                        obj.simDB.addComparison(runIndex, obj.name, ...
-                                results{i}.score1, results{i}.score2, ...
-                                results{i}.score3, results{i}.score4, ...
-                                results{i}.score5);
-                end
+                results{i}.compIndex = ...
+                    obj.simDB.addComparison(runIndex, obj.name, ...
+                            results{i}.score1, results{i}.score2, ...
+                            results{i}.score3, results{i}.score4, ...
+                            results{i}.score5);
             end            
         end
     end

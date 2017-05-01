@@ -333,8 +333,8 @@ classdef investigationDB < handle
         end
         
         %% addSimFeatureExtraction
-        function sfxIndex = ...
-                addSimFeatureExtraction(obj, fxNumber, fxBool)
+        function fxIDX = ...
+                addSimFeatureExtraction(obj, fxNumber, fxBool, runIDX)
             colnames = {'fxIDX', 'fxNumber', 'fxBool'};
             coldata = {num2str(fxNumber), ...
                        num2str(fxBool)};
@@ -347,8 +347,13 @@ classdef investigationDB < handle
                  'WHERE fxIDX = @@IDENTITY'];
             curs = exec(obj.dbConn, q);
             curs = fetch(curs);
-            sfxIndex = curs.Data.runIDX;
+            fxIDX = curs.Data.runIDX;
             close(curs);
+            
+            % Update the corresponding simulationRun with the foreign key
+            update(obj.dbConn, 'simulationRuns', {'fxIDX','state'}, ...
+                   {fxIDX,'FULLYPROCESSED'}, ...
+                   ['WHERE runIDX=' num2str(runIDX)]);
         end
         
         %% addComparison 
@@ -406,9 +411,28 @@ classdef investigationDB < handle
                 curs = fetch(curs);
                 compIndex = curs.Data.cmpIDX;
                 close(curs);
-        end        
+        end
+        
+        %% getSimFeatureExtraction
+        function featExtr = getSimFeatureExtraction(obj, sessionID, ...
+                                                         simSetID, simID)
+            q = ['SELECT simFeatureExtractions.*, simulationRuns.runIDX ' ...
+                 'FROM ((simFeatureExtractions INNER JOIN simulationRuns ' ...
+                 'ON simFeatureExtractions.fxIDX=simulationRuns.runIDX) ' ...
+                 'INNER JOIN sessions ' ...
+                 'ON simulationRuns.sessionIDX=sessions.sessionIDX) ' ...
+                 'WHERE sessions.dateTime=' '"' sessionID '"' ...
+                     ' AND simulationRuns.simID=' '"' simID '" ' ...
+                     ' AND simulationRuns.simSetID=' '"' simSetID '" ' ...
+                     ';'];
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            featExtr = curs.Data;
+        end
 
-        %% getIPVFromRunIDX 
+        
+        %% getIPVFromRunIDX
         function ipvData = getIPVFromRunIDX(obj, runIDX)
             q = ['SELECT ipvs.* FROM (ipvs INNER JOIN simulationRuns ' ...
                  'ON ipvs.ipvIDX=simulationRuns.ipvIDX) ' ...
@@ -416,9 +440,12 @@ classdef investigationDB < handle
             setdbprefs('DataReturnFormat','structure');
             curs = exec(obj.dbConn, q);
             curs = fetch(curs);
-            ipvData = curs.Data;
-            ipvData.stimulusType = ipvData.stimulusType{1};
+            ipvData = curs.Data
+            if iscell(ipvData)
+                ipvData = struct();
+            end            
             close(curs);
+            return;
         end
         
         %% getRunDataFromRunIDX 
