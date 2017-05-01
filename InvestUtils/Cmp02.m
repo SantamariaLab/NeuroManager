@@ -2,8 +2,8 @@ classdef Cmp02 < Comparator
     properties
     end
     methods
-        function obj = Cmp02(expDBConn, simDB)
-            obj = obj@Comparator(expDBConn, simDB);
+        function obj = Cmp02(expDBConn, simDB, expDataDir, cURLBinDir)
+            obj = obj@Comparator(expDBConn, simDB, expDataDir, cURLBinDir);
             obj.numScoresUsed = 1;
             obj.name = 'CMP02';
         end

@@ -6,7 +6,9 @@ classdef Comparator < handle
         expDBConn;
         expFXData;
         simDB;
-        numScoresUsed; % For now, <= 5
+        expDataDir;     % For vis only; remove in future
+        cURLBinDir;     % For vis only; remove in future
+        numScoresUsed;  % For now, <= 5
         name = 'NEEDS NAME (=TYPE)';
     end
     
@@ -15,10 +17,12 @@ classdef Comparator < handle
     end
 
     methods
-        function obj = Comparator(expDBConn, simDB)
+        function obj = Comparator(expDBConn, simDB, expDataDir, cURLBinDir)
             obj.expDBConn = expDBConn;
             obj.expFXData = ABIFeatExtrData(obj.expDBConn);
             obj.simDB = simDB;
+            obj.expDataDir = expDataDir;
+            obj.cURLBinDir = cURLBinDir;
             obj.numScoresUsed = 0;
         end
         

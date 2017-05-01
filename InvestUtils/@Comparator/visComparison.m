@@ -2,13 +2,16 @@
 function visComparison(obj, cmpIDX, highlightSpikeInsertion)
 
     % Hardwired locations
-	expDataDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\Fractional\ABI-FLIF\Cache\cell_types'];
 	abiSamplingRate = 200000;
-    cURLBinDir = ['C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/' ... 
-                  'ProjNeuroMan/CloudStuff/curl-7.46.0-win64-mingw/bin/'];
                                      
     % Get the simulation in question
     simRunData = obj.simDB.getSimulationRunDataFromCmpIDX(cmpIDX);
+    if ~isstruct(simRunData)
+        disp(['getSimulationRunDataFromCmpIDX: cmpIDX ' num2str(cmpIDX) ...
+              ' not found in investigation database ' ...
+              obj.simDB.getDatabaseName() '.'])
+          return;
+    end
     runIDX      = simRunData.runIDX;
     simID       = simRunData.simID{1};
     simSetID    = simRunData.simSetID{1};
@@ -24,8 +27,13 @@ function visComparison(obj, cmpIDX, highlightSpikeInsertion)
     expID = expDataSet.expExperimentID;
     
     nwbFilePath = ...
-        fullfile(expDataDir, ['specimen_' num2str(specID)], 'ephys.nwb');
-    acd = ABICellData(nwbFilePath, cURLBinDir);
+        fullfile(obj.expDataDir, ['specimen_' num2str(specID)], 'ephys.nwb');
+    if exist(nwbFilePath, 'file')~=2
+        disp(['visComparison: Could not find file ' nwbFilePath])
+        return;
+    end
+        
+    acd = ABICellData(nwbFilePath, obj.cURLBinDir);
     exp = acd.GetExperiment(expID);
     sweep = exp.GetExperimentSweep();
     expStimData = sweep.GetStimulusData();
