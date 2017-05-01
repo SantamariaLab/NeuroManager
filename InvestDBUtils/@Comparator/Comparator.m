@@ -41,5 +41,7 @@ classdef Comparator < handle
         function info = getExpExpInfo(obj, specNum, expNum)
             info = obj.expFXData.getExpInfo(obj, specNum, expNum);
         end
+        
+        visComparison(obj, cmpIDX, highlightSpikeInsertion)
     end
 end

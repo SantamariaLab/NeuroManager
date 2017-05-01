@@ -1,57 +1,31 @@
 % Visualize comparison wrt the experimental data
-function visComparison(cmpIDX, highlightSpikeInsertion)
+function visComparison(obj, cmpIDX, highlightSpikeInsertion)
 
     % Hardwired locations
-    addpath('C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\ABAtlas\ABIApiML')
-    simsDatabaseName = 'ShortTermDB';
-    simsDBConn = database.ODBCConnection(simsDatabaseName, ...
-                                         'david','Uni53mad'); %#ok<*NOPTS>
-	expDataDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\' ...
-                  'Projects\Fractional\ABI-FLIF\FeatExtractDev\cell_types'];
+	expDataDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\Fractional\ABI-FLIF\Cache\cell_types'];
 	abiSamplingRate = 200000;
+    cURLBinDir = ['C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/' ... 
+                  'ProjNeuroMan/CloudStuff/curl-7.46.0-win64-mingw/bin/'];
                                      
     % Get the simulation in question
-    q = ['SELECT simulationRuns.runIDX, ' ...
-         'simulationRuns.simID, ' ...
-         'simulationRuns.simSetID, ' ...
-         'simulationRuns.simSampleRate, ' ...
-         'simulationRuns.resultsDir, ' ...
-         'simulationRuns.voltageFilename, ' ...
-         'simulationRuns.spikeMarkerFilename, ' ...
-         'simulationRuns.stimulusFilename FROM ' ...
-         'comparisons INNER JOIN simulationRuns ' ...
-         'ON comparisons.runIDX=simulationRuns.runIDX ' ...
-         'WHERE comparisons.cmpIDX=' num2str(cmpIDX) ';'];
-    setdbprefs('DataReturnFormat','structure');
-    curs = exec(simsDBConn, q);
-    curs = fetch(curs);
-    temp = curs.Data;
-    close(curs)
-    runIDX = temp.runIDX;
-    simID  = temp.simID{1};
-    simSetID  = temp.simSetID{1};
-    simSampleRate = temp.simSampleRate;
-    rd     = temp.resultsDir{1};
-    vfn    = temp.voltageFilename{1};
-    smfn    = temp.spikeMarkerFilename{1};
-    sfn    = temp.stimulusFilename{1};
+    simRunData = obj.simDB.getSimulationRunDataFromCmpIDX(cmpIDX);
+    runIDX      = simRunData.runIDX;
+    simID       = simRunData.simID{1};
+    simSetID    = simRunData.simSetID{1};
+    simSampleRate = simRunData.simSampleRate;
+    rd          = simRunData.resultsDir{1};
+    vfn         = simRunData.voltageFilename{1};
+    smfn        = simRunData.spikeMarkerFilename{1};
+    sfn         = simRunData.stimulusFilename{1};
     
     % Get the experimental data in question
-    q = ['SELECT expDataSets.expSpecimenID, expDataSets.expExperimentID ' ...
-         'FROM ((simulationRuns INNER JOIN ipvs' ...
-         ' ON simulationRuns.ipvIDX=ipvs.ipvIDX)' ...
-         ' INNER JOIN expDataSets ' ...
-         'ON ipvs.expDataSetIDX=expDataSets.expDataSetIDX) ' ...
-         'WHERE simulationRuns.runIDX=' num2str(runIDX) ';'];
-    curs = exec(simsDBConn, q);
-    curs = fetch(curs);
-    temp = curs.Data;
-    close(curs);
-    specID = temp.expSpecimenID;
-    expID = temp.expExperimentID;
+    expDataSet = obj.simDB.getExpDataSetFromRunIDX(runIDX);
+    specID = expDataSet.expSpecimenID;
+    expID = expDataSet.expExperimentID;
+    
     nwbFilePath = ...
         fullfile(expDataDir, ['specimen_' num2str(specID)], 'ephys.nwb');
-    acd = ABICellData(nwbFilePath);
+    acd = ABICellData(nwbFilePath, cURLBinDir);
     exp = acd.GetExperiment(expID);
     sweep = exp.GetExperimentSweep();
     expStimData = sweep.GetStimulusData();

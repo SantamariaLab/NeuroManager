@@ -468,6 +468,19 @@ classdef investigationDB < handle
             close(curs);
         end        
         
+        %% getSimulationRunDataFromCmpIDX
+        function simRunData = getSimulationRunDataFromCmpIDX(obj, cmpIDX)
+            q = ['SELECT simulationRuns.* ' ...
+                 'FROM comparisons INNER JOIN simulationRuns ' ...
+                 'ON comparisons.runIDX=simulationRuns.runIDX ' ...
+                 'WHERE comparisons.cmpIDX=' num2str(cmpIDX) ';'];
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            simRunData = curs.Data;
+            close(curs)
+        end
+    
         %% getExpDataSet
         function expDataSet = getExpDataSet(obj, specNum, expNum)
             setdbprefs('DataReturnFormat','structure');
@@ -481,6 +494,21 @@ classdef investigationDB < handle
             close(curs);
         end
         
+        %% getExpDataSetFromRunIDX
+        function expDataSet = getExpDataSetFromRunIDX(obj, runIDX)
+            q = ['SELECT expDataSets.expSpecimenID, expDataSets.expExperimentID ' ...
+                 'FROM ((simulationRuns INNER JOIN ipvs' ...
+                 ' ON simulationRuns.ipvIDX=ipvs.ipvIDX)' ...
+                 ' INNER JOIN expDataSets ' ...
+                 'ON ipvs.expDataSetIDX=expDataSets.expDataSetIDX) ' ...
+                 'WHERE simulationRuns.runIDX=' num2str(runIDX) ';'];
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            expDataSet = curs.Data;
+            close(curs);
+        end 
+
         %% getAllExpDataSets
         function expDataSetList = getAllExpDataSets(obj)
             setdbprefs('DataReturnFormat','structure');
