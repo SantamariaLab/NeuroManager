@@ -88,7 +88,9 @@ function visComparison(cmpIDX, highlightSpikeInsertion)
         plot(simTimeBase, refracSM, '-b', 'LineWidth', 1.5)
     end
     plot(simTimeBase, simS*10, '-g')
-    title({'ABI-FLIF Simulation', ['simSetID: ' simSetID '   simID: ' simID]}, 'Interpreter', 'None')
+    title({'ABI-FLIF Simulation', ...
+           ['simSetID: ' simSetID '   simID: ' simID]}, ...
+           'Interpreter', 'None')
     xlabel('Time (sec)')
     ylabel('Voltage (mV)')
     xlim([0 3.0])

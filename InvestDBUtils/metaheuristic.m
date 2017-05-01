@@ -1,6 +1,5 @@
 % metaheuristic
 % A class for NM parameter space investigation
-% NOT COMPLETE
 classdef metaheuristic < handle
     properties
         initData;
