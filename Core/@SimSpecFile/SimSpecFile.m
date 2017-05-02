@@ -14,7 +14,7 @@ classdef SimSpecFile < handle
             obj.simSetID = simSetID;
             obj.filename = filename;
             obj.simType = simType;
-            obj.fullPath = fullfile(obj.path, filename)
+            obj.fullPath = fullfile(obj.path, filename);
 %             if exist(obj.fullPath, 'file') == 2
 %                 error(['SimSpec file ' obj.fullPath ' already exists.']);
 %             end
@@ -24,7 +24,7 @@ classdef SimSpecFile < handle
         
         function InsertHeader(obj)
             % Create the header
-            [fh, errmsg] = fopen(obj.fullPath, 'w');
+            [fh, ~] = fopen(obj.fullPath, 'w');
             fprintf(fh, '%s %s %s\n', 'SIMSETDEF',  obj.simSetID, obj.simType);
             fprintf(fh, '%s\n', ['% Constructed automatically by the ' ...
                                      'SimSpec class']);
