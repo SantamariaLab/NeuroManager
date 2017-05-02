@@ -33,6 +33,10 @@ classdef Cmp03 < Comparator
                 simFX = obj.simDB.getSimFeatureExtraction(...
                                     simList{i}.sessionID, ...
                                     simList{i}.simSetID, simList{i}.simID);
+                if ~isstruct(simFX)
+                    results = {};
+                    return;
+                end
                 simHasSpikes = simFX.hasSpikes;
                 % have to convert to seconds for the comparison
                 simStimulusLatency = simFX.stimulusLatency/1000.0;

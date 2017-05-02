@@ -1,6 +1,12 @@
 % investigationDB - a class that provides a minimal interface to a database
 % associated with a NeuroManager-based investigation. (investigation is a
 % series of sessions combined into one).
+% Kept simple for flexibility.  Generally a {} or {'No data'} return means
+% a failure, while a struct or scalar return means success (with
+% accompanying data).
+% Note: a full treatment of possible MySQL errors is beyond the scope of
+% this project. For perspective, please see 
+% https://dev.mysql.com/doc/refman/5.6/en/error-messages-server.html
 classdef investigationDB < handle
     properties (Access=protected)
         dbSource;
@@ -130,7 +136,15 @@ classdef investigationDB < handle
             insertStr = ['insert into sessions (' ...
                          strjoin(colnames, ', ') ') values(0, ''' ...
                          strjoin(coldata, ''', ''') ''')'];
-            exec(obj.dbConn, insertStr);
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, insertStr);
+            cm = curs.Message;
+            if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                close(curs);
+                sessionIndex = {};
+                return;
+            end
+            close(curs);
             
             % Get the new session's automatically assigned index
             % Reference:
@@ -162,7 +176,15 @@ classdef investigationDB < handle
                 insertStr = ['insert into machines (' ...
                              strjoin(colnames, ', ') ') values(0, ''' ...
                              strjoin(coldata, ''', ''') ''')'];
-                exec(obj.dbConn, insertStr);
+                setdbprefs('DataReturnFormat','structure');
+                curs = exec(obj.dbConn, insertStr);
+                cm = curs.Message;
+                if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                    close(curs);
+                    machineIndex = {};
+                    return;
+                end
+                close(curs);
 
                 % Get the new index
                 q2 = ['select machineIDX from machines ' ...
@@ -198,7 +220,15 @@ classdef investigationDB < handle
                 insertStr = ['insert into simulators (' ...
                              strjoin(colnames, ', ') ') values(0, ''' ...
                              strjoin(coldata, ''', ''') ''')'];
-                exec(obj.dbConn, insertStr);
+                setdbprefs('DataReturnFormat','structure');
+                curs = exec(obj.dbConn, insertStr);
+                cm = curs.Message;
+                if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                    close(curs);
+                    simIDX = {};
+                    return;
+                end
+                close(curs);
                 
                 q = ['select simulatorIDX from simulators ' ...
                      'WHERE simulatorIDX=@@IDENTITY'];
@@ -241,7 +271,15 @@ classdef investigationDB < handle
                 columnStr = [strjoin(colnames, ', ') ...
                              ') values(0, ''' strjoin(coldata, ''', ''') ''''];
                 insertStr = ['insert into expDataSets (' columnStr ')'];
-                exec(obj.dbConn, insertStr);
+                setdbprefs('DataReturnFormat','structure');
+                curs = exec(obj.dbConn, insertStr);
+                cm = curs.Message;
+                if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                    close(curs);
+                    expDataSetIndex = {};
+                    return;
+                end
+                close(curs);
 
                 q = ['select expDataSetIDX from expDataSets ' ...
                       'WHERE expDataSetIDX = @@IDENTITY'];
@@ -281,8 +319,16 @@ classdef investigationDB < handle
             insertStr = ['insert into ipvs (' ...
                          strjoin(colnames, ', ') ') values(0, ' ...
                          strjoin(coldata, ', ') ')'];
-            exec(obj.dbConn, insertStr);
-            
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, insertStr);
+            cm = curs.Message;
+            if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                close(curs);
+                ipvIndex = {};
+                return;
+            end
+            close(curs);
+
             q = ('select ipvIDX from ipvs WHERE ipvIDX = @@IDENTITY');
             curs = exec(obj.dbConn, q);
             curs = fetch(curs);
@@ -322,7 +368,15 @@ classdef investigationDB < handle
             insertStr = ['insert into simulationRuns (' ...
                          strjoin(colnames, ', ') ') values(0, ' ...
                          strjoin(coldata, ', ') ')'];
-            exec(obj.dbConn, insertStr);
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, insertStr);
+            cm = curs.Message;
+            if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                close(curs);
+                runIndex = {};
+                return;
+            end
+            close(curs);
             
             q = ['select runIDX from simulationRuns ' ...
                  'WHERE runIDX = @@IDENTITY'];
@@ -341,7 +395,15 @@ classdef investigationDB < handle
             insertStr = ['insert into simFeatureExtractions (' ...
                          strjoin(colnames, ', ') ') values(0, ' ...
                          strjoin(coldata, ', ') ')'];
-            exec(obj.dbConn, insertStr);
+            setdbprefs('DataReturnFormat','structure');
+            curs = exec(obj.dbConn, insertStr);
+            cm = curs.Message;
+            if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                close(curs);
+                fxIDX = {};
+                return;
+            end
+            close(curs);
             
             q = ['select fxIDX from simFeatureExtractions ' ...
                  'WHERE fxIDX = @@IDENTITY'];
@@ -357,6 +419,7 @@ classdef investigationDB < handle
         end
         
         %% addComparison 
+        % cell return means failure to add.
         function compIndex = addComparison(obj, runIndex, cmpType, ...
                                     score1, score2, score3, score4, score5)
                 % Massage the results for database insertion
@@ -402,7 +465,14 @@ classdef investigationDB < handle
                 insertStr = ['insert into comparisons (' ...
                              strjoin(colnames, ', ') ') values(0, ' ...
                              strjoin(coldata, ', ') ')'];
+                setdbprefs('DataReturnFormat','structure');
                 curs = exec(obj.dbConn, insertStr);
+                cm = curs.Message;
+                if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                    close(curs);
+                    compIndex = {};
+                    return;
+                end
                 close(curs);
             
                 q = ['select cmpIDX from comparisons ' ...
@@ -414,6 +484,7 @@ classdef investigationDB < handle
         end
         
         %% getSimFeatureExtraction
+        % If returns cell, not found in database.  If struct, has the row.
         function featExtr = getSimFeatureExtraction(obj, sessionID, ...
                                                          simSetID, simID)
             q = ['SELECT simFeatureExtractions.*, simulationRuns.runIDX ' ...
@@ -429,9 +500,9 @@ classdef investigationDB < handle
             curs = exec(obj.dbConn, q);
             curs = fetch(curs);
             featExtr = curs.Data;
+            close(curs);
         end
 
-        
         %% getIPVFromRunIDX
         function ipvData = getIPVFromRunIDX(obj, runIDX)
             q = ['SELECT ipvs.* FROM (ipvs INNER JOIN simulationRuns ' ...
@@ -440,12 +511,8 @@ classdef investigationDB < handle
             setdbprefs('DataReturnFormat','structure');
             curs = exec(obj.dbConn, q);
             curs = fetch(curs);
-            ipvData = curs.Data
-            if iscell(ipvData)
-                ipvData = struct();
-            end            
+            ipvData = curs.Data;
             close(curs);
-            return;
         end
         
         %% getRunDataFromRunIDX 
@@ -456,15 +523,6 @@ classdef investigationDB < handle
             curs = exec(obj.dbConn, q);
             curs = fetch(curs);
             runData = curs.Data;
-            runData.simSetID = runData.simSetID{1}; 
-            runData.simID = runData.simID{1}; 
-            runData.state = runData.state{1}; 
-            runData.simSpecFilename = runData.simSpecFilename{1}; 
-            runData.resultsDir = runData.resultsDir{1}; 
-            runData.stimulusFilename = runData.stimulusFilename{1}; 
-            runData.voltageFilename = runData.voltageFilename{1}; 
-            runData.timeFilename = runData.timeFilename{1}; 
-            runData.result = runData.result{1}; 
             close(curs);
         end        
         
@@ -536,17 +594,8 @@ classdef investigationDB < handle
             setdbprefs('DataReturnFormat','structure');
             curs = exec(obj.dbConn, q);
             curs = fetch(curs);
-            temp = curs.Data;
+            comps = curs.Data;
             close(curs);
-            for i=1:length(temp.runIDX)
-                comps(i).runIDX = temp.runIDX(i); %#ok<*AGROW>
-                comps(i).score1 = temp.score1(i);
-                comps(i).score2 = temp.score2(i);
-                comps(i).score3 = temp.score3(i);
-                comps(i).score4 = temp.score4(i);
-                comps(i).score5 = temp.score5(i);
-                comps(i).simID = temp.simID(i);
-            end
         end
         
         %% updateSessionSimSpecDir
@@ -580,9 +629,19 @@ classdef investigationDB < handle
                  ' simulationRuns.simID="' simID '";'];
             setdbprefs('DataReturnFormat','structure');
             curs = exec(obj.dbConn, q);
+            cm = curs.Message;
+            if ~isempty(strfind(cm, 'Error')) %#ok<*STREMP>
+                close(curs);
+                runIDX = {};
+                return;
+            end
             curs = fetch(curs);
             temp = curs.Data;
-            runIDX = temp.runIDX;
+            if iscell(temp) 
+                runIDX = 0;
+            else
+                runIDX = temp.runIDX;
+            end
             close(curs);
         end
         

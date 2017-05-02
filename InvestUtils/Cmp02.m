@@ -31,6 +31,10 @@ classdef Cmp02 < Comparator
                 simFX = obj.simDB.getSimFeatureExtraction(...
                                     simList{i}.sessionID, ...
                                     simList{i}.simSetID, simList{i}.simID);
+                if ~isstruct(simFX)
+                    results = {};
+                    return;
+                end
                 simHasSpikes = simFX.hasSpikes;
                 simStimulusLatency = simFX.stimulusLatency;
                 simISIMean = simFX.mean_isi;

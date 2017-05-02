@@ -13,8 +13,8 @@ classdef Cmp01 < Comparator
         % Features compared: hasSpikes T/F, latency, mean_isi
         % Measure: L2 norm
         function results = compare(obj, specIDList, expIDList, simList)
-            specID = specIDList{1}
-            expID = expIDList{1}
+            specID = specIDList{1};
+            expID = expIDList{1};
             
             %% Get the experimental features for comparison
             expFX = obj.getExpExpFXData(specID, expID);
@@ -28,6 +28,10 @@ classdef Cmp01 < Comparator
                 simFX = obj.simDB.getSimFeatureExtraction(...
                                     simList{i}.sessionID, ...
                                     simList{i}.simSetID, simList{i}.simID);
+                if ~isstruct(simFX)
+                    results = {};
+                    return;
+                end
                 simHasSpikes = simFX.hasSpikes;
                 simStimulusLatency = simFX.stimulusLatency;
                 simISIMean = simFX.mean_isi;
