@@ -197,9 +197,10 @@ classdef SimNeuronSimpleSpike02C < SimNeuron
     end
     
     methods
-        function obj = SimNeuronSimpleSpike02C(id, machine,...
+        function obj = SimNeuronSimpleSpike02C(id, machine, type, dbH, ...
                                                log, notificationSet)
-            obj = obj@SimNeuron(id, machine, log, notificationSet);
+            obj = obj@SimNeuron(id, machine, type, dbH, ...
+                                                    log, notificationSet);
             % List of all the fixed biomechs that will be available to
             % simulations and uploaded during simulator construction;
             % if a biomech is not on this list the simulation will have

@@ -197,9 +197,10 @@ classdef SimNeuronSimpleSpike01 < SimNeuron
     end
     
     methods
-        function obj = SimNeuronSimpleSpike01(id, machine,...
+        function obj = SimNeuronSimpleSpike01(id, machine, type, dbH, ...
                                               log, notificationSet)
-            obj = obj@SimNeuron(id, machine, log, notificationSet);
+            obj = obj@SimNeuron(id, machine, type, dbH, ...
+                                                log, notificationSet);
             obj.modFileList = {'Khh.mod', 'Leak.mod', 'NaF.mod'};
             % The corresponding UserSimulation.m knows that runme.hoc
             % is the lead hoc file; but that can be changed by the user

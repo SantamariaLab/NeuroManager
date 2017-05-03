@@ -195,9 +195,10 @@ classdef SimNeuronNeuronTutorialA < SimNeuron
     end
     
     methods
-        function obj = SimNeuronNeuronTutorialA(id, machine,...
+        function obj = SimNeuronNeuronTutorialA(id, machine, type, dbH, ...
                                                      log, notificationSet)
-            obj = obj@SimNeuron(id, machine, log, notificationSet);
+            obj = obj@SimNeuron(id, machine, type, dbH, ...
+                                log, notificationSet);
 
             % The corresponding UserSimulation.m knows that runme.hoc
             % is the lead hoc file.

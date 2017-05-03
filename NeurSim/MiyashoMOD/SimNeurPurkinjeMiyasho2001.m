@@ -38,9 +38,10 @@ classdef SimNeurPurkinjeMiyasho2001 < SimNeuron
     end
     
     methods
-        function obj = SimNeurPurkinjeMiyasho2001(id, machine,...
-                                                  log, notificationSet)
-            obj = obj@SimNeuron(id, machine, log, notificationSet);
+        function obj = SimNeurPurkinjeMiyasho2001(id, machine, ... 
+                                        type, dbH, log, notificationSet)
+            obj = obj@SimNeuron(id, machine, ...
+                                        type, dbH, log, notificationSet);
             obj.version = '1.0';  % Will be recorded in log
         end
         
