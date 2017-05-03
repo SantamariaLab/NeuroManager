@@ -637,7 +637,6 @@ classdef NeuroManager < handle
                                    obj.simResultsDir);
             obj.log.write(['Added session ' obj.sessionID ...
                            ' to database ' obj.dbH.getDatabaseName() '.']);
-            obj.useInvDB = true;
         end
                 
         % ---
