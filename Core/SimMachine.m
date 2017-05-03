@@ -324,12 +324,9 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
                     obj.dbH.addMachine(obj.getID(), char(resourceType));
                 obj.log.write(['Added machine ' obj.getID() ...
                                ' to database ' obj.dbH.getDatabaseName() '.']);
-
-            for i = 1:obj.numSimulators
-                if obj.dbH~=0
-                    obj.mSimulators{i}.addToDB(obj.machineIndex);
+                for i = 1:obj.numSimulators
+                        obj.mSimulators{i}.addToDB(obj.machineIndex);
                 end
-            end
             else
                 obj.machineIndex = 0;
             end

@@ -281,7 +281,9 @@ classdef NeuroManager < handle
         % Optional investigation database use
         investigationDir = '';
         % handle of database object (for now, constructed outside NM)
-        dbH = 0;  
+        % if 0 means no use of investigation database
+        dbH = 0;
+        
         % sessionIndex
         sessionIndex;
         
@@ -635,8 +637,14 @@ classdef NeuroManager < handle
                                    obj.simResultsDir);
             obj.log.write(['Added session ' obj.sessionID ...
                            ' to database ' obj.dbH.getDatabaseName() '.']);
+            obj.useInvDB = true;
         end
                 
+        % ---
+        function tf = useInvestigationDatabase(obj)
+            tf = (obj.dbH ~= 0);
+        end
+        
         % ---
         function tf = isSingleMachine(obj)
             tf = obj.singleMachine;
