@@ -2,7 +2,6 @@
 % Base class for exp-simulation comparisons.
 classdef Comparator < handle
     properties
-        cmpFunc;
         expDBConn;
         expFXData;
         simDB;
