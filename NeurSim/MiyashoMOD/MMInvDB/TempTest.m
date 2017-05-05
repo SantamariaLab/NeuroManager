@@ -241,10 +241,24 @@ metaheurInitData{4,1} = KD_smooth;
 metaheurInitData{5,1} = KD_spiny;
 mh = explicitGrid(metaheurInitData);
 
+%% Set up the compare class (objective function class)
+expDataDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\' ...
+              'Fractional\ABI-FLIF\Cache\cell_types'];
+% Cmp01 class compares hasSpikes, latency, and meanISI using L2 norm
+% later put this type as input to metaheuristic?
+%     cmp = Cmp01(abiDBConn, invDB, expDataDir, nmDirectorySet.curlDir);  
+% Cmp02 class compares hasSpikes, latency, meanISI, adaptation, and
+% numSpikes.
+%	cmp = Cmp02(abiDBConn, invDB, expDataDir, nmDirectorySet.curlDir);  
+cmp = CmpMM(abiDBConn, invDB, expDataDir, nmDirectorySet.curlDir);  
+nm.log.write(['Using comparison algorithm ' cmp.getName() '.']);
+
+
 %% Run parameter search starting with generation zero
 nm.log.write(['Starting metaheuristic ' mh.getName() '.']);
 points = mh.getPointSet() %#ok<NOPTS>
 generation = 0;
+comparisonResults = {};
 while ~isempty(points)
 
     %% Start up a SimSpec file to hold the points 
@@ -267,7 +281,7 @@ while ~isempty(points)
     for j = 1:size(points,1)
         %% Add a SimSpec line to the SimSpec file
         simID = [simulationRoot num2str(j, '%04u')];
-        simList{j,1}.sessionID = 'asdf';%nm.getSessionID();    %#ok<*SAGROW>
+        simList{j,1}.sessionID = nm.getSessionID();    %#ok<*SAGROW>
         simList{j,1}.simSetID = simSetID;
         simList{j,1}.simID = simID;
         inParam = {points{j,1}, ... % curr
@@ -305,6 +319,14 @@ while ~isempty(points)
     %% Run the simSet for this generation 
     result = nm.runFromFile(simSetFileName);
 
+    %% For the simSet results, do comparisons with experimental data 
+    % and log them into the database.
+    % Logging comparison type allows using multiple types of 
+    % comparisons here with separate entries into database
+    comparisonResults = [comparisonResults ...
+        cmp.compare({num2str(specimenNum)}, ...
+                    {num2str(experimentNum)}, simList)] %#ok<AGROW>
+    
     %% Get the next generation of points to investigate
     points = mh.getPointSet();
     generation = generation + 1;
@@ -312,9 +334,74 @@ end
 nm.log.write(['Termination criteria reached.  Terminating search.']);
 
 
+%% Run post-metaheuristic analysis
+% Get the comparisons for this session, find the minimum for each score
+% and which run they are associated with.
+comps = invDB.getSessionComparisons(nm.getSessionID());
+
+%% score1
+minScore = realmax;
+minRunIDX = intmax;
+for j = 1:length(comps.runIDX)
+     if comps.score1(j) < minScore
+         minScore = comps.score1(j);
+         minRunIDX = comps.runIDX(j);
+     end
+end
+% Find the ipv corresponding to that run and print the results message
+ipvData = invDB.getIPVFromRunIDX(minRunIDX);
+runData = invDB.getRunDataFromRunIDX(minRunIDX);
+simID = runData.simID{1};
+msg = ['Score1: Minimum is run "' simID ...
+       '" with score1=' num2str(minScore)];
+nm.log.write(msg);
+
+%% score2
+if cmp.getNumScoresUsed() > 1
+    minScore = realmax;
+    minRunIDX = intmax;
+    for j = 1:length(comps.runIDX)
+         if comps.score2(j) < minScore
+             minScore = comps.score2(j);
+             minRunIDX = comps.runIDX(j);
+         end
+    end
+    % Find the ipv corresponding to that run and print the results message
+    ipvData = invDB.getIPVFromRunIDX(minRunIDX);
+    % Handle empty ipvData here...
+    if ~isempty(fieldnames(ipvData))
+        runData = invDB.getRunDataFromRunIDX(minRunIDX);
+        simID = runData.simID{1};
+        msg = ['Score2: Minimum is run "' simID ...
+               '" with score2=' num2str(minScore)];
+        log.write(msg);
+    else
+        % Not defined yet
+    end
+end
+
+%% score3
+if cmp.getNumScoresUsed() > 2
+    minScore = realmax;
+    minRunIDX = intmax;
+    for j = 1:length(comps.runIDX)
+         if comps.score3(j) < minScore
+             minScore = comps.score3(j);
+             minRunIDX = comps.runIDX(j);
+         end
+    end
+    % Find the ipv corresponding to that run and print the results message
+    ipvData = invDB.getIPVFromRunIDX(minRunIDX);
+    runData = invDB.getRunDataFromRunIDX(minRunIDX);
+    simID = runData.simID{1};
+    msg = ['Score3: Minimum is run "' simID ...
+           '" with score3=' num2str(minScore)];
+    log.write(msg);
+end
+
     
 %% Close up
-%close(abiDBConn);
+% close(abiDBConn);
 % databaseSaveName = ['_BU_' nm.getSessionID()];
 % invDB.save('david', investigationDir, databaseSaveName)
 % msg = ['Investigation database ' invDB.getDatabaseName() ' saved as ' ...
