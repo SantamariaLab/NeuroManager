@@ -16,7 +16,7 @@ import pprint
 
 from pprint import pprint
 
-useTraceback = True     # True/False
+useTraceback = False     # True/False
 
 print 'Number of arguments:', len(sys.argv), 'arguments.'
 print 'Argument List:', str(sys.argv)

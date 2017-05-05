@@ -192,26 +192,35 @@ function [result, errMsg] =...
                    runDir, inputDir, modelDir, outputDir, varargin)
     % Convert the input parameters into the simulation names; these are all
     % strings and so will need conversion if you want to use them here.
-    current = varargin{1};
-    vInit = varargin{2};
-    delay = varargin{3};
-    stimDuration = varargin{4};
-    timeStep = varargin{5};
-    simtStop = varargin{6};
-    recordInterval = varargin{7};
+    currentStr = varargin{1};
+    vInitStr = varargin{2};
+    delayStr = varargin{3};
+    stimDurationStr = varargin{4};
+    timeStepStr = varargin{5};
+    simtStopStr = varargin{6};
+    recordIntervalStr = varargin{7};
+    
+    current         = str2num(currentStr);
+    vInit           = str2num(vInitStr);
+    delay           = str2num(delayStr);
+    stimDuration    = str2num(stimDurationStr);
+    timeStep        = str2num(timeStepStr);
+    simtStop        = str2num(simtStopStr);
+    recordInterval  = str2num(recordIntervalStr);
+    
     % These are available but we are not using them since they are embodied
     % in the NOMORPH file; here we are just using them in the title of the
     % figure; these too are strings and so will need conversion if you want
     % to use them here as numbers.
-    gkbarKhSoma = varargin{8};
-    gkbarKhSmooth = varargin{9};
-    gkbarKhSpiny = varargin{10};
-    gkbarCaESoma = varargin{11};
-    gkbarCaESmooth = varargin{12};
-    gkbarCaESpiny = varargin{13};
-    gkbarKDSoma = varargin{14};
-    gkbarKDSmooth = varargin{15};
-    gkbarKDSpiny = varargin{16};
+    gkbarKhSomaStr = varargin{8};
+    gkbarKhSmoothStr = varargin{9};
+    gkbarKhSpinyStr = varargin{10};
+    gkbarCaESomaStr = varargin{11};
+    gkbarCaESmoothStr = varargin{12};
+    gkbarCaESpinyStr = varargin{13};
+    gkbarKDSomaStr = varargin{14};
+    gkbarKDSmoothStr = varargin{15};
+    gkbarKDSpinyStr = varargin{16};
 
     % Test error
     %a = simXid;
@@ -239,11 +248,37 @@ function [result, errMsg] =...
     % Note that the Kh,KD,and CaE values are carried by the biomech hoc file and 
     % are not used by the PySim.py, and so do not need to be inserted here.
     arguments = {simID, runDir, inputDir, modelDir, outputDir, ...
-                 current, vInit, delay,...
-                 stimDuration, timeStep, simtStop, recordInterval};
+                 currentStr, vInitStr, delayStr,...
+                 stimDurationStr, timeStepStr, simtStopStr, recordIntervalStr};
     status = runPythonSimulation(runDir, inputDir, modelDir, outputDir, ...
                                  'PySim.py', 'pythonsim', arguments);
     
+%     % resample the voltage and create time and stimulus waveforms that are
+%     % suitable for use with the ABI tools.
+%     irregTime = load([outputDir '/timedata.txt']);  % in msec
+%     irregVoltage = load([outputDir '/voltagedata.txt']);
+%     desiredFs = 1/timeStep; % samples per msec
+% 	[rsTime, rsVoltage] = resample(irregVoltage, irregTime, desiredFs); 
+%     save(fullfile(outputDir, 'rsTimedata.txt'), 'time', '-ascii');
+%     save(fullfile(outputDir, 'rsVoltagedata.txt'), 'voltage', '-ascii');
+% 
+    % REDO THIS USING UNIFORM TIME              
+	% create the stimulus waveform (compensate for not being done by PySim.py)
+    % Need to record it or use another approach since time interval is not 
+    % uniform
+    load([outputDir '/timedata.txt']);
+    stimulusdata = zeros(length(timedata), 1);
+    pulseStart = delay;  
+    pulseEnd = stimDuration + pulseStart;
+    % Yes there are faster ways to do this
+    for i=1:length(timedata)
+        if (timedata(i) > pulseStart && timedata(i) < pulseEnd)
+            stimulusdata(i) = current;
+        end
+    end
+    save(fullfile(outputDir, 'stimulusdata.txt'), 'stimulusdata', '-ascii');
+    
+                             
     % --
 	% Do some example custom data visualization using MATLAB
     if status == 0 % i.e, successful return from the simulation
@@ -263,50 +298,51 @@ function [result, errMsg] =...
         % clicking in Windows explorer, say, won't work).
         h = figure('visible', 'on'); 
         plot(timedata, voltagedata);
+%         plot(rsTime, rsVoltage);
+
         % Actually should get this data from the simulation command returns,
         % instead of directly from the input, since the simulation may have
         % had to adjust them for compatibility (not implemented yet)
         % Just choose what you want in the title; too much to put everything
         title({['Miyasho model - somatic stimulation. SimID = ' simID];
-               ['gkbarKhSoma = ' gkbarKhSoma...
-                '; gkbarKhSmooth = ' gkbarKhSmooth];...
-               ['gkbarKhSpiny = ' gkbarKhSpiny];...
-               ['gkbarCaESoma = ' gkbarCaESoma...
-                '; gkbarCaESmooth = ' gkbarCaESmooth];...
-               ['gkbarCaESpiny = ' gkbarCaESpiny];...
-               ['gkbarKDSoma = ' gkbarKDSoma...
-                '; gkbarKDSmooth = ' gkbarKDSmooth];...
-               ['gkbarKDSpiny = ' gkbarKDSpiny];...
+               ['gkbarKhSoma = ' gkbarKhSomaStr...
+                '; gkbarKhSmooth = ' gkbarKhSmoothStr];...
+               ['gkbarKhSpiny = ' gkbarKhSpinyStr];...
+               ['gkbarCaESoma = ' gkbarCaESomaStr...
+                '; gkbarCaESmooth = ' gkbarCaESmoothStr];...
+               ['gkbarCaESpiny = ' gkbarCaESpinyStr];...
+               ['gkbarKDSoma = ' gkbarKDSomaStr...
+                '; gkbarKDSmooth = ' gkbarKDSmoothStr];...
+               ['gkbarKDSpiny = ' gkbarKDSpinyStr];...
                ['Created on machine ' machineID '.']},...
                 'Interpreter', 'none');
-        xlabel('Time (msec)');
-        ylabel('Voltage (mV)');
+        xlabel('Resampled Time (msec)');
+        ylabel('Resampled Voltage (mV)');
         grid on;
-        filename = [simID '_current_' current '_delay_' delay...
-                    '_stimduration_' stimDuration '.fig'];
+        filename = [simID '_current_' currentStr '_delay_' delayStr...
+                    '_stimduration_' stimDurationStr '.fig'];
         saveas(h, fullfile(outputDir, filename), 'fig')
-        filename = [simID '_current_' current '_delay_' delay...
-                    '_stimduration_' stimDuration '.tiff'];
+        filename = [simID '_current_' currentStr '_delay_' delayStr...
+                    '_stimduration_' stimDurationStr '.tiff'];
         print(h, '-dtiff','-r1200', fullfile(outputDir, filename));
         close(h);
         
-%         %% FEATURE EXTRACTION -- extract ABI experiment features
-%         simDuration = tStop;
-%         stimStart = delay;
-%         analysisStart = stimStart;
-%         analysisDuration = stimDuration;
-%         featuresFilename = 'ABIFeatures.json';
+        %% FEATURE EXTRACTION -- extract ABI experiment features
+        stimStart = delay
+        analysisStart = stimStart
+        analysisDuration = stimDuration
+        featuresFilename = 'ABIFeatures.json'
 %         try
-%             [status, cmdout] = ...
-%             extractABIExpFeatures(simID, ...
-%                                   timeFilename, voltageFilename, ...
-%                                   stimulusFilename, simDuration, ...
-%                                   stimStart, stimDuration, ...       
-%                                   analysisStart, analysisDuration, ...     
-%                                   featuresFilename, runDir, outDir)
-%         catch
-%             errmsg = ['Problem extracting ABI features. ' ...
-%                       status ' ' cmdout];
+            [status, cmdout] = ...
+            extractABIExpFeatures(simID, ...
+                                  'timedata.txt', 'voltagedata.txt', ...
+                                  'stimulusdata.txt', simtStop, ...
+                                  stimStart, stimDuration, ...       
+                                  analysisStart, analysisDuration, ...     
+                                  featuresFilename, runDir, outputDir)
+%         catch  ME
+%             errmsg = ['Problem extracting ABI features: ' ...
+%                     ME.identifier ' ' ME.message];
 %             result = 1;
 %             return;
 %         end

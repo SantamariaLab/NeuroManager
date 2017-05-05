@@ -1,10 +1,11 @@
-classdef abiFLIFCompDB < abiCompDB
+%
+classdef abiMMCompDB < abiCompDB
     methods (Access=protected)
         setIpvsTableCmd(obj)
     end
     
     methods 
-        function obj = abiFLIFCompDB(dataSourceName, databaseName, ...
+        function obj = abiMMCompDB(dataSourceName, databaseName, ...
                                      userName, password)
             obj = obj@abiCompDB(dataSourceName, databaseName, ...
                                 userName, password);
@@ -16,87 +17,47 @@ classdef abiFLIFCompDB < abiCompDB
         % (Of course) has to match the table creation command
         function ipvIndex = ...
                     addIPV(obj, expDataSetIndex, ...
-                           tstop, tstep, taum, refrac, alpha, rM, ...
-                           vRest, thresholdHeight, spikeHeight, p10, ...
-                           stimCode, p12, stimulusStartTime, pulseWidth, ...
-                           pulseCurrent, p16, p17, p18, p19, p20, p21)
-            colnames = {'ipvIDX', 'expDataSetIDX', 'tstop', 'tstep', 'taum', 'refrac', ...
-                        'alpha', 'rM', 'vRest', 'thresholdHeight', ...
-                        'spikeHeight', 'rsrv', 'stimulusType', 'sC01', ...
-                        'stimulusStartTime', 'pulseWidth', 'pulseCurrent', ...
-                        'sC05', 'sC06', 'sC07', 'sC08', 'sC09', 'sC10'};
-            % All this massaging needs to be designed/rewritten
-            if isnan(p12)
-                p12Str = 'NULL';
-            else
-                p12Str = num2str(p12);
-            end
-            if isnan(stimulusStartTime)
-                stimulusStartTimeStr = 'NULL';
-            else
-                stimulusStartTimeStr = num2str(stimulusStartTime);
-            end
-            if isnan(pulseWidth)
-                pulseWidthStr = 'NULL';
-            else
-                pulseWidthStr = num2str(pulseWidth);
-            end
-            if isnan(pulseCurrent)
-                pulseCurrentStr = 'NULL';
-            else
-                pulseCurrentStr = num2str(pulseCurrent);
-            end
-            if isnan(p16)
-                p16Str = 'NULL';
-            else
-                p16Str = num2str(p16);
-            end
-            if isnan(p17)
-                p17Str = 'NULL';
-            else
-                p17Str = num2str(p17);
-            end
-            if isnan(p18)
-                p18Str = 'NULL';
-            else
-                p18Str = num2str(p18);
-            end
-            if isnan(p19)
-                p19Str = 'NULL';
-            else
-                p19Str = num2str(p19);
-            end
-            if isnan(p20)
-                p20Str = 'NULL';
-            else
-                p20Str = num2str(p20);
-            end
-            if isnan(p21)
-                p21Str = 'NULL';
-            else
-                p21Str = num2str(p21);
-            end
-            
+                           curr, vinit, delay, stimdur, ...
+						   tstep, tstop, rcdintvl, ...
+						   Kh_soma, Kh_smooth, Kh_spiny, ...
+                           CaE_soma, CaE_smooth, CaE_spiny, ...
+						   KD_soma, KD_smooth, KD_spiny, ...
+                           ~, ~, ~, ~, ~)
+            colnames = {'ipvIDX', 'expDataSetIDX', ...
+						'curr', 'vinit', 'delay', 'stimdur', ...
+						'tstep', 'tstop', 'rcdintvl', ...
+						'Kh_soma', 'Kh_smooth', 'Kh_spiny', ...
+						'CaE_soma', 'CaE_smooth', 'CaE_spiny', ...
+						'KD_soma', 'KD_smooth', 'KD_spiny', ...
+						'p17', 'p18', 'p19', 'p20', 'p21'};
+
+			% p17-p21 are not used here
+			p17Str = 'NULL';
+			p18Str = 'NULL';
+			p19Str = 'NULL';
+			p20Str = 'NULL';
+			p21Str = 'NULL';  
+			
             %%
             coldata = ...
-               {num2str(expDataSetIndex), num2str(tstop), num2str(tstep), ...
-                num2str(taum), num2str(refrac), ...
-                num2str(alpha), num2str(rM), ...
-                num2str(vRest), num2str(thresholdHeight), ...
-                num2str(spikeHeight), p10, ...
-                ['''' stimCode ''''], ...
-                p12Str, stimulusStartTimeStr, ...
-                pulseWidthStr, pulseCurrentStr, ...
-                p16Str, p17Str, p18Str, p19Str, p20Str, p21Str};
+               {num2str(expDataSetIndex), ...
+			    num2str(curr), num2str(vinit), num2str(delay), num2str(stimdur), ...
+			    num2str(tstep), num2str(tstop), num2str(rcdintvl), ...
+ 			    num2str(Kh_soma), num2str(Kh_smooth), num2str(Kh_spiny), ... 
+			    num2str(CaE_soma), num2str(CaE_smooth), num2str(CaE_spiny), ...
+			    num2str(KD_soma), num2str(KD_smooth), num2str(KD_spiny), ...
+                p17Str, p18Str, p19Str, p20Str, p21Str};
             insertStr = ['insert into ipvs (' ...
                          strjoin(colnames, ', ') ') values(0, ' ...
-                         strjoin(coldata, ', ') ')'];
-            exec(obj.dbConn, insertStr);
+                         strjoin(coldata, ', ') ')']
+            curs = exec(obj.dbConn, insertStr)
+            curs = fetch(curs)
+            close(curs);
             
             q = ('select ipvIDX from ipvs WHERE ipvIDX = @@IDENTITY');
-            curs = exec(obj.dbConn, q);
-            curs = fetch(curs);
-            ipvIndex = curs.Data.ipvIDX;
+            curs = exec(obj.dbConn, q)
+            curs = fetch(curs)
+            ipvIndex = curs.Data.ipvIDX
             close(curs);
         end
     end

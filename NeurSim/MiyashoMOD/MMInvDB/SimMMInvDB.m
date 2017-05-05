@@ -22,9 +22,9 @@
 classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
     properties(Access=private)
         % Need to add feature extraction (7) and stimulus (2) files
-        addlCustomFileList = {'ABIStimulus.m',...
-                              'LongSquare.m',...
-                              '__init__.py', ...
+%         'ABIStimulus.m',...
+% 'LongSquare.m',...
+        addlCustomFileList = {'__init__.py', ...
                               'ephys_extractor.py', ...
                               'ephys_features.py', ...
                               'extract_cell_features.py', ...
@@ -35,7 +35,7 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
         hocFileList = {};  % added to dynamically
     end
     properties
-        version;
+%         version;
     end
     
     methods
@@ -78,7 +78,7 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
             fprintf(f, '%s\n',   ['soma {']);
             fprintf(f, '%s\n',   ['     insert Kh   gkbar_Kh = '...
                                   simulation.getParam(8)]);
-            fprintf(f, '%s\n',   ['     insert CaE  cai = 4e-5 cao = 2.4  gcabar_CaE = '...
+            fprintf(f, '%s\n',   ['     insert CaEdbs  cai = 4e-5 cao = 2.4  gcabar_CaEdbs = '...
                                   simulation.getParam(11)]);
             fprintf(f, '%s\n',   ['     insert KD   gkbar_KD = '...
                                   simulation.getParam(14)]);
@@ -87,7 +87,7 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
             fprintf(f, '%s\n',   ['for i=0,84 SmoothDendrite[i]  {']);
             fprintf(f, '%s\n',   ['     insert Kh   gkbar_Kh = '...
                                   simulation.getParam(9)]);
-            fprintf(f, '%s\n',   ['     insert CaE  cai = 4e-5 cao = 2.4  gcabar_CaE = '...
+            fprintf(f, '%s\n',   ['     insert CaEdbs  cai = 4e-5 cao = 2.4  gcabar_CaEdbs = '...
                                   simulation.getParam(12)]);
             fprintf(f, '%s\n',   ['     insert KD   gkbar_KD = '...
                                   simulation.getParam(15)]);
@@ -96,7 +96,7 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
             fprintf(f, '%s\n',   ['for i=0,1001 SpinyDendrite[i]  {']);
             fprintf(f, '%s\n',   ['     insert Kh   gkbar_Kh = '...
                                   simulation.getParam(10)]);
-            fprintf(f, '%s\n',   ['     insert CaE  cai = 4e-5 cao = 2.4  gcabar_CaE = '...
+            fprintf(f, '%s\n',   ['     insert CaEdbs  cai = 4e-5 cao = 2.4  gcabar_CaEdbs = '...
                                   simulation.getParam(13)]);
             fprintf(f, '%s\n',   ['     insert KD   gkbar_KD = '...
                                   simulation.getParam(16)]);
@@ -114,5 +114,55 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
             % Add to the hoc file list for proper target file manipulation
             obj.hocFileList = [obj.hocFileList, targetBiomechFilename];
         end
+        
+        function postDownloadProcessingSimulatorSpecific(obj, simulation) 
+            % Update the simulation run in the database
+            if obj.dbH~=0
+                obj.log.write(['DATABASE: Updating simulation runtime ' ...
+                      'for simulation ' simulation.getID()]);
+
+                % get the unique run index 
+                runIDX = obj.dbH.getSimulationRunIndex(simulation.getID(), ...
+                    simulation.getSimSetID(), simulation.getSessionID());
+
+                % update the run in the investigation database
+                simulatorIDX = obj.simulatorIndex;  % Not sure about this approach
+                resultsDir = simulation.getHostBaseDir();
+                stimulusFilename = 'stimulusdata.txt';
+                voltageFilename = 'rsVoltagedata.txt';
+                spikeMarkerFilename = 'NULL';
+                timeFilename = 'rsTimedata.txt';
+                fxFilename = 'ABIFeatures.json';
+                simTime   = simulation.getExecutionTime();
+                simResult = simulation.getResult();
+                if strcmp(simResult, 'COMPLETE')
+                    simResult = 'Success';
+                else
+                    simResult = 'Failure';
+                end
+                obj.dbH.updateSimulationRun(runIDX, simulatorIDX, ...
+                            resultsDir, stimulusFilename, voltageFilename, ...
+                            spikeMarkerFilename, timeFilename, fxFilename, ...
+                            simTime, simResult);
+
+                % Add the feature extraction to the database
+                obj.log.write(['Adding feature extraction data to database ' ...
+                               'for simulation ' simulation.getID() '.']);
+                resultsDir = simulation.getHostBaseDir();
+                featuresFilename = 'ABIFeatures.json';
+                featDat = loadjson(fullfile(resultsDir, featuresFilename));
+                % Remove elements that are not supported by the table
+                if isfield(featDat, 'spikeData')
+                    featDat = rmfield(featDat, 'spikeData');
+                end
+                if isfield(featDat, 'simID')
+                    featDat = rmfield(featDat, 'simID');
+                end
+                obj.dbH.addSimFeatureExtraction(featDat, runIDX);
+                obj.log.write(['Feature extraction data added to database ' ...
+                   'for simulation ' simulation.getID() '.']);
+            end
+        end
+        
     end
 end

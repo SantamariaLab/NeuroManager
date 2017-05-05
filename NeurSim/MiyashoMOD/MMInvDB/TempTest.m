@@ -1,7 +1,7 @@
 %% Initial prep
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java  %#ok<CLJAVA,CLCLS>
+clear; clear variables; clear classes; clear java  
 
 %%%
 % voltages in mV; currents in pA; resistances in MOhms; times in msec
@@ -11,27 +11,38 @@ clear; clear variables; clear classes; clear java  %#ok<CLJAVA,CLCLS>
 %% Set up a Neuromanager session
 disp(['Starting the MMInvDB investigation']);
 
-investigationDir = ...
-    ['C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/' ...
-     '/ProjNeuroMan/NeuroManager/NeurSim/MiyashoMOD/MMInvDB/MMInvDBInvestigation01'];
+launchDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\' ... 
+             'ProjNeuroMan\NeuroManager\NeurSim\MiyashoMOD\MMInvDB'];
+investigationDir = fullfile(launchDir, 'MMInvDBInvestigation01');
 
-% Set up NeuroManager with the MMInvDB simulator
+% Possible hack - review this
+abiUtilsDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\' ...
+               'ProjNeuroMan\NeuroManager\ABIUtils'];
+addlCustomFileList = {'__init__.py', ...
+                      'ephys_extractor.py', ...
+                      'ephys_features.py', ...
+                      'extract_cell_features.py', ...
+                      'feature_extractor.py', ...
+                      'extractABIExpFeatures.m', ...
+                      'STGFeatExtr.py' ...
+                      };  
+ for i=1:length(addlCustomFileList)
+    sourceFile = fullfile(abiUtilsDir, addlCustomFileList{i});
+	copyfile(sourceFile, launchDir);
+ end
+ 
+ % Set up NeuroManager with the MMInvDB simulator
 myData = ['C:\Users\David\Dropbox\Documents'...
           '\SantamariaLab\Projects\ProjNeuroMan\NeuroManager' ...
           '\dbsStaticData.ini'];   
 [nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
-nmDirectorySet.customDir = fullfile(nmDirectorySet.nmMainDir,...
-                                    'NeurSim', 'MiyashoMOD');
+nmDirectorySet.customDir = launchDir;
+% fullfile(nmDirectorySet.nmMainDir,...
+%                                     'NeurSim', 'MiyashoMOD');
 nmDirectorySet.modelDir = fullfile(nmDirectorySet.nmMainDir,...
                                     'NeurSim', 'MiyashoMOD');
 nmDirectorySet.resultsDir = investigationDir;
 nmDirectorySet.simSpecFileDir = nmDirectorySet.resultsDir;
-
-% Keep the feature extraction python file up to date in the custom dir
-% (edit it in the ShtTrmGoal/src directory)
-copyfile(fullfile(['C:\Users\David\Dropbox\Documents\SantamariaLab' ...
-                   '\Projects\Fractional\ABI-FLIF\ShtTrmGoal\src'], ...
-                  'STGFeatExtr.py'), nmDirectorySet.customDir);
 
 nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
                   'maxNumSimSpecParams', 21,...
@@ -44,45 +55,47 @@ disp 'AFter NM construction'
 % path
 
 %% Connect with the experimental data (ABI) database
-% abiDatabaseName = 'ABICellSurvey';
-% log.write(['Connecting to abi database ' abiDatabaseName '.']);
-% abiDBConn = database.ODBCConnection(abiDatabaseName,'david','Uni53mad');
+abiDatabaseName = 'ABICellSurvey';
+log.write(['Connecting to abi database ' abiDatabaseName '.']);
+abiDBConn = database.ODBCConnection(abiDatabaseName,'david','Uni53mad');
 
 %% Attach the investigation database
-% % Connect with the simulations database
-% % Set up using the database toolbox database explorer app
-% % Show MATLAB where the inv database class is located
-% % For the ABI investigation database, metaheuristic, and comparator classes
-% addpath(['C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/' ...
-%          'ProjNeuroMan/NeuroManager/InvestUtils']); 
-% simsDataSourceName = 'MMInvDB';
-% simsDatabaseName = 'mminvdb';
-% log.write(['Connecting to investigation database ' simsDatabaseName ...
-%            ' using data source ' simsDataSourceName '.']);
-% invDB = abiFLIFCompDB(simsDataSourceName, simsDatabaseName, ...
-%                   'david', 'Uni53mad');
-% 
-% % Reset or Load Database?
-% % !!!!!!!!!!!!!!!
-% resetInvestigationDatabase = true;   % !!!!!!!!!!!!!!!
-% % !!!!!!!!!!!!!!!
-% 
-% if resetInvestigationDatabase
-%     % Set up the new (for now) database for this run by cleaning out the
-%     % old one and rebuilding it.
-%     log.write(['Initializing investigation database ' simsDatabaseName '.']);
-%     invDB.initialize();
-% else
-%     % Load the latest database backup from the investigation dir
-%     slist = sort(string(ls(fullfile(investigationDir, ...
-%                              [simsDatabaseName '*.sql']))), 'descend'); %#ok<*UNRCH>
-%     buPath = fullfile(investigationDir, char(slist(1,:)));
-%     log.write(['Loading investigation database backup file ' buPath ...
-%         ' into investigation database ' simsDatabaseName '.']);
-%     invDB.load('david', buPath)  % fix authentication later
-% end
-% 
-% nm.attachInvestigationDatabase(investigationDir, invDB);
+% Connect with the simulations database
+% Set up using the database toolbox database explorer app
+% Show MATLAB where the inv database class is located
+% For the ABI investigation database, metaheuristic, and comparator classes
+addpath(['C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/' ...
+         'ProjNeuroMan/NeuroManager/InvestUtils']); 
+addpath(abiUtilsDir)
+addpath(nmDirectorySet.modelDir)
+simsDataSourceName = 'MMInvDB';
+simsDatabaseName = 'mminvdb';
+log.write(['Connecting to investigation database ' simsDatabaseName ...
+           ' using data source ' simsDataSourceName '.']);
+invDB = abiMMCompDB(simsDataSourceName, simsDatabaseName, ...
+                  'david', 'Uni53mad');
+
+% Reset or Load Database?
+% !!!!!!!!!!!!!!!
+resetInvestigationDatabase = true;   % !!!!!!!!!!!!!!!
+% !!!!!!!!!!!!!!!
+
+if resetInvestigationDatabase
+    % Set up the new (for now) database for this run by cleaning out the
+    % old one and rebuilding it.
+    log.write(['Initializing investigation database ' simsDatabaseName '.']);
+    invDB.initialize();
+else
+    % Load the latest database backup from the investigation dir
+    slist = sort(string(ls(fullfile(investigationDir, ...
+                             [simsDatabaseName '*.sql']))), 'descend'); %#ok<*UNRCH>
+    buPath = fullfile(investigationDir, char(slist(1,:)));
+    log.write(['Loading investigation database backup file ' buPath ...
+        ' into investigation database ' simsDatabaseName '.']);
+    invDB.load('david', buPath)  % fix authentication later
+end
+
+nm.attachInvestigationDatabase(investigationDir, invDB);
 
 %% Move the SimSpecDir to the SimResults dir
 d = nm.getSimResultsDir();
@@ -99,11 +112,12 @@ MLCompileMachineInfoFile = 'CheetahInfo.json';
 nm.setMLCompileServer(MLCompileMachineInfoFile);
 nm.doMATLABCompilation();
 
-nm.addStandaloneServer('SynapseInfo.json', 2, '/home/David.Stockton/NMDev'); 
+% Synapse NEURON installation appears to be broken
+% nm.addStandaloneServer('SynapseInfo.json', 2, '/home/David.Stockton/NMDev'); 
 % nm.addStandaloneServer('DendriteInfo.json', 8, '/home/David.Stockton/SMDev'); 
-% numSimulators = 2;
-% nm.addClusterQueue('CheetahInfo.json', 'General', ...
-%                    numSimulators, '/home/david.stockton/SMDev/ALL');
+numSimulators = 6;
+nm.addClusterQueue('CheetahInfo.json', 'General', ...
+                   numSimulators, '/home/david.stockton/SMDev/ALL');
 nm.printConfig();
 
 %% Test communications, file transfers, and other compatibilities
@@ -152,13 +166,43 @@ specExps(1,1) = specimens(03); %
 specExps(1,2) =  51;           % (hero sweep for 469753383)
 specimenNum = specExps(1,1);
 experimentNum = specExps(1,2);
- 
-%% Deal with input parameters and other settings
+
+%% Grab the experimental features for those choices...
+% (Not currently being used)
+% addpath for the ABIFeatExtrData class
+addpath(['C:/Users/David/Dropbox/Documents/SantamariaLab' ...
+         '/Projects/Fractional/ABI-FLIF/ABICellSurvey/src']);
+fxData = ABIFeatExtrData(abiDBConn);
+
+%% Move things around a little
 ABISamplingRate = 200000;
 SimSamplingRate = 20000;     % simulation samples per second
 
+
+%% Install the experimental features into the investigation database
+expData = fxData.getExpFXData(specimenNum, experimentNum);
+specData = fxData.getSpecFXData(specimenNum);
+expInfo = fxData.getExpInfo(specimenNum, experimentNum);
+% ...and put them into the simulations database as a new expDataSet;
+% the expPx values will be used to generate the parameter space
+stimulusType = expInfo.stimulusType{1};
+% threshold: The experiment value rather than specimen value
+expDataSetIndex = invDB.addExpDataSet(specimenNum, experimentNum, ...
+                    ABISamplingRate, ...
+                    stimulusType, expInfo.stimCurrent, ...
+                    specData.ri, specData.tau, ...
+                    expData.frstSpkThresholdV, ...
+                    specData.v_rest, specData.peak_v_long_square);
+
+%% Get the data set 
+expDataSet = invDB.getExpDataSet(specimenNum, experimentNum);
+
+
+
+%% Deal with input parameters and other settings
+
 % Set constant input parameters
-delay = 20.0;
+delay = 1020.0;
 vinit = -65.0;
 stimdur = 1000.0;  % To match ABI Long Square
 tstep = 1/SimSamplingRate*1000; % in msec
@@ -198,6 +242,7 @@ metaheurInitData{5,1} = KD_spiny;
 mh = explicitGrid(metaheurInitData);
 
 %% Run parameter search starting with generation zero
+nm.log.write(['Starting metaheuristic ' mh.getName() '.']);
 points = mh.getPointSet() %#ok<NOPTS>
 generation = 0;
 while ~isempty(points)
@@ -210,8 +255,8 @@ while ~isempty(points)
     % Create the SimSpec file header
     simSetFileName = [simSetID '.txt'];
     simulationRoot = 'Point';
-    mmss = MMInvDBSimSpecFile(investigationDir, simSetID, simSetFileName);
-%        mmss = MMInvDBSimSpecFile(nm.getSimSpecFileDir(), simSetID, simSetFileName);
+%     mmss = MMInvDBSimSpecFile(investigationDir, simSetID, simSetFileName);
+    mmss = MMInvDBSimSpecFile(nm.getSimSpecFileDir(), simSetID, simSetFileName);
     mmss.InsertHeader();
 
     %% Do all preparation for each point
@@ -237,10 +282,28 @@ while ~isempty(points)
                    p17, p18, p19, p20, p21 ...
                    };
         mmss.addPoint(false, simID, inParam{:})        
+        
+        %% Add the corresponding ipv to the database
+        ipvIndex = invDB.addIPV(expDataSetIndex, ...
+                                points{j,1}, vinit, delay, stimdur, ...
+                                tstep, tstop, rcdintvl, ...
+                                Kh_soma, Kh_smooth, Kh_spiny, ...
+                                CaE_soma, points{j,2}, points{j,3}, ...
+                                KD_soma, points{j,4}, points{j,5}, ...
+                                p17, p18, p19, p20, p21)
+                            
+        %% Add the corresponding simulation run into the database
+        % update some items after simulation results downloaded 
+        % usage of tstop and SimSamplingRate is NOT CONSISTENT
+        % Will be updated at finish of simulation
+        %runIndex = ...
+        runIndex = invDB.addSimulationRun(ipvIndex, ...
+                                nm.getSessionIndex(), simSetID, ...
+                                simID, SimSamplingRate, tstop)
     end
     
     %% Run the simSet for this generation 
-    result = nm.runFromFile(fullfile(investigationDir, simSetFileName));
+    result = nm.runFromFile(simSetFileName);
 
     %% Get the next generation of points to investigate
     points = mh.getPointSet();

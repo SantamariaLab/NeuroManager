@@ -23,7 +23,6 @@ by dbs
          insert NaP
          insert CaP2 cai = 4e-5 cao = 2.4 gcabar_CaP2 = 0.0005
          insert CaT cai = 4e-5 cao = 2.4  gcabar_CaT = 0
-         insert CaEdbs cai = 4e-5 cao = 2.4  gcabar_CaEdbs = 0
          insert Khh
          insert KM
          insert KA 
@@ -38,7 +37,6 @@ by dbs
          insert Leak gl_Leak = 0.00021 el_Leak = -80
          insert CaP2 cai = 4e-5 cao = 2.4 gcabar_CaP2 = 0.004
          insert CaT cai = 4e-5 cao = 2.4  gcabar_CaT = 0.0015
-         insert CaEdbs cai = 4e-5 cao = 2.4  gcabar_CaEdbs = 0.008
          insert Khh gkbar_Khh = 0.0006
          insert KM  gkbar_KM  = 0.00001
          insert KA  gkbar_KA  = 0.08
@@ -54,7 +52,6 @@ by dbs
          insert Leak gl_Leak = 0.00021 el_Leak = -80
          insert CaP2 cai = 4e-5 cao = 2.4 gcabar_CaP2 = 0.004
          insert CaT cai = 4e-5 cao = 2.4  gcabar_CaT = 0.0015
-         insert CaEdbs cai = 4e-5 cao = 2.4  gcabar_CaEdbs = 0.008
          insert Khh gkbar_Khh = 0.0006
          insert KM  gkbar_KM  = 0.00001
          insert KA  gkbar_KA  = 0.08
