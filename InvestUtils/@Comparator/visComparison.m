@@ -20,6 +20,7 @@ function visComparison(obj, cmpIDX, highlightSpikeInsertion)
     vfn         = simRunData.voltageFilename{1};
     smfn        = simRunData.spikeMarkerFilename{1};
     sfn         = simRunData.stimulusFilename{1};
+    tfn         = simRunData.timeFilename{1};
     
     % Get the experimental data in question
     expDataSet = obj.simDB.getExpDataSetFromRunIDX(runIDX);
@@ -56,21 +57,23 @@ function visComparison(obj, cmpIDX, highlightSpikeInsertion)
     
     % Plot the simulated part
     simV = load(fullfile(rd, vfn), '-ascii');
-    simSM = load(fullfile(rd, smfn), '-ascii');
     simS = load(fullfile(rd, sfn), '-ascii');
+    simT = load(fullfile(rd, tfn), '-ascii');
     subplot(2,1,2)
-    simTimeBase = 1:length(simV);
-    simTimeBase = simTimeBase/simSampleRate;
-    plot(simTimeBase, simV, '-k')
+%     simTimeBase = 1:length(simV);
+%     simTimeBase = simTimeBase/simSampleRate;
+%     plot(simTimeBase, simV, '-k')
+    plot(simT/1000, simV, '-k')
     hold on
     if highlightSpikeInsertion
+        simSM = load(fullfile(rd, smfn), '-ascii');
         spikeSM = (1./(simSM./simSM)) .* simV;
         refracSM = (1./(simSM > 1)) .* simV;
         plot(simTimeBase, spikeSM,  '-r', 'LineWidth', 1.5)
         plot(simTimeBase, refracSM, '-b', 'LineWidth', 1.5)
     end
-    plot(simTimeBase, simS*10, '-g')
-    title({'ABI-FLIF Simulation', ...
+    plot(simT/1000, simS*10, '-g')
+    title({'ABI Simulation', ...
            ['simSetID: ' simSetID '   simID: ' simID]}, ...
            'Interpreter', 'None')
     xlabel('Time (sec)')
