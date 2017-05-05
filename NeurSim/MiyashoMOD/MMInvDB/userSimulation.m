@@ -184,9 +184,7 @@ END OF LICENSE
 %}
 
 % userSimulation.m
-% Runs a basic simulation of the PC using Miyasho2001 model and does a
-% little plotting afterwards. Must be used with the
-% SimMMInvDB simulator class.
+% Must be used with the SimMMInvDB simulator class.
 function [result, errMsg] =...
     userSimulation(machineID, simID, ...
                    runDir, inputDir, modelDir, outputDir, varargin)
@@ -200,8 +198,8 @@ function [result, errMsg] =...
     simtStopStr = varargin{6};
     recordIntervalStr = varargin{7};
     
-    current         = str2num(currentStr);
-    vInit           = str2num(vInitStr);
+    current         = str2num(currentStr); %#ok<*ST2NM>
+    vInit           = str2num(vInitStr); %#ok<*NASGU>
     delay           = str2num(delayStr);
     stimDuration    = str2num(stimDurationStr);
     timeStep        = str2num(timeStepStr);
@@ -328,25 +326,17 @@ function [result, errMsg] =...
         close(h);
         
         %% FEATURE EXTRACTION -- extract ABI experiment features
-        stimStart = delay
-        analysisStart = stimStart
-        analysisDuration = stimDuration
-        featuresFilename = 'ABIFeatures.json'
-%         try
-            [status, cmdout] = ...
-            extractABIExpFeatures(simID, ...
-                                  'timedata.txt', 'voltagedata.txt', ...
-                                  'stimulusdata.txt', simtStop, ...
-                                  stimStart, stimDuration, ...       
-                                  analysisStart, analysisDuration, ...     
-                                  featuresFilename, runDir, outputDir)
-%         catch  ME
-%             errmsg = ['Problem extracting ABI features: ' ...
-%                     ME.identifier ' ' ME.message];
-%             result = 1;
-%             return;
-%         end
-
+        stimStart = delay;
+        analysisStart = stimStart;
+        analysisDuration = stimDuration;
+        featuresFilename = 'ABIFeatures.json';
+        [status, cmdout] = ...
+        extractABIExpFeatures(simID, ...
+                              'timedata.txt', 'voltagedata.txt', ...
+                              'stimulusdata.txt', simtStop, ...
+                              stimStart, stimDuration, ...       
+                              analysisStart, analysisDuration, ...     
+                              featuresFilename, runDir, outputDir); %#ok<*ASGLU>
         % Clean up
         errMsg = '';
         result = 0;

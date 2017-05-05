@@ -9,21 +9,12 @@
 % of Physics, School of Science and Engineering, Waseda University,
 % Shinjyuku-ku, 169, Tokyo, Japan., 2001, 891, 106-115.
 %
-% This class is somewhat arbitrary. We are not changing hoc or mod files
-% simulation-by-simulation, so all we really need is one hoc file that is
-% simulator-static. Our PySim.py file, however, is looking for a hoc file
-% that is named simid + '.hoc', and (looking ahead) subclasses of this
-% class will generate a simulation-specific biomechanisms file. So here we
-% will use  PreRunModelProcPhaseHHocFileModification to create the biomech
-% file and upload it. The morphology file will upload as part of simulator
-% construction. The concatentation and rename will take place on the target
-% in UserSimulation.  Then all our subclasses need to do is override the
-% biomech construction.
+% This class adds the soma, smooth, and spiny conductances for CaE, KD,
+% and Kh ion channels to the variable input parameters available to the
+% user.  It also makes use of the investigation database to store each run
+% and its associated feature extractions.
 classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
     properties(Access=private)
-        % Need to add feature extraction (7) and stimulus (2) files
-%         'ABIStimulus.m',...
-% 'LongSquare.m',...
         addlCustomFileList = {'__init__.py', ...
                               'ephys_extractor.py', ...
                               'ephys_features.py', ...
@@ -35,7 +26,6 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
         hocFileList = {};  % added to dynamically
     end
     properties
-%         version;
     end
     
     methods
@@ -73,12 +63,11 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
             fprintf(f, '%s\n',...   
                 ['/* The following lines added by the ' ...
                  'PreRunModelProcPhaseHHocFileModification method']);
-            fprintf(f, '%s\n',...   
-                ['    of the SimMMInvDB class. */']);
+            fprintf(f, '%s\n',   ['    of the SimMMInvDB class. */']);
             fprintf(f, '%s\n',   ['soma {']);
             fprintf(f, '%s\n',   ['     insert Kh   gkbar_Kh = '...
                                   simulation.getParam(8)]);
-            fprintf(f, '%s\n',   ['     insert CaEdbs  cai = 4e-5 cao = 2.4  gcabar_CaEdbs = '...
+            fprintf(f, '%s\n',   ['     insert CaE  cai = 4e-5 cao = 2.4  gcabar_CaE = '...
                                   simulation.getParam(11)]);
             fprintf(f, '%s\n',   ['     insert KD   gkbar_KD = '...
                                   simulation.getParam(14)]);
@@ -87,7 +76,7 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
             fprintf(f, '%s\n',   ['for i=0,84 SmoothDendrite[i]  {']);
             fprintf(f, '%s\n',   ['     insert Kh   gkbar_Kh = '...
                                   simulation.getParam(9)]);
-            fprintf(f, '%s\n',   ['     insert CaEdbs  cai = 4e-5 cao = 2.4  gcabar_CaEdbs = '...
+            fprintf(f, '%s\n',   ['     insert CaE  cai = 4e-5 cao = 2.4  gcabar_CaE = '...
                                   simulation.getParam(12)]);
             fprintf(f, '%s\n',   ['     insert KD   gkbar_KD = '...
                                   simulation.getParam(15)]);
@@ -96,7 +85,7 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
             fprintf(f, '%s\n',   ['for i=0,1001 SpinyDendrite[i]  {']);
             fprintf(f, '%s\n',   ['     insert Kh   gkbar_Kh = '...
                                   simulation.getParam(10)]);
-            fprintf(f, '%s\n',   ['     insert CaEdbs  cai = 4e-5 cao = 2.4  gcabar_CaEdbs = '...
+            fprintf(f, '%s\n',   ['     insert CaE  cai = 4e-5 cao = 2.4  gcabar_CaE = '...
                                   simulation.getParam(13)]);
             fprintf(f, '%s\n',   ['     insert KD   gkbar_KD = '...
                                   simulation.getParam(16)]);
@@ -129,9 +118,9 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
                 simulatorIDX = obj.simulatorIndex;  % Not sure about this approach
                 resultsDir = simulation.getHostBaseDir();
                 stimulusFilename = 'stimulusdata.txt';
-                voltageFilename = 'rsVoltagedata.txt';
+                voltageFilename = 'voltagedata.txt';
                 spikeMarkerFilename = 'NULL';
-                timeFilename = 'rsTimedata.txt';
+                timeFilename = 'timedata.txt';
                 fxFilename = 'ABIFeatures.json';
                 simTime   = simulation.getExecutionTime();
                 simResult = simulation.getResult();

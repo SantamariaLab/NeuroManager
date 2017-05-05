@@ -1,7 +1,7 @@
 %% Initial prep
 clc
 disp('Clearing variables, classes, and java. Please wait...');
-clear; clear variables; clear classes; clear java  
+clear; clear variables; clear classes; clear java;   %#ok<*CLJAVA,*CLCLS>
 
 %%%
 % voltages in mV; currents in pA; resistances in MOhms; times in msec
@@ -10,37 +10,42 @@ clear; clear variables; clear classes; clear java
 
 %% Set up a Neuromanager session
 disp(['Starting the MMInvDB investigation']);
-
-launchDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\' ... 
-             'ProjNeuroMan\NeuroManager\NeurSim\MiyashoMOD\MMInvDB'];
+launchDir = pwd;
 investigationDir = fullfile(launchDir, 'MMInvDBInvestigation01');
 
-% Possible hack - review this
-abiUtilsDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\' ...
-               'ProjNeuroMan\NeuroManager\ABIUtils'];
-addlCustomFileList = {'__init__.py', ...
-                      'ephys_extractor.py', ...
-                      'ephys_features.py', ...
-                      'extract_cell_features.py', ...
-                      'feature_extractor.py', ...
-                      'extractABIExpFeatures.m', ...
-                      'STGFeatExtr.py' ...
-                      };  
- for i=1:length(addlCustomFileList)
-    sourceFile = fullfile(abiUtilsDir, addlCustomFileList{i});
+% We are using four special locations; where to do these?
+commonDir = 'C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/';
+abiUtilsDir       = fullfile(commonDir, 'ProjNeuroMan/NeuroManager/ABIUtils');
+investDBUtilsDir  = fullfile(commonDir, 'ProjNeuroMan/NeuroManager/InvestUtils');
+abiCellSurveyDir  = fullfile(commonDir, 'Fractional/ABI-FLIF/ABICellSurvey/src');
+abiApiMLDir       = fullfile(commonDir, 'ABAtlas/ABIApiML');
+localCellTypesDir = fullfile(commonDir, 'Fractional/ABI-FLIF/Cache/cell_types');
+
+% Copy the remote feature extraction files from common storage into the
+% investigation for use. For now we don't have a special abiFX class for
+% NeuroManager; we just put the fx files into the simulator's Addl Custom
+% File list and copy them into that directory, ensuring one file source.
+featureExtractionFileList = {'__init__.py', ...
+                             'ephys_extractor.py', ...
+                             'ephys_features.py', ...
+                             'extract_cell_features.py', ...
+                             'feature_extractor.py', ...
+                             'extractABIExpFeatures.m', ...
+                             'STGFeatExtr.py'};  
+ for i=1:length(featureExtractionFileList)
+    sourceFile = fullfile(abiUtilsDir, featureExtractionFileList{i});
 	copyfile(sourceFile, launchDir);
  end
  
- % Set up NeuroManager with the MMInvDB simulator
+% Set up NeuroManager with the MMInvDB simulator
 myData = ['C:\Users\David\Dropbox\Documents'...
           '\SantamariaLab\Projects\ProjNeuroMan\NeuroManager' ...
           '\dbsStaticData.ini'];   
 [nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 nmDirectorySet.customDir = launchDir;
-% fullfile(nmDirectorySet.nmMainDir,...
-%                                     'NeurSim', 'MiyashoMOD');
 nmDirectorySet.modelDir = fullfile(nmDirectorySet.nmMainDir,...
                                     'NeurSim', 'MiyashoMOD');
+addpath(nmDirectorySet.modelDir); % For the superclass
 nmDirectorySet.resultsDir = investigationDir;
 nmDirectorySet.simSpecFileDir = nmDirectorySet.resultsDir;
 
@@ -64,10 +69,7 @@ abiDBConn = database.ODBCConnection(abiDatabaseName,'david','Uni53mad');
 % Set up using the database toolbox database explorer app
 % Show MATLAB where the inv database class is located
 % For the ABI investigation database, metaheuristic, and comparator classes
-addpath(['C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/' ...
-         'ProjNeuroMan/NeuroManager/InvestUtils']); 
-addpath(abiUtilsDir)
-addpath(nmDirectorySet.modelDir)
+addpath(investDBUtilsDir, abiUtilsDir);  % For the invDB and abi classes
 simsDataSourceName = 'MMInvDB';
 simsDatabaseName = 'mminvdb';
 log.write(['Connecting to investigation database ' simsDatabaseName ...
@@ -112,7 +114,8 @@ MLCompileMachineInfoFile = 'CheetahInfo.json';
 nm.setMLCompileServer(MLCompileMachineInfoFile);
 nm.doMATLABCompilation();
 
-% Synapse NEURON installation appears to be broken
+% Synapse NEURON installation appears to be broken 
+% (perhaps only the Python part?
 % nm.addStandaloneServer('SynapseInfo.json', 2, '/home/David.Stockton/NMDev'); 
 % nm.addStandaloneServer('DendriteInfo.json', 8, '/home/David.Stockton/SMDev'); 
 numSimulators = 6;
@@ -128,65 +131,34 @@ end
 %% Build the Simulators on the server
 nm.constructMachineSet();
 
+%% Experiment vs simulation sample rates
+ABISamplingRate = 200000;   % experimental data samples per second
+SimSamplingRate = 20000;    % simulation raw data samples per second
+
 %% Select specimens and experiments
-% specimens currently in the Cell Survey Database
-specimens = [ ...
-            484635029, ... % 01
-            469801569, ... % 02
-            469753383, ... % 03
-            487667205, ... % 04
-            468120757, ... % 05
-            476104386, ... % 06
-            484742372, ... % 07
-            475622793, ... % 08
-            464188580, ... % 09
-            478058328, ... % 10
-            476218657, ... % 11
-            318808427, ... % 12
-            479704527, ... % 13
-            324493977, ... % 14
-            483020137, ... % 15
-            464212183, ... % 16
-            476457450, ... % 17
-            324266189, ... % 18
-            478107198, ... % 19
-            476686112, ... % 20
-            478396248, ... % 21
-            485058595, ... % 22
-            475622680, ... % 23
-            327962063, ... % 24
-            474267418, ... % 25
-            466664172, ... % 26
-            474626527, ... % 27
-            464198958  ... % 28
-            ];
+% Some of the ABI Specimens that have models associated with them
+specimens = [484635029, ... % 01
+             469801569, ... % 02
+             469753383, ... % 03
+             487667205];    % 04
+specimenNum = specimens(03);    % Arbitrary choice
+experimentNum = 51;             % (hero sweep for 469753383)
 
-specExps = [];
-specExps(1,1) = specimens(03); % 
-specExps(1,2) =  51;           % (hero sweep for 469753383)
-specimenNum = specExps(1,1);
-experimentNum = specExps(1,2);
-
-%% Grab the experimental features for those choices...
-% (Not currently being used)
-% addpath for the ABIFeatExtrData class
-addpath(['C:/Users/David/Dropbox/Documents/SantamariaLab' ...
-         '/Projects/Fractional/ABI-FLIF/ABICellSurvey/src']);
+%% Grab the experimental features for that choice...
+addpath(abiCellSurveyDir);  % For the cell survey access utilities
 fxData = ABIFeatExtrData(abiDBConn);
 
-%% Move things around a little
-ABISamplingRate = 200000;
-SimSamplingRate = 20000;     % simulation samples per second
-
-
-%% Install the experimental features into the investigation database
+%% Install the experimental features into the investigation database for 
+% association with the ipvs
 expData = fxData.getExpFXData(specimenNum, experimentNum);
 specData = fxData.getSpecFXData(specimenNum);
 expInfo = fxData.getExpInfo(specimenNum, experimentNum);
-% ...and put them into the simulations database as a new expDataSet;
-% the expPx values will be used to generate the parameter space
+% ...and put them into the investigation database as a new expDataSet;
+% the expPx values can be used as a source to generate the input parameter
+% space for the simulations to be done
 stimulusType = expInfo.stimulusType{1};
-% threshold: The experiment value rather than specimen value
+% threshold: ABI's "experiment" value rather than "specimen" value.
+% These for demo only since we are not using them to help generate the IPVs.
 expDataSetIndex = invDB.addExpDataSet(specimenNum, experimentNum, ...
                     ABISamplingRate, ...
                     stimulusType, expInfo.stimCurrent, ...
@@ -194,43 +166,36 @@ expDataSetIndex = invDB.addExpDataSet(specimenNum, experimentNum, ...
                     expData.frstSpkThresholdV, ...
                     specData.v_rest, specData.peak_v_long_square);
 
-%% Get the data set 
+%% Get the data set for access directly from the database
 expDataSet = invDB.getExpDataSet(specimenNum, experimentNum);
 
-
-
 %% Deal with input parameters and other settings
-
 % Set constant input parameters
-delay = 1020.0;
+delay = 1020.0;     % To match ABI Long Square stimulus
 vinit = -65.0;
-stimdur = 1000.0;  % To match ABI Long Square
+stimdur = 1000.0;   % To match ABI Long Square
 tstep = 1/SimSamplingRate*1000; % in msec
 tstop = 3000.0;                 % in msec  
 rcdintvl = 0.1;
-KD_soma     = 0.00;
 Kh_soma     = 0.0005;
 Kh_smooth   = 0.00;
 Kh_spiny    = 0.00;
 CaE_soma    = 0.00;
-p17 = NaN;
-p18 = NaN;
-p19 = NaN;
-p20 = NaN;
-p21 = NaN;
+KD_soma     = 0.00;
+p17 = NaN; p18 = NaN; p19 = NaN; p20 = NaN; p21 = NaN;
 
 % Define simulation-variable input parameters
-curr = {0.40};
-%curr = {-0.80, -0.40, 0.00, 0.40};
+%curr = {0.40};
+curr = {0.50, 1.00, 1.50, 2.00, 2.50, 3.00};
 
-CaE_smooth  = {0.00123};
-% CaE_smooth  = {0.000, 0.008};
+%CaE_smooth  = {0.00123};
+CaE_smooth  = {0.000, 0.008};
 CaE_spiny   = {0.00456};
 % CaE_spiny   = {0.000, 0.008};
 
-KD_smooth   = {0.078};
-% KD_smooth   = {0.00, 0.09};
-KD_spiny    = {0.090};
+% KD_smooth   = {0.078};
+KD_smooth   = {0.00, 0.09};
+KD_spiny    = {0.09};
 % KD_spiny    = {0.00, 0.09};
 
 %% Set up the metaheuristic for parameter search
@@ -240,52 +205,35 @@ metaheurInitData{3,1} = CaE_spiny;
 metaheurInitData{4,1} = KD_smooth;
 metaheurInitData{5,1} = KD_spiny;
 mh = explicitGrid(metaheurInitData);
+nm.log.write(['Using metaheuristic ' mh.getName() '.']);
 
 %% Set up the compare class (objective function class)
-expDataDir = ['C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\' ...
-              'Fractional\ABI-FLIF\Cache\cell_types'];
-% Cmp01 class compares hasSpikes, latency, and meanISI using L2 norm
-% later put this type as input to metaheuristic?
-%     cmp = Cmp01(abiDBConn, invDB, expDataDir, nmDirectorySet.curlDir);  
-% Cmp02 class compares hasSpikes, latency, meanISI, adaptation, and
-% numSpikes.
-%	cmp = Cmp02(abiDBConn, invDB, expDataDir, nmDirectorySet.curlDir);  
-cmp = CmpMM(abiDBConn, invDB, expDataDir, nmDirectorySet.curlDir);  
+addpath(abiApiMLDir);  % For the comparison class's use of the ABIApiML
+cmp = CmpMM(abiDBConn, invDB, localCellTypesDir, nmDirectorySet.curlDir);  
 nm.log.write(['Using comparison algorithm ' cmp.getName() '.']);
-
 
 %% Run parameter search starting with generation zero
 nm.log.write(['Starting metaheuristic ' mh.getName() '.']);
 points = mh.getPointSet() %#ok<NOPTS>
-generation = 0;
 comparisonResults = {};
 while ~isempty(points)
-
-    %% Start up a SimSpec file to hold the points 
+    generation = mh.getGenerationNumber();
     simSetID = ['Spec_' num2str(specimenNum) ...
                 '_Sweep_' num2str(experimentNum) ...
                 '_Gen_' num2str(generation)];
-
-    % Create the SimSpec file header
     simSetFileName = [simSetID '.txt'];
     simulationRoot = 'Point';
-%     mmss = MMInvDBSimSpecFile(investigationDir, simSetID, simSetFileName);
+    %% Start a SimSpec file which holds the ipvs of the SimSet for running
     mmss = MMInvDBSimSpecFile(nm.getSimSpecFileDir(), simSetID, simSetFileName);
+    % Add the SimSpec file header
     mmss.InsertHeader();
 
-    %% Do all preparation for each point
-    % simList holds each point's uniqueness information for use later
-    % NOT CORRECT FOR MULTIPLE CELLS
-%         simList{i,1} = struct;   %#ok<*SAGROW> 
-
     for j = 1:size(points,1)
-        %% Add a SimSpec line to the SimSpec file
+        % Do all preparation for each point
         simID = [simulationRoot num2str(j, '%04u')];
-        simList{j,1}.sessionID = nm.getSessionID();    %#ok<*SAGROW>
-        simList{j,1}.simSetID = simSetID;
-        simList{j,1}.simID = simID;
-        inParam = {points{j,1}, ... % curr
-                   vinit, delay, stimdur, tstep, tstop,  rcdintvl, ...
+        inParam = {points{j,1}, ... % curr(ent)
+                   vinit, delay, stimdur, ...
+                   tstep, tstop,  rcdintvl, ...
                    Kh_soma, Kh_smooth, Kh_spiny, ...
                    CaE_soma, ...
                    points{j,2}, ... % CaE_smooth
@@ -293,27 +241,23 @@ while ~isempty(points)
                    KD_soma, ...
                    points{j,4}, ... % KD_smooth
                    points{j,5}, ... % KD_spiny
-                   p17, p18, p19, p20, p21 ...
-                   };
+                   p17, p18, p19, p20, p21};
+        % Add the corresponding SimSpec line to the SimSpec file
         mmss.addPoint(false, simID, inParam{:})        
         
         %% Add the corresponding ipv to the database
-        ipvIndex = invDB.addIPV(expDataSetIndex, ...
-                                points{j,1}, vinit, delay, stimdur, ...
-                                tstep, tstop, rcdintvl, ...
-                                Kh_soma, Kh_smooth, Kh_spiny, ...
-                                CaE_soma, points{j,2}, points{j,3}, ...
-                                KD_soma, points{j,4}, points{j,5}, ...
-                                p17, p18, p19, p20, p21)
+        ipvIndex = invDB.addIPV(expDataSetIndex, inParam{:});
                             
-        %% Add the corresponding simulation run into the database
-        % update some items after simulation results downloaded 
-        % usage of tstop and SimSamplingRate is NOT CONSISTENT
-        % Will be updated at finish of simulation
-        %runIndex = ...
+        %% Add the corresponding simulation run into the database;
+        % some items will be updated after simulation results downloaded 
         runIndex = invDB.addSimulationRun(ipvIndex, ...
                                 nm.getSessionIndex(), simSetID, ...
-                                simID, SimSamplingRate, tstop)
+                                simID, SimSamplingRate, tstop);
+        % simList holds each point's uniqueness information for use later
+        % in comparisons
+        simList{j,1}.sessionID = nm.getSessionID();    %#ok<*SAGROW>
+        simList{j,1}.simSetID = simSetID;
+        simList{j,1}.simID = simID;
     end
     
     %% Run the simSet for this generation 
@@ -325,11 +269,10 @@ while ~isempty(points)
     % comparisons here with separate entries into database
     comparisonResults = [comparisonResults ...
         cmp.compare({num2str(specimenNum)}, ...
-                    {num2str(experimentNum)}, simList)] %#ok<AGROW>
+                    {num2str(experimentNum)}, simList)]; %#ok<AGROW>
     
     %% Get the next generation of points to investigate
     points = mh.getPointSet();
-    generation = generation + 1;
 end
 nm.log.write(['Termination criteria reached.  Terminating search.']);
 
