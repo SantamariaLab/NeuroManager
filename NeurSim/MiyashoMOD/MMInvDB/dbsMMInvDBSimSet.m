@@ -8,18 +8,25 @@ clear; clear variables; clear classes; clear java;   %#ok<*CLJAVA,*CLCLS>
 % rates in events/second
 %%%
 
+myData = ['C:\Users\David\Dropbox\Documents'...
+          '\SantamariaLab\Projects\ProjNeuroMan\NeuroManager' ...
+          '\dbsStaticData.ini'];   
+[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
+
 %% Set up a Neuromanager session
 disp(['Starting the MMInvDB investigation']);
 launchDir = pwd;
 investigationDir = fullfile(launchDir, 'MMInvDBInvestigation01');
 
-% We are using four special locations; where to do these?
+% We are using three external ABI locations and need access to them
+% These are defined in userStaticData.ini
+%addpath(nmDirectorySet.abiUtilsDir);
+addpath(nmDirectorySet.abiCellSurveySrcDir);
+addpath(nmDirectorySet.abiApiMLDir);
+addpath(nmDirectorySet.localCellTypesDir);
+
 commonDir = 'C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/';
-abiUtilsDir       = fullfile(commonDir, 'ProjNeuroMan/NeuroManager/ABIUtils');
-investDBUtilsDir  = fullfile(commonDir, 'ProjNeuroMan/NeuroManager/InvestUtils');
-abiCellSurveyDir  = fullfile(commonDir, 'Fractional/ABI-FLIF/ABICellSurvey/src');
-abiApiMLDir       = fullfile(commonDir, 'ABAtlas/ABIApiML');
-localCellTypesDir = fullfile(commonDir, 'Fractional/ABI-FLIF/Cache/cell_types');
+abiUtilsDir         = fullfile(commonDir, 'ProjNeuroMan/NeuroManager/ABIUtils');
 
 % Copy the remote feature extraction files from common storage into the
 % investigation for use. For now we don't have a special abiFX class for
@@ -38,10 +45,6 @@ featureExtractionFileList = {'__init__.py', ...
  end
  
 % Set up NeuroManager with the MMInvDB simulator
-myData = ['C:\Users\David\Dropbox\Documents'...
-          '\SantamariaLab\Projects\ProjNeuroMan\NeuroManager' ...
-          '\dbsStaticData.ini'];   
-[nmAuthData, nmDirectorySet, userData] = loadUserStaticData(myData);
 nmDirectorySet.customDir = launchDir;
 nmDirectorySet.modelDir = fullfile(nmDirectorySet.nmMainDir,...
                                     'NeurSim', 'MiyashoMOD');
@@ -62,20 +65,22 @@ disp 'AFter NM construction'
 %% Connect with the experimental data (ABI) database
 abiDatabaseName = 'ABICellSurvey';
 log.write(['Connecting to abi database ' abiDatabaseName '.']);
-abiDBConn = database.ODBCConnection(abiDatabaseName,'david','Uni53mad');
+abiDBConn = database.ODBCConnection(abiDatabaseName, ...
+                            userData.mysqlUsername, userData.mysqlPassword);
+% abiDBConn = database.ODBCConnection(abiDatabaseName,'david','Uni53mad');
 
 %% Attach the investigation database
 % Connect with the simulations database
 % Set up using the database toolbox database explorer app
 % Show MATLAB where the inv database class is located
 % For the ABI investigation database, metaheuristic, and comparator classes
-addpath(investDBUtilsDir, abiUtilsDir);  % For the invDB and abi classes
+% addpath(investDBUtilsDir, abiUtilsDir);  % For the invDB and abi classes
 simsDataSourceName = 'MMInvDB';
 simsDatabaseName = 'mminvdb';
 log.write(['Connecting to investigation database ' simsDatabaseName ...
            ' using data source ' simsDataSourceName '.']);
 invDB = abiMMCompDB(simsDataSourceName, simsDatabaseName, ...
-                  'david', 'Uni53mad');
+                    userData.mysqlUsername, userData.mysqlPassword);
 
 % Reset or Load Database?
 % !!!!!!!!!!!!!!!
@@ -145,7 +150,6 @@ specimenNum = specimens(03);    % Arbitrary choice
 experimentNum = 51;             % (hero sweep for 469753383)
 
 %% Grab the experimental features for that choice...
-addpath(abiCellSurveyDir);  % For the cell survey access utilities
 fxData = ABIFeatExtrData(abiDBConn);
 
 %% Install the experimental features into the investigation database for 
@@ -208,8 +212,8 @@ mh = explicitGrid(metaheurInitData);
 nm.log.write(['Using metaheuristic ' mh.getName() '.']);
 
 %% Set up the compare class (objective function class)
-addpath(abiApiMLDir);  % For the comparison class's use of the ABIApiML
-cmp = CmpMM(abiDBConn, invDB, localCellTypesDir, nmDirectorySet.curlDir);  
+cmp = CmpMM(abiDBConn, invDB, nmDirectorySet.localCellTypesDir, ...
+            nmDirectorySet.curlDir);  
 nm.log.write(['Using comparison algorithm ' cmp.getName() '.']);
 
 %% Run parameter search starting with generation zero
@@ -344,13 +348,13 @@ end
 
     
 %% Close up
-% close(abiDBConn);
-% databaseSaveName = ['_BU_' nm.getSessionID()];
-% invDB.save('david', investigationDir, databaseSaveName)
-% msg = ['Investigation database ' invDB.getDatabaseName() ' saved as ' ...
-%        databaseSaveName ' in directory ' investigationDir];
-% log.write(msg);
-% invDB.delete();
+close(abiDBConn);
+databaseSaveName = ['_BU_' nm.getSessionID()];
+invDB.save('david', investigationDir, databaseSaveName)
+msg = ['Investigation database ' invDB.getDatabaseName() ' saved as ' ...
+       databaseSaveName ' in directory ' investigationDir];
+log.write(msg);
+invDB.delete();
 disp('Script complete.')
     
     

@@ -204,12 +204,23 @@ function p = neuroManagerInputParser(obj) %#ok<INUSD>
     defaultResultsDir = '.';
     defaultCurlDir = '';
     
+%     defaultAbiUtilsDir = '';
+    defaultAbiCellSurveySrcDir = '';
+    defaultAbiApiMLDir = '';
+    defaultLocalCellTypesDir = '';
+    
     addParamValue(p, 'nmMainDir',       defaultNMMainDir,       @dirCheck); %#ok<*NVREPL>
     addParamValue(p, 'coreDir',         defaultCoreDir,         @dirCheck);
     addParamValue(p, 'sshLibDir',       defaultSSHLibDir,       @dirCheck);
     addParamValue(p, 'customDir',       defaultCustomDir,       @dirCheck);
     addParamValue(p, 'modelDir',        defaultModelDir,        @dirCheckEmptyOK);
     addParamValue(p, 'localMachineDir', defaultLocalMachineDir, @dirCheck);
+%     addParamValue(p, 'abiUtilsDir',     defaultAbiUtilsDir,     @dirCheck);
+    addParamValue(p, 'abiCellSurveySrcDir', ...
+                                        defaultAbiCellSurveySrcDir, @dirCheck);
+    addParamValue(p, 'abiApiMLDir',     defaultAbiApiMLDir,     @dirCheck);
+    addParamValue(p, 'localCellTypesDir', ...
+                                        defaultLocalCellTypesDir, @dirCheck);
     addParamValue(p, 'simSpecFileDir',  defaultSimSpecFileDir,  @dirCheck);
     addParamValue(p, 'resultsDir',      defaultResultsDir,      @dirCheck);
     addParamValue(p, 'curlDir',         defaultCurlDir,         @dirCheck);
@@ -227,10 +238,12 @@ function p = neuroManagerInputParser(obj) %#ok<INUSD>
     
     defaultPollDelay = 20.0;
     addParamValue(p, 'notificationsType', 'OFF', notificationsCheck);
-    addParamValue(p, 'phone',       '',                 @ischar);
-    addParamValue(p, 'carrier',     '',                 @ischar);
-    addParamValue(p, 'email',       '',                 @ischar);
-    addParamValue(p, 'smtpServer',  '',                 @ischar);
+    addParamValue(p, 'phone',           '',     @ischar);
+    addParamValue(p, 'carrier',         '',     @ischar);
+    addParamValue(p, 'email',           '',     @ischar);
+    addParamValue(p, 'smtpServer',      '',     @ischar);
+    addParamValue(p, 'mysqlUsername',   '',     @ischar);
+    addParamValue(p, 'mysqlPassword',   '',     @ischar);
     addParamValue(p, 'pollDelay',   defaultPollDelay, ...
                             @(x) isnumeric(x) && (x > 10) && (x <= 300));
     defaultMaxNumSimSpecParams = 10;

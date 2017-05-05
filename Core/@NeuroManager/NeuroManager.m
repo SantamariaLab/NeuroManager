@@ -337,6 +337,10 @@ classdef NeuroManager < handle
             % simulation files. 
             % Add it to the MATLAB search path and preserve old
             obj.oldPath = addpath(obj.customSimDir);
+            % Add the Investigation Database Utilities directory
+            addpath(fullfile(obj.nmMainDir, 'InvestUtils'));
+            % Add the ABI Utilities directory
+            addpath(fullfile(obj.nmMainDir, 'ABIUtils'));
             obj.compiledType = SimType.UNASSIGNED;
             obj.simSpecFullPath = '';  % Set in RunFromFile()
             obj.nmSimSet = SimSet();   % actually assigned in nmRun()
