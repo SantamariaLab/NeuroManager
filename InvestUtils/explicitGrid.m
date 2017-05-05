@@ -21,6 +21,7 @@ classdef explicitGrid < metaheuristic
         
         % For now, get all the points at once.
         function points = getPointSet(obj)
+            obj.incrementGenerationNumber();
             if obj.terminate
                 points = [];
                 return;
