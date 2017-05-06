@@ -1,4 +1,6 @@
-# Comes from STGFeatExtrFromDB; remove all database access for use on remotes.
+# ABI Feature extraction for remote no-console function on remotes.
+# print statements go into FXout.txt in the downloaded files for each
+# simulation, and the f.write statements go into pytemp.txt.
 print "Importing..."
 import sys
 import numpy as np
@@ -10,14 +12,10 @@ from feature_extractor import EphysFeatureExtractor
 from ephys_extractor import EphysSweepFeatureExtractor
 import traceback
 import json
-
 import math
-import pprint
-
-from pprint import pprint
+#from pprint import pprint
 
 useTraceback = False     # True/False
-
 print 'Number of arguments:', len(sys.argv), 'arguments.'
 print 'Argument List:', str(sys.argv)
 
@@ -31,7 +29,6 @@ stimDurationStr     = sys.argv[7]
 analysisStartStr    = sys.argv[8]
 analysisDurationStr = sys.argv[9]
 featuresFilename    = sys.argv[10]
-# runDir              = sys.argv[11]
 outDir              = sys.argv[11]
 
 f = open(outDir + "/pytemp.txt", 'w')
@@ -55,9 +52,6 @@ analysisDuration = float(analysisDurationStr)
 
 # Retrieve data for extraction
 f.write("Loading data files now..." + "\n")
-# timeFile = outDir + '/' + timeFilename
-# voltageFile = outDir + '/' + voltageFilename
-# stimulusFile = outDir + '/' + stimulusFilename
 featuresFile = outDir + '/' + featuresFilename
 timeFile = outDir + '/' + timeFileName
 voltageFile = outDir + '/' + voltageFileName
@@ -65,7 +59,7 @@ stimulusFile = outDir + '/' + stimulusFileName
 f.write("Files: " + timeFile + " " + voltageFile + " " + 
                     stimulusFile + " " + featuresFile + "\n")
 
-time =     np.loadtxt(timeFile)
+time = np.loadtxt(timeFile)
 time /= 1e3 # convert from mseconds to seconds
 voltage =  np.loadtxt(voltageFile)
 stimulus = np.loadtxt(stimulusFile)
@@ -100,7 +94,7 @@ except:
         traceback.print_exc()
 
 feature_data = fx.feature_list[0].mean  # See ABI code
-# print "feature_data", feature_data
+
 # Pull out the specific features for entry into the database
 numSpikes = feature_data['n_spikes']
 hasSpikes = (numSpikes != 0)
@@ -132,7 +126,7 @@ else:
         print "\n[14]: Individual spike data from EphysFeatureExtractor"
         for i in range(0,numSpikes):
             print "Spike data for spike ", i 
-            pprint(feature_data["spikes"][i])
+            #pprint(feature_data["spikes"][i])
         
         
 if 'f_peak' in feature_data: 
@@ -217,7 +211,7 @@ if numSpikes >= 2:  # process_spikes() does not work if fewer than 2
                    "time constant of rise before spike):")
             delayMetrics = sfx.delay_metrics()
             print "Delay metrics: type ", type(delayMetrics[0]), type(delayMetrics[1])
-            pprint(delayMetrics)
+            #pprint(delayMetrics)
             delayRatio = delayMetrics[0]
             # Test necessary because ABI SDK not consistent
             if delayRatio.dtype == 'numpy.float64' and np.isnan(delayRatio):
