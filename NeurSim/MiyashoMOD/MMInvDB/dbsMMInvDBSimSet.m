@@ -7,7 +7,6 @@ clear; clear variables; clear classes; clear java;   %#ok<*CLJAVA,*CLCLS>
 % voltages in mV; currents in pA; resistances in MOhms; times in msec
 % rates in events/second
 %%%
-
 myData = ['C:\Users\David\Dropbox\Documents'...
           '\SantamariaLab\Projects\ProjNeuroMan\NeuroManager' ...
           '\dbsStaticData.ini'];   
@@ -20,13 +19,24 @@ investigationDir = fullfile(launchDir, 'MMInvDBInvestigation01');
 
 % We are using three external ABI locations and need access to them
 % These are defined in userStaticData.ini
-%addpath(nmDirectorySet.abiUtilsDir);
 addpath(nmDirectorySet.abiCellSurveySrcDir);
 addpath(nmDirectorySet.abiApiMLDir);
 addpath(nmDirectorySet.localCellTypesDir);
 
-commonDir = 'C:/Users/David/Dropbox/Documents/SantamariaLab/Projects/';
-abiUtilsDir         = fullfile(commonDir, 'ProjNeuroMan/NeuroManager/ABIUtils');
+% Set up NeuroManager with the MMInvDB simulator
+nmDirectorySet.customDir = launchDir;
+nmDirectorySet.modelDir = fullfile(nmDirectorySet.nmMainDir,...
+                                    'NeurSim', 'MiyashoMOD');
+addpath(nmDirectorySet.modelDir); % For the simulator superclass
+nmDirectorySet.resultsDir = investigationDir;
+nmDirectorySet.simSpecFileDir = nmDirectorySet.resultsDir;
+
+nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
+                  'maxNumSimSpecParams', 21,...
+                  'notificationsType', 'NONE', 'useDualKey', true,...
+                  'isSingleMachine', false);
+
+log = nm.getLog(); % For log additions from this script
 
 % Copy the remote feature extraction files from common storage into the
 % investigation for use. For now we don't have a special abiFX class for
@@ -40,41 +50,19 @@ featureExtractionFileList = {'__init__.py', ...
                              'extractABIExpFeatures.m', ...
                              'STGFeatExtr.py'};  
  for i=1:length(featureExtractionFileList)
-    sourceFile = fullfile(abiUtilsDir, featureExtractionFileList{i});
+    sourceFile = fullfile(nm.getABIUtilsDir(), featureExtractionFileList{i});
 	copyfile(sourceFile, launchDir);
  end
+ log.write(['ABI remote feature extraction files copied to ' launchDir]);
  
-% Set up NeuroManager with the MMInvDB simulator
-nmDirectorySet.customDir = launchDir;
-nmDirectorySet.modelDir = fullfile(nmDirectorySet.nmMainDir,...
-                                    'NeurSim', 'MiyashoMOD');
-addpath(nmDirectorySet.modelDir); % For the superclass
-nmDirectorySet.resultsDir = investigationDir;
-nmDirectorySet.simSpecFileDir = nmDirectorySet.resultsDir;
-
-nm = NeuroManager(nmDirectorySet, nmAuthData, userData,...
-                  'maxNumSimSpecParams', 21,...
-                  'notificationsType', 'NONE', 'useDualKey', true,...
-                  'isSingleMachine', false);
-
-log = nm.getLog(); % For log additions from this script
-
-disp 'AFter NM construction'
-% path
-
-%% Connect with the experimental data (ABI) database
+ %% Connect with the experimental data (ABI) database
 abiDatabaseName = 'ABICellSurvey';
 log.write(['Connecting to abi database ' abiDatabaseName '.']);
 abiDBConn = database.ODBCConnection(abiDatabaseName, ...
                             userData.mysqlUsername, userData.mysqlPassword);
-% abiDBConn = database.ODBCConnection(abiDatabaseName,'david','Uni53mad');
 
 %% Attach the investigation database
-% Connect with the simulations database
 % Set up using the database toolbox database explorer app
-% Show MATLAB where the inv database class is located
-% For the ABI investigation database, metaheuristic, and comparator classes
-% addpath(investDBUtilsDir, abiUtilsDir);  % For the invDB and abi classes
 simsDataSourceName = 'MMInvDB';
 simsDatabaseName = 'mminvdb';
 log.write(['Connecting to investigation database ' simsDatabaseName ...
@@ -101,7 +89,6 @@ else
         ' into investigation database ' simsDatabaseName '.']);
     invDB.load('david', buPath)  % fix authentication later
 end
-
 nm.attachInvestigationDatabase(investigationDir, invDB);
 
 %% Move the SimSpecDir to the SimResults dir
@@ -114,15 +101,10 @@ invDB.updateSessionSimSpecDir(nm.getSessionIndex(), d);
 %% Set simulator type and machine configuration
 simulatorType = SimType.SIM_MMINVDB;
 nm.setSimulatorType(simulatorType);
-% MLCompileMachineInfoFile = 'SynapseInfo.json';
 MLCompileMachineInfoFile = 'CheetahInfo.json';
 nm.setMLCompileServer(MLCompileMachineInfoFile);
 nm.doMATLABCompilation();
 
-% Synapse NEURON installation appears to be broken 
-% (perhaps only the Python part?
-% nm.addStandaloneServer('SynapseInfo.json', 2, '/home/David.Stockton/NMDev'); 
-% nm.addStandaloneServer('DendriteInfo.json', 8, '/home/David.Stockton/SMDev'); 
 numSimulators = 6;
 nm.addClusterQueue('CheetahInfo.json', 'General', ...
                    numSimulators, '/home/david.stockton/SMDev/ALL');
@@ -173,14 +155,16 @@ expDataSetIndex = invDB.addExpDataSet(specimenNum, experimentNum, ...
 %% Get the data set for access directly from the database
 expDataSet = invDB.getExpDataSet(specimenNum, experimentNum);
 
-%% Deal with input parameters and other settings
+%% Define input parameters and other settings
 % Set constant input parameters
 delay = 1020.0;     % To match ABI Long Square stimulus
-vinit = -65.0;
+vinit = -65.0;      % mV
 stimdur = 1000.0;   % To match ABI Long Square
 tstep = 1/SimSamplingRate*1000; % in msec
 tstop = 3000.0;                 % in msec  
-rcdintvl = 0.1;
+% rcdintvl is not used via changes to PySim.py in this dir,
+% to ensure a proper timebase for the ABI feature extraction code
+rcdintvl = tstep; % not used
 Kh_soma     = 0.0005;
 Kh_smooth   = 0.00;
 Kh_spiny    = 0.00;
@@ -189,16 +173,17 @@ KD_soma     = 0.00;
 p17 = NaN; p18 = NaN; p19 = NaN; p20 = NaN; p21 = NaN;
 
 % Define simulation-variable input parameters
-%curr = {0.40};
-curr = {0.50, 1.00, 1.50, 2.00, 2.50, 3.00};
+% current in nA
+curr = {0.40};
+% curr = {0.50, 1.00, 1.50, 2.00, 2.50, 3.00};
 
-%CaE_smooth  = {0.00123};
-CaE_smooth  = {0.000, 0.008};
+CaE_smooth  = {0.00123};
+% CaE_smooth  = {0.000, 0.008};
 CaE_spiny   = {0.00456};
 % CaE_spiny   = {0.000, 0.008};
 
-% KD_smooth   = {0.078};
-KD_smooth   = {0.00, 0.09};
+KD_smooth   = {0.078};
+% KD_smooth   = {0.00, 0.09};
 KD_spiny    = {0.09};
 % KD_spiny    = {0.00, 0.09};
 
@@ -297,7 +282,7 @@ for j = 1:length(comps.runIDX)
 end
 % Find the ipv corresponding to that run and print the results message
 ipvData = invDB.getIPVFromRunIDX(minRunIDX);
-runData = invDB.getRunDataFromRunIDX(minRunIDX);
+runData = invDB.getSimulationRunFromRunIDX(minRunIDX);
 simID = runData.simID{1};
 msg = ['Score1: Minimum is run "' simID ...
        '" with score1=' num2str(minScore)];
@@ -315,16 +300,11 @@ if cmp.getNumScoresUsed() > 1
     end
     % Find the ipv corresponding to that run and print the results message
     ipvData = invDB.getIPVFromRunIDX(minRunIDX);
-    % Handle empty ipvData here...
-    if ~isempty(fieldnames(ipvData))
-        runData = invDB.getRunDataFromRunIDX(minRunIDX);
-        simID = runData.simID{1};
-        msg = ['Score2: Minimum is run "' simID ...
-               '" with score2=' num2str(minScore)];
-        log.write(msg);
-    else
-        % Not defined yet
-    end
+    runData = invDB.getSimulationRunFromRunIDX(minRunIDX);
+    simID = runData.simID{1};
+    msg = ['Score2: Minimum is run "' simID ...
+           '" with score2=' num2str(minScore)];
+    log.write(msg);
 end
 
 %% score3
@@ -339,34 +319,19 @@ if cmp.getNumScoresUsed() > 2
     end
     % Find the ipv corresponding to that run and print the results message
     ipvData = invDB.getIPVFromRunIDX(minRunIDX);
-    runData = invDB.getRunDataFromRunIDX(minRunIDX);
+    runData = invDB.getSimulationRunFromRunIDX(minRunIDX);
     simID = runData.simID{1};
     msg = ['Score3: Minimum is run "' simID ...
            '" with score3=' num2str(minScore)];
     log.write(msg);
 end
 
-    
 %% Close up
 close(abiDBConn);
 databaseSaveName = ['_BU_' nm.getSessionID()];
-invDB.save('david', investigationDir, databaseSaveName)
+invDB.save('david', investigationDir, databaseSaveName);
 msg = ['Investigation database ' invDB.getDatabaseName() ' saved as ' ...
        databaseSaveName ' in directory ' investigationDir];
 log.write(msg);
 invDB.delete();
-disp('Script complete.')
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+disp('Script complete.');
