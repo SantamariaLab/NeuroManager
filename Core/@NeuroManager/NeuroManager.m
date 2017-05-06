@@ -197,6 +197,7 @@ classdef NeuroManager < handle
         customSimDir;      % Where user custom files are located
         modelFileDir;      % Where model files are located
         localMachineDir;   % Where local machine files are located
+        abiUtilsDir;       % Where the ABI Utilities are located
         simSpecFileDir;    % Where to look for the SimSpec
         simResultsBaseDir; % Where user wants the results tree to be attached
         simResultsDir;     % The pathname of the results tree (automatically generated)
@@ -340,7 +341,8 @@ classdef NeuroManager < handle
             % Add the Investigation Database Utilities directory
             addpath(fullfile(obj.nmMainDir, 'InvestUtils'));
             % Add the ABI Utilities directory
-            addpath(fullfile(obj.nmMainDir, 'ABIUtils'));
+            obj.abiUtilsDir = fullfile(obj.nmMainDir, 'ABIUtils');
+            addpath(obj.abiUtilsDir);
             obj.compiledType = SimType.UNASSIGNED;
             obj.simSpecFullPath = '';  % Set in RunFromFile()
             obj.nmSimSet = SimSet();   % actually assigned in nmRun()
@@ -640,12 +642,12 @@ classdef NeuroManager < handle
                                    obj.simSpecFileDir, obj.modelFileDir, ...
                                    obj.simResultsDir);
             obj.log.write(['Added session ' obj.sessionID ...
-                           ' to database ' obj.dbH.getDatabaseName() '.']);
+                           ' to investigation database ' obj.dbH.getDatabaseName() '.']);
         end
                 
         % ---
-        function tf = useInvestigationDatabase(obj)
-            tf = (obj.dbH ~= 0);
+        function dir = getABIUtilsDir(obj)
+            dir = obj.abiUtilsDir;
         end
         
         % ---
