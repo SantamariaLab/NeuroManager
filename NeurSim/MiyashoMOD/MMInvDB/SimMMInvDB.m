@@ -107,8 +107,9 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
         function postDownloadProcessingSimulatorSpecific(obj, simulation) 
             % Update the simulation run in the database
             if obj.dbH~=0
-                obj.log.write(['DATABASE: Updating simulation runtime ' ...
-                      'for simulation ' simulation.getID()]);
+                obj.log.write(['Investigation database: ' ...
+                               'Updating simulation runtime ' ...
+                               'for simulation ' simulation.getID()]);
 
                 % get the unique run index 
                 runIDX = obj.dbH.getSimulationRunIndex(simulation.getID(), ...
@@ -148,8 +149,9 @@ classdef SimMMInvDB < SimNeurPurkinjeMiyasho2001
                     featDat = rmfield(featDat, 'simID');
                 end
                 obj.dbH.addSimFeatureExtraction(featDat, runIDX);
-                obj.log.write(['Feature extraction data added to database ' ...
-                   'for simulation ' simulation.getID() '.']);
+                obj.log.write(['Feature extraction data added to ' ...
+                               'investigation database ' ...
+                               'for simulation ' simulation.getID() '.']);
             end
         end
         

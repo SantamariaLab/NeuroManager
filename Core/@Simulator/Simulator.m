@@ -327,7 +327,8 @@ classdef Simulator < handle
                     obj.dbH.addSimulator(machineIndex, obj.id, ...
                                          obj.type, obj.version);
                 obj.log.write(['Added simulator ' obj.id ...
-                           ' to database ' obj.dbH.getDatabaseName() '.']);
+                               ' to investigation database ' ...
+                               obj.dbH.getDatabaseName() '.']);
 
             else
                 obj.simulatorIndex = 0;

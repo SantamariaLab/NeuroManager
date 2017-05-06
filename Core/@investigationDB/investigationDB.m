@@ -297,6 +297,7 @@ classdef investigationDB < handle
         %% addIPV
         % This works with the above table definition and should be
         % overridden if the table creation is overridden.
+        % Here we assume strings so no conversions to be done
         function ipvIndex = ...
                     addIPV(obj, expDataSetIndex, ...
                     p01Str, p02Str, p03Str, p04Str, p05Str, ...
@@ -337,8 +338,9 @@ classdef investigationDB < handle
         end
 
         %% addSimulationRun 
-        % Assumes (for now) that simulation hasn't been assigned to a
-        % simulator, run, or had feature extraction done.
+        % Assumes that simulation hasn't been assigned to a
+        % simulator, run, or had feature extraction done.  Those elements
+        % are updated later (after the run is complete) using 
         function runIndex = ...
                 addSimulationRun(obj, ipvIDX,  ...
                     sessionIDX, simSetID, simID, simSampleRate, ...
@@ -384,6 +386,24 @@ classdef investigationDB < handle
             curs = fetch(curs);
             runIndex = curs.Data.runIDX;
             close(curs);
+        end
+        
+        %% updateSimulationRun
+        function updateSimulationRun(obj, runIDX, simulatorIDX, ...
+                        resultsDir, stimulusFilename, voltageFilename, ...
+                        other01Filename, timeFilename, other02Filename, ...
+                        simTime, simResult)
+            colnames  = {'simulatorIDX', 'resultsDir', ...
+                         'stimulusFilename', 'voltageFilename', ...
+                         'other01Filename', 'timeFilename', ...
+                         'other02Filename', 'runtime', 'result'};
+            coldata   = {simulatorIDX, resultsDir, ...
+                         stimulusFilename, voltageFilename, ...
+                         other01Filename, timeFilename, ...
+                         other02Filename, simTime, simResult};
+            whereStr  = ['WHERE runIDX=' num2str(runIDX)];
+            update(obj.dbConn, 'simulationRuns', ...
+                   colnames, coldata, whereStr);
         end
         
         %% addSimFeatureExtraction
@@ -515,8 +535,8 @@ classdef investigationDB < handle
             close(curs);
         end
         
-        %% getRunDataFromRunIDX 
-        function runData = getRunDataFromRunIDX(obj, runIDX)
+        %% getSimulationRunFromRunIDX 
+        function runData = getSimulationRunFromRunIDX(obj, runIDX)
             q = ['SELECT simulationRuns.* FROM simulationRuns ' ...
                  'WHERE simulationRuns.runIDX=' num2str(runIDX) ';'];
             setdbprefs('DataReturnFormat','structure');
@@ -526,8 +546,8 @@ classdef investigationDB < handle
             close(curs);
         end        
         
-        %% getSimulationRunDataFromCmpIDX
-        function simRunData = getSimulationRunDataFromCmpIDX(obj, cmpIDX)
+        %% getSimulationRunFromCmpIDX
+        function simRunData = getSimulationRunFromCmpIDX(obj, cmpIDX)
             q = ['SELECT simulationRuns.* ' ...
                  'FROM comparisons INNER JOIN simulationRuns ' ...
                  'ON comparisons.runIDX=simulationRuns.runIDX ' ...

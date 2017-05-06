@@ -5,9 +5,9 @@ function visComparison(obj, cmpIDX, highlightSpikeInsertion)
 	abiSamplingRate = 200000;
                                      
     % Get the simulation in question
-    simRunData = obj.simDB.getSimulationRunDataFromCmpIDX(cmpIDX);
+    simRunData = obj.simDB.getSimulationRunFromCmpIDX(cmpIDX);
     if ~isstruct(simRunData)
-        disp(['getSimulationRunDataFromCmpIDX: cmpIDX ' num2str(cmpIDX) ...
+        disp(['getSimulationRunFromCmpIDX: cmpIDX ' num2str(cmpIDX) ...
               ' not found in investigation database ' ...
               obj.simDB.getDatabaseName() '.'])
           return;

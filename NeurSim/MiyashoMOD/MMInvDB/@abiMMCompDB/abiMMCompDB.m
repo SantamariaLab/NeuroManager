@@ -13,8 +13,7 @@ classdef abiMMCompDB < abiCompDB
         end
 
         %% addIPV 
-        % This could be genericized someday but might lose clarity
-        % (Of course) has to match the table creation command
+        % An override of the abiCompDB method for further specialization.
         function ipvIndex = ...
                     addIPV(obj, expDataSetIndex, ...
                            curr, vinit, delay, stimdur, ...
@@ -49,15 +48,15 @@ classdef abiMMCompDB < abiCompDB
                 p17Str, p18Str, p19Str, p20Str, p21Str};
             insertStr = ['insert into ipvs (' ...
                          strjoin(colnames, ', ') ') values(0, ' ...
-                         strjoin(coldata, ', ') ')']
-            curs = exec(obj.dbConn, insertStr)
-            curs = fetch(curs)
+                         strjoin(coldata, ', ') ')'];
+            curs = exec(obj.dbConn, insertStr);
+            curs = fetch(curs);
             close(curs);
             
             q = ('select ipvIDX from ipvs WHERE ipvIDX = @@IDENTITY');
-            curs = exec(obj.dbConn, q)
-            curs = fetch(curs)
-            ipvIndex = curs.Data.ipvIDX
+            curs = exec(obj.dbConn, q);
+            curs = fetch(curs);
+            ipvIndex = curs.Data.ipvIDX;
             close(curs);
         end
     end
