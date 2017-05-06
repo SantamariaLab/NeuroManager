@@ -264,17 +264,17 @@ function [result, errMsg] =...
 	% create the stimulus waveform (compensate for not being done by PySim.py)
     % Need to record it or use another approach since time interval is not 
     % uniform
-    load([outputDir '/timedata.txt']);
-    stimulusdata = zeros(length(timedata), 1);
-    pulseStart = delay;  
-    pulseEnd = stimDuration + pulseStart;
-    % Yes there are faster ways to do this
-    for i=1:length(timedata)
-        if (timedata(i) > pulseStart && timedata(i) < pulseEnd)
-            stimulusdata(i) = current;
-        end
-    end
-    save(fullfile(outputDir, 'stimulusdata.txt'), 'stimulusdata', '-ascii');
+%     load([outputDir '/timedata.txt']);
+%     stimulusdata = zeros(length(timedata), 1);
+%     pulseStart = delay;  
+%     pulseEnd = stimDuration + pulseStart;
+%     % Yes there are faster ways to do this
+%     for i=1:length(timedata)
+%         if (timedata(i) > pulseStart && timedata(i) < pulseEnd)
+%             stimulusdata(i) = current;
+%         end
+%     end
+%     save(fullfile(outputDir, 'stimulusdata.txt'), 'stimulusdata', '-ascii');
     
                              
     % --
