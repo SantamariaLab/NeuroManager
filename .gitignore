@@ -1,3 +1,10 @@
-*/MMInvDBInvestigation01/*
+NeurSim/MiyashoMOD/MMInvDB/MMInvDBInvestigation01/*
 dbsStaticData.ini
 *.asv
+NeurSim/MiyashoMOD/MMInvDB/STGFeatExtr.py
+NeurSim/MiyashoMOD/MMInvDB/__init__.py
+NeurSim/MiyashoMOD/MMInvDB/ephys_extractor.py
+NeurSim/MiyashoMOD/MMInvDB/ephys_features.py
+NeurSim/MiyashoMOD/MMInvDB/extractABIExpFeatures.m
+NeurSim/MiyashoMOD/MMInvDB/extract_cell_features.py
+NeurSim/MiyashoMOD/MMInvDB/feature_extractor.py
