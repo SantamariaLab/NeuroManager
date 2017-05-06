@@ -20,90 +20,32 @@ classdef abiCompDB < investigationDB
         end
         
         %% addIPV 
-        % This could be genericized someday but might lose clarity
+        % These must match the ipvs table definition in setIpvsTableCmd.m.
+        % Override for specific investigations.  Here we don't know what
+        % the pXX are, so we assume they are (longish) strings. Override
+        % this class to redefine the table or to use the pXX differently.
         function ipvIndex = ...
                     addIPV(obj, expDataSetIndex, ...
-                           tstop, tstep, taum, p04, p05, rM, ...
-                           vRest, thresholdHeight, spikeHeight, p10, ...
-                           stimCode, p12, stimulusStartTime, pulseWidth, ...
-                           pulseCurrent, p16, p17, p18, p19, p20, p21)
-            colnames = {'ipvIDX', 'expDataSetIDX', 'tstop', 'tstep', 'taum', 'p04', ...
-                        'p05', 'rM', 'vRest', 'thresholdHeight', ...
+                           tstop, tstep, taum, p04Str, p05Str, rM, ...
+                           vRest, thresholdHeight, spikeHeight, p10Str, ...
+                           stimCode, p12Str, stimulusStartTime, ...
+                           pulseWidth, pulseCurrent, ...
+                           p16Str, p17Str, p18Str, p19Str, p20Str, p21Str)
+            colnames = {'ipvIDX', 'expDataSetIDX', 'tstop', 'tstep', 'taum', ...
+                        'p04', 'p05', 'rM', 'vRest', 'thresholdHeight', ...
                         'spikeHeight', 'p10', 'stimulusType', 'p12', ...
                         'stimulusStartTime', 'pulseWidth', 'pulseCurrent', ...
                         'p16', 'p17', 'p18', 'p19', 'p20', 'p21'};
-            % All this massaging needs to be designed/rewritten
-            if isnan(p04)
-                p04Str = 'NULL';
-            else
-                p04Str = num2str(p04);
-            end
-            if isnan(p05)
-                p05Str = 'NULL';
-            else
-                p05Str = num2str(p05);
-            end
-            if isnan(p12)
-                p12Str = 'NULL';
-            else
-                p12Str = num2str(p12);
-            end
-            if isnan(stimulusStartTime)
-                stimulusStartTimeStr = 'NULL';
-            else
-                stimulusStartTimeStr = num2str(stimulusStartTime);
-            end
-            if isnan(pulseWidth)
-                pulseWidthStr = 'NULL';
-            else
-                pulseWidthStr = num2str(pulseWidth);
-            end
-            if isnan(pulseCurrent)
-                pulseCurrentStr = 'NULL';
-            else
-                pulseCurrentStr = num2str(pulseCurrent);
-            end
-            if isnan(p16)
-                p16Str = 'NULL';
-            else
-                p16Str = num2str(p16);
-            end
-            if isnan(p17)
-                p17Str = 'NULL';
-            else
-                p17Str = num2str(p17);
-            end
-            if isnan(p18)
-                p18Str = 'NULL';
-            else
-                p18Str = num2str(p18);
-            end
-            if isnan(p19)
-                p19Str = 'NULL';
-            else
-                p19Str = num2str(p19);
-            end
-            if isnan(p20)
-                p20Str = 'NULL';
-            else
-                p20Str = num2str(p20);
-            end
-            if isnan(p21)
-                p21Str = 'NULL';
-            else
-                p21Str = num2str(p21);
-            end
             
-            %%
             coldata = ...
                {num2str(expDataSetIndex), num2str(tstop), num2str(tstep), ...
                 num2str(taum), p04Str, ...
                 p05Str, num2str(rM), ...
                 num2str(vRest), num2str(thresholdHeight), ...
-                num2str(spikeHeight), p10, ...
+                num2str(spikeHeight), p10Str, ...
                 ['''' stimCode ''''], ...
-                p12Str, stimulusStartTimeStr, ...
-                pulseWidthStr, pulseCurrentStr, ...
+                p12Str, num2Str(stimulusStartTime), ...
+                num2str(pulseWidth), num2str(pulseCurrent), ...
                 p16Str, p17Str, p18Str, p19Str, p20Str, p21Str};
             insertStr = ['insert into ipvs (' ...
                          strjoin(colnames, ', ') ') values(0, ' ...
