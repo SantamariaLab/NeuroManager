@@ -85,7 +85,7 @@ f.write("Doing FX now..." + "\n")
 
 
 from ABISweepFX import ExtractSweepFeatures
-analysisStart = analysisStart/1000
+analysisStart = analysisStart/1000 
 analysisDuration = analysisDuration/1000
 stimulusStart = stimulusStart/1000
 verbose = True

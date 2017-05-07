@@ -250,32 +250,6 @@ function [result, errMsg] =...
                  stimDurationStr, timeStepStr, simtStopStr, recordIntervalStr};
     status = runPythonSimulation(runDir, inputDir, modelDir, outputDir, ...
                                  'PySim.py', 'pythonsim', arguments);
-    
-%     % resample the voltage and create time and stimulus waveforms that are
-%     % suitable for use with the ABI tools.
-%     irregTime = load([outputDir '/timedata.txt']);  % in msec
-%     irregVoltage = load([outputDir '/voltagedata.txt']);
-%     desiredFs = 1/timeStep; % samples per msec
-% 	[rsTime, rsVoltage] = resample(irregVoltage, irregTime, desiredFs); 
-%     save(fullfile(outputDir, 'rsTimedata.txt'), 'time', '-ascii');
-%     save(fullfile(outputDir, 'rsVoltagedata.txt'), 'voltage', '-ascii');
-% 
-    % REDO THIS USING UNIFORM TIME              
-	% create the stimulus waveform (compensate for not being done by PySim.py)
-    % Need to record it or use another approach since time interval is not 
-    % uniform
-%     load([outputDir '/timedata.txt']);
-%     stimulusdata = zeros(length(timedata), 1);
-%     pulseStart = delay;  
-%     pulseEnd = stimDuration + pulseStart;
-%     % Yes there are faster ways to do this
-%     for i=1:length(timedata)
-%         if (timedata(i) > pulseStart && timedata(i) < pulseEnd)
-%             stimulusdata(i) = current;
-%         end
-%     end
-%     save(fullfile(outputDir, 'stimulusdata.txt'), 'stimulusdata', '-ascii');
-    
                              
     % --
 	% Do some example custom data visualization using MATLAB
