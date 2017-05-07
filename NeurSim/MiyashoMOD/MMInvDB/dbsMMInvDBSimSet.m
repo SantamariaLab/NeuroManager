@@ -53,6 +53,8 @@ featureExtractionFileList = {'__init__.py', ...
     sourceFile = fullfile(nm.getABIUtilsDir(), featureExtractionFileList{i});
 	copyfile(sourceFile, launchDir);
  end
+ copyfile('C:\Users\David\Dropbox\Documents\SantamariaLab\Projects\Fractional\ABI-FLIF\ABICellSurvey\src\ABISweepFX.py', ...
+     launchDir);
  log.write(['ABI remote feature extraction files copied to ' launchDir]);
  
  %% Connect with the experimental data (ABI) database
@@ -174,16 +176,16 @@ p17 = NaN; p18 = NaN; p19 = NaN; p20 = NaN; p21 = NaN;
 
 % Define simulation-variable input parameters
 % current in nA
-curr = {0.40};
-% curr = {0.50, 1.00, 1.50, 2.00, 2.50, 3.00};
+% curr = {2.00};
+curr = {0.50, 1.00, 1.50, 2.00, 2.50, 3.00};
 
-CaE_smooth  = {0.00123};
-% CaE_smooth  = {0.000, 0.008};
+% CaE_smooth  = {0.000};
+CaE_smooth  = {0.000, 0.008};
 CaE_spiny   = {0.00456};
 % CaE_spiny   = {0.000, 0.008};
 
-KD_smooth   = {0.078};
-% KD_smooth   = {0.00, 0.09};
+% KD_smooth   = {0.000};
+KD_smooth   = {0.00, 0.09};
 KD_spiny    = {0.09};
 % KD_spiny    = {0.00, 0.09};
 

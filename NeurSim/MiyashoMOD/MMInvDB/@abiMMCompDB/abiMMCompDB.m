@@ -1,4 +1,4 @@
-%
+% abiMMCompDB -- Overrides the IPV insertion for the MMInvDB example.
 classdef abiMMCompDB < abiCompDB
     methods (Access=protected)
         setIpvsTableCmd(obj)

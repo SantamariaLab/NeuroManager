@@ -88,7 +88,6 @@ classdef investigationDB < handle
                 end
             end
         end
-        
     end
 
     methods
@@ -104,8 +103,7 @@ classdef investigationDB < handle
                                        obj.dbUserName, obj.dbPassword);            
             % These must be listed in order of table creation due to the
             % requirements of foreign key constraints; dropping will be 
-            % done in reverse order. Sub classes can extend this as
-            % desired.
+            % done in reverse order. 
             obj.tableList = {'sessions', 'machines', 'simulators', ...
                              'expDataSets', 'ipvs', ...
                              'simFeatureExtractions',  ...
@@ -147,8 +145,7 @@ classdef investigationDB < handle
             close(curs);
             
             % Get the new session's automatically assigned index
-            % Reference:
-            % https://www.mathworks.com/matlabcentral/answers/
+            % Reference: https://www.mathworks.com/matlabcentral/answers/
             % 93959-how-can-the-primary-key-of-the-last-record-that-was-inserted-
             % into-a-database-using-the-fastinsert-co
             q = ['select sessionIDX from sessions ' ...

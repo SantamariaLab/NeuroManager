@@ -12,9 +12,9 @@ classdef CmpMM < Comparator
         % simulation in the simulation list.
         % simulation.
         % Features compared: 
-        %       hasSpikes T/F, mean_isi (score1)
-        %       hasSpikes T/F, latency, mean_isi (score2)
-        %       hasSpikes T/F, latency, mean_isi, adaptation  (score3)
+        %       hasSpikes T/F, ISIMean (score1)
+        %       hasSpikes T/F, latency, ISIMean (score2)
+        %       hasSpikes T/F, latency, ISIMean, adaptation  (score3)
         % Measure: L2 norm
         function results = compare(obj, specIDList, expIDList, simList)
             specID = specIDList{1};
@@ -41,7 +41,7 @@ classdef CmpMM < Comparator
                 % have to convert to seconds for the comparison
                 simStimulusLatency = simFX.stimulusLatency/1000.0;
                 % have to convert to seconds for the comparison
-                simMeanISI = simFX.mean_isi/1000.0;
+                simMeanISI = simFX.ISIMean/1000.0;
                 simAdaptation = simFX.adaptation;
                 runIndex = simFX.runIDX;
 
@@ -82,18 +82,6 @@ classdef CmpMM < Comparator
                 end
                 results{i}.score4 = NaN;
                 results{i}.score5 = NaN;
-%                 disp(['runIDX=' num2str(runIndex) ...
-%                       ', simID=' simList{i}.simID ': ' ...
-%                       ', simStimulusLatency = ' num2str(simStimulusLatency) ...
-%                       ', expStimulusLatency = ' num2str(expStimulusLatency) ...
-%                       ', simMeanISI = ' num2str(simMeanISI) ...
-%                       ', expMeanISI = ' num2str(expMeanISI) ...
-%                       ', simAdaptation = ' num2str(simAdaptation) ...
-%                       ', expAdaptation = ' num2str(expAdaptation) ...
-%                       ', score1 = ' num2str(results{i}.score1) ...
-%                       ', score2 = ' num2str(results{i}.score2) ...
-%                       ', score3 = ' num2str(results{i}.score3) ...
-%                       ]);
 
                 %% Add the results to the investigation database  
                 results{i}.compIndex = ...

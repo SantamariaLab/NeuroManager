@@ -36,7 +36,6 @@ classdef abiCompDB < investigationDB
                         'spikeHeight', 'p10', 'stimulusType', 'p12', ...
                         'stimulusStartTime', 'pulseWidth', 'pulseCurrent', ...
                         'p16', 'p17', 'p18', 'p19', 'p20', 'p21'};
-            
             coldata = ...
                {num2str(expDataSetIndex), num2str(tstop), num2str(tstep), ...
                 num2str(taum), p04Str, ...
@@ -101,8 +100,9 @@ classdef abiCompDB < investigationDB
         end
         
         %% addSimFeatureExtraction
-        % This approach depends on featDat matching the table definition;
-        % also puts the fx key into the identified simulationRun.
+        % This approach depends on featDat matching the table definition in
+        % content (but order not important); also puts the fx key into the
+        % identified simulationRun. 
         function fxIDX = ...
                 addSimFeatureExtraction(obj, featDat, runIDX)
             fns = fieldnames(featDat);
@@ -131,7 +131,7 @@ classdef abiCompDB < investigationDB
             columnStr = [strjoin(colnames, ', ') ...
                          ') values(0, ' strjoin(coldata, ', ')];
             insertStr = ['insert into simFeatureExtractions (' columnStr ')'];
-            exec(obj.dbConn, insertStr);
+            curs = exec(obj.dbConn, insertStr); %#ok<NASGU>
             
             q = ['select fxIDX from simFeatureExtractions ' ...
                  'WHERE fxIDX = @@IDENTITY'];

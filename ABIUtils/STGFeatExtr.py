@@ -13,7 +13,6 @@ from ephys_extractor import EphysSweepFeatureExtractor
 import traceback
 import json
 import math
-#from pprint import pprint
 
 useTraceback = False     # True/False
 print 'Number of arguments:', len(sys.argv), 'arguments.'
@@ -83,212 +82,25 @@ analysis_duration = analysisDuration
 
 # Perform the feature extractions
 f.write("Doing FX now..." + "\n")
-fx = EphysFeatureExtractor()      # +++++++++++++++++++++++++++++++++++++++++++
-try:
-    fx.process_instance("", voltage, stimulus, time, 
-                        analysis_start/1000, analysis_duration/1000, "")
-except:
-    print "Problem processing instance..."
-    if useTraceback:
-        traceback.print_exc()
 
-feature_data = fx.feature_list[0].mean  # See ABI code
 
-# Pull out the specific features for entry into the database
-numSpikes = feature_data['n_spikes']
-hasSpikes = (numSpikes != 0)
-if not hasSpikes:
-    print "no spikes found"
-    latency = None
-    ISIMean = None
-#     ISIFirst = None
-    ISICV = None
-    adaptation = None
-    threshold = None
-else:
-    if numSpikes == 1:
-        print "one spike found"
-        latency = feature_data['latency']
-        ISIMean = None
-#         ISIFirst = None
-        ISICV = None
-        adaptation = None
-        threshold = feature_data['threshold']
-    else: # numSpikes > 1
-        print "Number of spikes found: ", numSpikes
-        latency = feature_data['latency']
-        ISIMean = feature_data['isi_avg']
-        if 'first_isi' in feature_data:
-            ISIFirst = feature_data['first_isi']
-        else:
-            ISIFirst = None
-            
-        #print "Ephys ISIFirst: ", ISIFirst
-        ISICV = feature_data['ISICV']  # seconds or mseconds?
-        adaptation = feature_data['adapt']
-        threshold = feature_data['threshold']
-
-        #print "\n[14]: Individual spike data from EphysFeatureExtractor"
-        #for i in range(0,numSpikes):
-            #print "Spike data for spike ", i 
-            #pprint(feature_data["spikes"][i])
+from ABISweepFX import ExtractSweepFeatures
+analysisStart = analysisStart/1000
+analysisDuration = analysisDuration/1000
+stimulusStart = stimulusStart/1000
+verbose = True
+features = ExtractSweepFeatures(time, voltage, stimulus, analysisStart, 
+                                analysisDuration, stimulusStart, verbose)
         
-if 'f_peak' in feature_data: 
-    averageSpikePeak = feature_data['f_peak']
-else:
-    averageSpikePeak = None  
-
-print "Sweep processing now"     
-sfx = EphysSweepFeatureExtractor(time, voltage, stimulus, 
-                                 analysis_start/1000, 
-                                 analysis_duration/1000)  # +++++++++++++++++++
-if numSpikes >= 2:  # process_spikes() does not work if fewer than 2
-    try:
-        print "Processing spikes now"
-        sfx.process_spikes()
-        print "Spikes processed"
-        
-        try:
-            avgFiringRate = sfx.sweep_feature('avg_rate')
-        except:
-            avgFiringRate = None
-
-        print "avgFiringRate", avgFiringRate
-                
-        try:
-            # isi stuff from feature extractor is in msecs, whereas 
-            # isi stuff from sweep feature extractor is in seconds, so we 
-            # ensure both are in msec.
-            ISIFirst = sfx.sweep_feature('first_isi')*1000
-        except:
-            #traceback.print_exc()
-            ISIFirst = None
- 
-        print "ISIFirst:", ISIFirst 
-
-        try:
-            # isi stuff from feature extractor is in msecs, whereas 
-            # isi stuff from sweep feature extractor is in seconds, so we 
-            # ensure both are in msec.
-            ISIMeanSweep = sfx.sweep_feature('mean_isi')*1000
-        except:
-            ISIMeanSweep = None
- 
-        print "ISIMeanSweep:", ISIMeanSweep
-
-        try:
-            print ("Burst data for this experiment (max_burstiness_index " + 
-                   "- normalized max rate in burst vs out, num_bursts - " + 
-                   "number of bursts detected):")
-            burstMetrics = sfx.burst_metrics()
-#             pprint(burstMetrics)
-            maxBurstiness = burstMetrics[0]
-            numBursts = burstMetrics[1]
-            hasBursts = numBursts!=0
-        except:
-            maxBurstiness = None
-            numBursts = 0
-            hasBursts = False
-            if useTraceback:
-                traceback.print_exc()
-            print "No burst in this experiment"
-            
-        try:
-            print ("Pause data for this experiment (num_pauses - " + 
-                   "number of pauses detected, pause_fraction - fraction " + 
-                   "of interval [between start and end] spent in a pause):")
-            pauseMetrics = sfx.pause_metrics()
-#             pprint(pauseMetrics)
-            numPauses = pauseMetrics[0]
-            hasPauses = numPauses!=0
-            pauseFraction = pauseMetrics[1]
-        except:
-            numPauses = 0
-            hasPauses = False
-            pauseFraction = None
-            if useTraceback:
-                traceback.print_exc()
-            print "No pause in this experiment"
-            
-        try: 
-            print ("Delay data for this experiment (delay_ratio - ratio of " + 
-                   "latency to tau [higher means more delay], tau - dominant " + 
-                   "time constant of rise before spike):")
-            delayMetrics = sfx.delay_metrics()
-            print "Delay metrics: type ", type(delayMetrics[0]), type(delayMetrics[1])
-            #pprint(delayMetrics)
-            delayRatio = delayMetrics[0]
-            # Test necessary because ABI SDK not consistent
-            if delayRatio.dtype == 'numpy.float64' and np.isnan(delayRatio):
-                delayRatio = None
-                
-            delayTau = delayMetrics[1]
-            # Test necessary because ABI SDK not consistent
-            if delayTau.dtype == 'numpy.float64' and np.isnan(delayTau):
-                delayTau = None
-            
-        except:
-            delayRatio = None
-            delayTau = None
-            if useTraceback:
-                traceback.print_exc()
-            print "No delay in this experiment"
-    except:
-        if useTraceback:
-            traceback.print_exc()
-        print "process_spikes() failed"
-else:  # (if numSpikes >= 2)
-    avgFiringRate = None
-    ISIFirst = None
-    hasBursts = False
-    numBursts = 0
-    maxBurstiness = None
-    hasPauses = False
-    numPauses = 0
-    pauseFraction = None
-#     hasDelays = False
-    delayRatio = None
-    delayTau = None
-
-# Fill a dictionary with the results and then save to file
-features = dict()
-features['simID']               = simID
-features['analysisStart']       = analysis_start                              #                                  
-features['analysisDuration']    = analysis_duration                           # 
-features['adaptation']          = adaptation                                  # 
-features['avgFiringRate']       = avgFiringRate                               # spikes per second
-features['hasSpikes']           = hasSpikes                                   # 1=true;0=false
-features['numSpikes']           = numSpikes                                   # 
-features['hasBursts']           = hasBursts                                   # 1=true;0=false
-features['numBursts']           = numBursts                                   #
-features['maxBurstiness']       = maxBurstiness                               #
-features['hasPauses']           = hasPauses                                   # 1=true;0=false
-features['numPauses']           = numPauses                                   #
-features['pauseFraction']       = pauseFraction                               #
-# features['hasDelays']           = hasDelays
-features['delayRatio']          = delayRatio                                  #
-features['delayTau']            = delayTau                                    #
-features['first_isi']           = ISIFirst                                    # in milliseconds
-features['mean_isi']            = ISIMean                                     # in milliseconds
-features['isi_cv']              = ISICV                                       # dimensionless
-features['f_peak']              = averageSpikePeak                            # millivolts
-# This latency is from the beginning of the "sweep", not the analysis window,
-# because we have modified feature_extractor.py to analyze the entire window.
-# This is not latency from the start of the stimulus, and is the same as the 
-# time of the first spike threshold.
-features['latency']             = latency
-# stimulusLatency is from stimulus start to the first spike threshold
-if latency is not None:
-    features['stimulusLatency']     = latency - stimStart
-else:
-    features['stimulusLatency']     = None
+for spike in features['spikeData']:
+    for (k,v) in spike.items():
+        print k, ",", v
+        if not isinstance(v, basestring):
+            if isinstance(v, float):
+                if math.isnan(v):
+                    spike[k] = "_NaN_"
+                    print "Converted ", k
     
-features['threshold']           = threshold
-
-features['spikeData'] = []
-for i in range(0,numSpikes):
-    feature_data["spikes"][i]['spikeNumber'] = i
-    features['spikeData'].append(feature_data["spikes"][i])
 
 json.dump(features, open(featuresFile,'w'), indent=4)
 
