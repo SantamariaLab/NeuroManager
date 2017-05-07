@@ -83,7 +83,6 @@ analysis_duration = analysisDuration
 
 # Perform the feature extractions
 f.write("Doing FX now..." + "\n")
-# START USE ABISweepFX here
 fx = EphysFeatureExtractor()      # +++++++++++++++++++++++++++++++++++++++++++
 try:
     fx.process_instance("", voltage, stimulus, time, 
@@ -119,15 +118,20 @@ else:
         print "Number of spikes found: ", numSpikes
         latency = feature_data['latency']
         ISIMean = feature_data['isi_avg']
-#         ISIFirst = feature_data['first_isi']
+        if 'first_isi' in feature_data:
+            ISIFirst = feature_data['first_isi']
+        else:
+            ISIFirst = None
+            
+        #print "Ephys ISIFirst: ", ISIFirst
         ISICV = feature_data['ISICV']  # seconds or mseconds?
         adaptation = feature_data['adapt']
         threshold = feature_data['threshold']
-        print "\n[14]: Individual spike data from EphysFeatureExtractor"
-        for i in range(0,numSpikes):
-            print "Spike data for spike ", i 
+
+        #print "\n[14]: Individual spike data from EphysFeatureExtractor"
+        #for i in range(0,numSpikes):
+            #print "Spike data for spike ", i 
             #pprint(feature_data["spikes"][i])
-        
         
 if 'f_peak' in feature_data: 
     averageSpikePeak = feature_data['f_peak']
@@ -157,6 +161,7 @@ if numSpikes >= 2:  # process_spikes() does not work if fewer than 2
             # ensure both are in msec.
             ISIFirst = sfx.sweep_feature('first_isi')*1000
         except:
+            #traceback.print_exc()
             ISIFirst = None
  
         print "ISIFirst:", ISIFirst 
@@ -285,10 +290,6 @@ for i in range(0,numSpikes):
     feature_data["spikes"][i]['spikeNumber'] = i
     features['spikeData'].append(feature_data["spikes"][i])
 
-# END USE ABISweepFX here
- 
-
 json.dump(features, open(featuresFile,'w'), indent=4)
-#json.dump(features, open(featuresFile,'w'))
 
 f.close()
