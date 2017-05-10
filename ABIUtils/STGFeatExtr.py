@@ -58,10 +58,11 @@ stimulusFile = outDir + '/' + stimulusFileName
 f.write("Files: " + timeFile + " " + voltageFile + " " + 
                     stimulusFile + " " + featuresFile + "\n")
 
-time = np.loadtxt(timeFile)
-time /= 1e3 # convert from mseconds to seconds
+time = np.loadtxt(timeFile) # raw data already in seconds
 voltage =  np.loadtxt(voltageFile)
+voltage *= 1e3 # convert from volts to mV
 stimulus = np.loadtxt(stimulusFile)
+stimulus *= 1e12 # convert from amps to pA
 
 # Retrieve time parameters for extraction
 # Get these somewhere...
@@ -85,22 +86,21 @@ f.write("Doing FX now..." + "\n")
 
 
 from ABISweepFX import ExtractSweepFeatures
-analysisStart = analysisStart/1000 
-analysisDuration = analysisDuration/1000
-stimulusStart = stimulusStart/1000
+analysisStart = analysisStart/1000       # convert from msec to sec
+analysisDuration = analysisDuration/1000 # convert from msec to sec
+stimulusStart = stimulusStart/1000       # convert from msec to sec
 verbose = True
 features = ExtractSweepFeatures(time, voltage, stimulus, analysisStart, 
                                 analysisDuration, stimulusStart, verbose)
-        
-for spike in features['spikeData']:
-    for (k,v) in spike.items():
-        print k, ",", v
-        if not isinstance(v, basestring):
-            if isinstance(v, float):
-                if math.isnan(v):
-                    spike[k] = "_NaN_"
-                    print "Converted ", k
-    
+if 'spikeData' in features:
+    for spike in features['spikeData']:
+        for (k,v) in spike.items():
+            print k, ",", v
+            if not isinstance(v, basestring):
+                if isinstance(v, float):
+                    if math.isnan(v):
+                        spike[k] = "_NaN_"
+                        print "Converted ", k
 
 json.dump(features, open(featuresFile,'w'), indent=4)
 

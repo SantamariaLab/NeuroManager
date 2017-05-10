@@ -250,16 +250,36 @@ function [result, errMsg] =...
                  stimDurationStr, timeStepStr, simtStopStr, recordIntervalStr};
     status = runPythonSimulation(runDir, inputDir, modelDir, outputDir, ...
                                  'PySim.py', 'pythonsim', arguments);
-                             
+
     % --
 	% Do some example custom data visualization using MATLAB
     if status == 0 % i.e, successful return from the simulation
         if (~exist([outputDir '/timedata.txt'], 'file') || ...
-            ~exist([outputDir '/voltagedata.txt'], 'file'))
-            errMsg = 'Could not find either timedata.txt or voltagedata.txt';
+            ~exist([outputDir '/voltagedata.txt'], 'file')|| ...
+            ~exist([outputDir '/stimulusdata.txt'], 'file'))
+            errMsg = ['Could not find at least one of timedata.txt, ' ...
+                      'voltagedata.txt, or stimulusdata.txt'];
             result = 1;
             return;
         end
+        
+        % Re-range the output files to match the ABI NWB files, which store
+        % voltage in volts, current in amps, and (essentially) time in seconds.
+        % msec to seconds
+        t = load([outputDir '/timedata.txt']);
+        t = t./10^3;
+        save([outputDir '/timedata.txt'], 't', '-ascii');
+
+        % mV to volts
+        v = load([outputDir '/voltagedata.txt']);
+        v = v./10^3;
+        save([outputDir '/voltagedata.txt'], 'v', '-ascii');
+
+        % nA to amps
+        i = load([outputDir '/stimulusdata.txt']);
+        i = i./10^9;
+        save([outputDir '/stimulusdata.txt'], 'i', '-ascii');
+                             
         load([outputDir '/timedata.txt']);
         load([outputDir '/voltagedata.txt']);
         % Figure visibility doesn't seem to matter as far as remote operation
@@ -269,7 +289,7 @@ function [result, errMsg] =...
         % the command line with openfig('file', 'new', 'visible') - double
         % clicking in Windows explorer, say, won't work).
         h = figure('visible', 'on'); 
-        plot(timedata, voltagedata);
+        plot(timedata, voltagedata*10^3);
 %         plot(rsTime, rsVoltage);
 
         % Actually should get this data from the simulation command returns,
@@ -288,8 +308,8 @@ function [result, errMsg] =...
                ['gkbarKDSpiny = ' gkbarKDSpinyStr];...
                ['Created on machine ' machineID '.']},...
                 'Interpreter', 'none');
-        xlabel('Resampled Time (msec)');
-        ylabel('Resampled Voltage (mV)');
+        xlabel('Time (msec)');
+        ylabel('Voltage (mV)');
         grid on;
         filename = [simID '_current_' currentStr '_delay_' delayStr...
                     '_stimduration_' stimDurationStr '.fig'];
