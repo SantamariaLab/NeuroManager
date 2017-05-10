@@ -176,16 +176,16 @@ p17 = NaN; p18 = NaN; p19 = NaN; p20 = NaN; p21 = NaN;
 
 % Define simulation-variable input parameters
 % current in nA
-% curr = {2.00};
-curr = {0.50, 1.00, 1.50, 2.00, 2.50, 3.00};
+curr = {2.00};
+% curr = {0.50, 1.00, 1.50, 2.00, 2.50, 3.00};
 
-% CaE_smooth  = {0.000};
-CaE_smooth  = {0.000, 0.008};
+CaE_smooth  = {0.008};
+% CaE_smooth  = {0.000, 0.008};
 CaE_spiny   = {0.00456};
 % CaE_spiny   = {0.000, 0.008};
 
-% KD_smooth   = {0.000};
-KD_smooth   = {0.00, 0.09};
+KD_smooth   = {0.000};
+% KD_smooth   = {0.00, 0.09};
 KD_spiny    = {0.09};
 % KD_spiny    = {0.00, 0.09};
 
