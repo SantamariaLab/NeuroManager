@@ -186,7 +186,7 @@ END OF LICENSE
 % userSimulation.m
 % Runs a basic simulation of the PC using Miyasho2001 model and does a
 % little plotting afterwards. Must be used with the
-% Sim_ActivePKFreqAnalysis simulator class.
+% SimNeurPurkinjeMiyasho2001Kh simulator class.
 function [result, errMsg] =...
     userSimulation(machineID, simID, ...
                    runDir, inputDir, modelDir, outputDir, varargin)

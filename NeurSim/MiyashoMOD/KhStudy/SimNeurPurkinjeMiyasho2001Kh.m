@@ -200,10 +200,10 @@ classdef SimNeurPurkinjeMiyasho2001Kh < SimNeurPurkinjeMiyasho2001
         %Version; Already defined in SimNeurPurkinjeMiyasho2001
     end
     methods
-        function obj = SimNeurPurkinjeMiyasho2001Kh(id, machine,...
-                                                    log, notificationSet)
+        function obj = SimNeurPurkinjeMiyasho2001Kh(id, machine, ...
+                                        type, dbH, log, notificationSet)
             obj = obj@SimNeurPurkinjeMiyasho2001(id, machine,...
-                                                    log, notificationSet);
+                                        type, dbH, log, notificationSet);
             % Will replace that from the Sim_Neur_Purkinje_Miyasho2001
             % constructor
             obj.version = '1.1';  

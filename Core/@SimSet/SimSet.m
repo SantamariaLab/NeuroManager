@@ -190,6 +190,7 @@ classdef SimSet < handle
     properties
         % ID for the SimSet
         id;
+        sessionID; % and for the session
 
         % The NeuroManager RESULTS+DateTime baseDir
         nmResultsDir; 
@@ -239,8 +240,9 @@ classdef SimSet < handle
     end
     
     methods
-        function obj = SimSet(source, simspec, resultsBasedir, ...
-                                      maxNumParams, log, notificationSet)
+        function obj = SimSet(source, simspec, sessionID, ...
+                              resultsBasedir, ...
+                              maxNumParams, log, notificationSet)
         % If source is empty, uses the simspec; otherwise uses the source
         % file. This approach is clumsy but MATLAB doesn't support
         % overloading by signature.
@@ -257,6 +259,7 @@ classdef SimSet < handle
                 % Test inputs for validity
                 % (not implemented yet)
                 obj.source = source;
+                obj.sessionID = sessionID;
                 obj.nmResultsDir = resultsBasedir;
                 obj.totalNumSims = 0; % TEMPORARY
                 obj.MAX_PARAMS = maxNumParams;
@@ -285,7 +288,8 @@ classdef SimSet < handle
                 % future editing.
                 if (~isempty(obj.source))
                     [~, name, ext] = fileparts(obj.source);
-                    newSource = [obj.baseDir name '_COPY_DO_NOT_EDIT' ext];
+					copyName = [name '_COPY_DO_NOT_EDIT' ext];
+                    newSource = fullfile(obj.baseDir, copyName);
                     [result, errmsg] = copyfile(obj.source, newSource);
                     fileattrib(newSource, '-w');
                     % Handle bad copies here 
@@ -293,7 +297,7 @@ classdef SimSet < handle
                     if result
                         obj.log.write([obj.source ...
                             ' copied to SimSet Base Directory as '...
-                            [name ext] '.']);
+                            copyName '.']);
                     else
                         % Policy is to fail easily before simulations begin to
                         % ensure proper setup and provenance.
@@ -435,7 +439,9 @@ classdef SimSet < handle
                                 'SimSet: SimDef ID must not be empty.');
                 throw(ME);
             end
-            newSim = Simulation(obj.baseDir, id, type, notify, params);
+            newSim = Simulation(obj.baseDir, id, ...
+                                obj.sessionID, obj.id, ...
+                                type, notify, params);
             obj.sims(obj.totalNumSims) = newSim;
         end
         
@@ -516,12 +522,12 @@ classdef SimSet < handle
                         resultStr = 'Unknown';
                 end
                 if (simtime >= 0.0)
-                    obj.id = obj.sims(i).getID();
+                    id = obj.sims(i).getID();
                     simid = obj.sims(i).getSimulatorID();
                     machineid = obj.sims(i).getMachineID();
                     mlversion = obj.sims(i).getMLVersion();
                     entry = sprintf('\t%s%s%10.2f  %s%s%s%s%s%s%s',...
-                        obj.id, repmat(sprintf(' '), 1, 20-length(obj.id)),...
+                        id, repmat(sprintf(' '), 1, 20-length(id)),...
                         simtime, ...
                         resultStr,...
                         repmat(sprintf(' '), 1, 10-length(resultStr)),...

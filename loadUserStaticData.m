@@ -189,7 +189,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
 	% Grabs the path where this file is located
 	[installPath, ~, ~] = fileparts(mfilename('fullpath'));
 
-    % User data import ---
+    %% User data import ---
     % Pull in the user data from dataFile
     % no datafile means grab the default
     if isempty(dataFile)
@@ -215,16 +215,48 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
         end
     end
     
-    % Static localizing directories ---
+    %% Static localizing directories ---
     % Installation value is the empty string
     if isempty(userData.localmachine.directory)
         userLocalMachineDir = fullfile(installPath, 'LocalMachine');
     else
         userLocalMachineDir = userData.localmachine.directory;
     end
-        
     if ~(exist(userLocalMachineDir, 'file')==7)
         error(['NeuroManager error: local machine directory <' userLocalMachineDir '> not found.']);
+    end
+    
+    
+    % cellSurveyDir
+    if isempty(userData.ABITools.cellSurveySrcDir)
+        abiCellSurveySrcDir = '';
+    else
+        abiCellSurveySrcDir = userData.ABITools.cellSurveySrcDir;
+        if ~(exist(abiCellSurveySrcDir, 'file')==7)
+            error(['NeuroManager error: abiCellSurveySrcDir <' ...
+                   abiCellSurveySrcDir '> not found.']);
+        end
+    end
+    
+    % abiApiMLDir
+    if isempty(userData.ABITools.abiApiMLDir)
+        abiApiMLDir = '';
+    else
+        abiApiMLDir = userData.ABITools.abiApiMLDir;
+        if ~(exist(abiApiMLDir, 'file')==7)
+            error(['NeuroManager error: abiApiMLDir <' ...
+                   abiApiMLDir '> not found.']);
+        end
+    end
+    
+    % localCellTypesDir
+    if isempty(userData.ABITools.localCellTypesDir)
+        localCellTypesDir = '';
+    else
+        localCellTypesDir = userData.ABITools.localCellTypesDir;
+    end
+    if ~(exist(localCellTypesDir, 'file')==7)
+        error(['NeuroManager error: localCellTypesDir <' localCellTypesDir '> not found.']);
     end
     
     % cURL directory ---
@@ -240,8 +272,11 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
         error(['NeuroManager error: cURL directory <' curlDir '> not found.']);
     end
     
+    %% MySQL
+    mysqlUsername = userData.MySQL.username;
+    mysqlPassword = userData.MySQL.password;
     
-    % Authentication ---
+    %% Authentication ---
     % Location of the user's possibly NeuroManager-specific private keys
 	userKeyfileDir = userData.authentication.keyDirectory;
     if ~(exist(userKeyfileDir, 'file')==7)
@@ -278,7 +313,7 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
 	% Example: 'smtp.mail.yahoo.com'
     userSMTPServer = userData.notifications.SMTPserver;
     
-    % Output structs ---
+    %% Output structs ---
     % Now construct the output structs used by NeuroManager constructor
     AuthStruct = struct;
     DirStruct = struct;
@@ -287,6 +322,9 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
 	DirStruct.coreDir = fullfile(installPath, 'Core');
 	DirStruct.sshLibDir = fullfile(installPath, 'SSHLib');
 	DirStruct.localMachineDir = userLocalMachineDir;
+    DirStruct.abiCellSurveySrcDir = abiCellSurveySrcDir;
+    DirStruct.abiApiMLDir = abiApiMLDir;
+    DirStruct.localCellTypesDir = localCellTypesDir;
     DirStruct.curlDir = curlDir;
     if ispc
         if ~isempty(userWINDOWSKeyFile)
@@ -325,8 +363,11 @@ function [AuthStruct, DirStruct, UserDataStruct] = loadUserStaticData(dataFile)
     UserDataStruct.carrier = userCarrier;
     UserDataStruct.email = userEmail;
     UserDataStruct.smtpServer = userSMTPServer; 
+    % This approach may need to be changed
+	UserDataStruct.mysqlUsername = mysqlUsername;
+    UserDataStruct.mysqlPassword = mysqlPassword;
 
-    % Search path ---
+    %% Search path ---
     % Now add the appropriate paths to the MATLAB search path
 	% The user has already added the install path (MainDir)
 	addpath(DirStruct.coreDir, ...
