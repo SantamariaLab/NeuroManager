@@ -18,7 +18,7 @@ davidbrucestocktonbme@gmail.com
 Project PI:
 Fidel.Santamaria@utsa.edu
 
-NeuroManager 0.961
+NeuroManager
 
 UTSA RESEARCH LICENSE (SOURCE CODE)
 The University of Texas at San Antonio has developed certain software and
@@ -298,7 +298,7 @@ classdef NeuroManager < handle
         % ---
         function obj = NeuroManager(varargin)
         % NeuroManager constructor
-            obj.version = '0.986a';
+            obj.version = '0.990';
             
             obj.callingFunctionData = dbstack('-completenames');
 
