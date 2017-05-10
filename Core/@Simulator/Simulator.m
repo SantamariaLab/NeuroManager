@@ -239,6 +239,10 @@ classdef Simulator < handle
         % The SimMachine on which the simulator is running
         machine;
 
+        % database stuff
+        dbH;
+        simulatorIndex;
+        
         % Log handle for this simulator to make log entries 
         log;
         
@@ -256,9 +260,9 @@ classdef Simulator < handle
    
     methods
         % Machine makes the simulator so the caller's handle goes in machine.
-        function obj = Simulator(id, machine, log, notificationSet)
+        function obj = Simulator(id, machine, type, dbH, log, notificationSet)
             obj.id = id;
-            obj.type = SimType.UNASSIGNED; 
+            obj.type = type; 
             
             % List defined in SimType.m
 %     	    obj.simCoreCompatibilityList = type.simCoreList;
@@ -304,6 +308,7 @@ classdef Simulator < handle
             obj.preRunModelProcDStr = '';
             obj.stats = SimulatorStats();
             obj.machine = machine; 
+            obj.dbH = dbH;
             obj.log = log;
             obj.notificationSet = notificationSet;
 
@@ -313,6 +318,21 @@ classdef Simulator < handle
                        
             % Remote aspects of the Simulator are constructed separately;
             % see constructRemoteAspect() below
+        end
+        
+        % ---
+        function addToDB(obj, machineIndex)
+            if obj.dbH~=0
+                obj.simulatorIndex = ...
+                    obj.dbH.addSimulator(machineIndex, obj.id, ...
+                                         obj.type, obj.version);
+                obj.log.write(['Added simulator ' obj.id ...
+                               ' to investigation database ' ...
+                               obj.dbH.getDatabaseName() '.']);
+
+            else
+                obj.simulatorIndex = 0;
+            end
         end
         
         % --------------

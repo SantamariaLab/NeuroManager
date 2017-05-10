@@ -238,6 +238,9 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
        
         remoteConfig;  % The SimCore data for the remote machine
         
+        dbH;
+        machineIndex;
+        
         log;                % Global log for the simulation session
         notificationSet;    % Global notifies for the simulation session
     end
@@ -246,7 +249,7 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         function obj = SimMachine(config, hostID, scratchDir,...
                                   simFileSourceDir, custFileSourceDir,...
                                   modelFileSourceDir,...
-                                  simType, auth, log, notificationSet)
+                                  simType, auth, dbH, log, notificationSet)
             obj = obj@RealMachine(config, hostID, auth); % Not sure why this was necessary
             obj = obj@MATLABMachineInfo(config.getCompilerDir(),...
                                         config.getCompiler(),...
@@ -266,6 +269,7 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
             obj.modelFileSourceDir = modelFileSourceDir;
 
             obj.numSimulators = config.numSimulators;
+            obj.dbH = dbH;
             obj.log = log;
             obj.notificationSet = notificationSet;
 
@@ -305,12 +309,28 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
                 simulatorID = sprintf([char(obj.getID()) '%02.0f'], i); 
                 obj.mSimulators{i} = ...
                     obj.makeSimulator(obj.sType, simulatorID,...
-                                      obj.log, obj.notificationSet);
+                                      obj.dbH, obj.log, ...
+                                      obj.notificationSet);
                 obj.mSimulators{i}.constructRemoteAspect();
             end
             obj.state = MachineState.READY;
             
             
+        end
+        
+        function addToDB(obj, resourceType)
+            if obj.dbH~=0
+                obj.machineIndex = ...
+                    obj.dbH.addMachine(obj.getID(), char(resourceType));
+                obj.log.write(['Added machine ' obj.getID() ...
+                               ' to investigation database ' ...
+                               obj.dbH.getDatabaseName() '.']);
+                for i = 1:obj.numSimulators
+                        obj.mSimulators{i}.addToDB(obj.machineIndex);
+                end
+            else
+                obj.machineIndex = 0;
+            end
         end
         
         % ---
@@ -393,13 +413,13 @@ classdef SimMachine < RealMachine & MATLABMachineInfo
         % -----------
         % Calls the simulator constructor supplied in SimType.
         function simulator = makeSimulator(obj, type, simulatorID,...
-                                           log, notificationSet)
+                                           dbH, log, notificationSet)
             if ~isa(type.constrFunc, 'function_handle')
                 error('NeuroManager:SimMachine',...
                       ['Received improper SimType: ' char(type) '.']);
             end
             simulator = type.constrFunc(simulatorID, obj,...
-                                        log, notificationSet);
+                                        type, dbH, log, notificationSet);
         end
 
         % ----------------

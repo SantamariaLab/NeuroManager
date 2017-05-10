@@ -197,6 +197,7 @@ classdef NeuroManager < handle
         customSimDir;      % Where user custom files are located
         modelFileDir;      % Where model files are located
         localMachineDir;   % Where local machine files are located
+        abiUtilsDir;       % Where the ABI Utilities are located
         simSpecFileDir;    % Where to look for the SimSpec
         simResultsBaseDir; % Where user wants the results tree to be attached
         simResultsDir;     % The pathname of the results tree (automatically generated)
@@ -232,7 +233,9 @@ classdef NeuroManager < handle
         files2Compile;      % Not sure if need this
         files2Upload;       % Not sure if need this
         modelFiles2Upload;  % Not sure if need this 
+
         compiledType;       % Simulator type set by user
+
         MLCompilerVersion = ''; % determined automatically during compilation
         
         % The configuration of the machine set to set up
@@ -277,6 +280,15 @@ classdef NeuroManager < handle
         
         % Notifications to the user are handled through this object
         simNotificationSet;
+        
+        % Optional investigation database use
+        investigationDir = '';
+        % handle of database object (for now, constructed outside NM)
+        % if 0 means no use of investigation database
+        dbH = 0;
+        
+        % sessionIndex
+        sessionIndex;
         
         % NeuroManager Version; synced with GIT repository
         version;
@@ -328,11 +340,13 @@ classdef NeuroManager < handle
             % simulation files. 
             % Add it to the MATLAB search path and preserve old
             obj.oldPath = addpath(obj.customSimDir);
-            
-            % First use of SimType must come after the custom dir is added
-            % so that SimType can be picked from there.
-            obj.compiledType = SimType.UNASSIGNED;  
-            
+
+            % Add the Investigation Database Utilities directory
+            addpath(fullfile(obj.nmMainDir, 'InvestUtils'));
+            % Add the ABI Utilities directory
+            obj.abiUtilsDir = fullfile(obj.nmMainDir, 'ABIUtils');
+            addpath(obj.abiUtilsDir);
+            obj.compiledType = SimType.UNASSIGNED;
             obj.simSpecFullPath = '';  % Set in RunFromFile()
             obj.nmSimSet = SimSet();   % actually assigned in nmRun()
             
@@ -528,7 +542,8 @@ classdef NeuroManager < handle
             % PREPARATION
             % Make the SimSet from the simspec
             obj.log.write(['Constructing SimSet from supplied simspec.']);
-            simset = SimSet('', simspec, obj.simResultsDir,...
+            simset = SimSet('', simspec, obj.sessionID, ...
+                            obj.simResultsDir,...
                             obj.maxNumSimSpecParams, ...
                             obj.log, obj.simNotificationSet);
             obj.log.write('SimSet constructed.'); % NEED ERROR MSG IF FAILS
@@ -556,7 +571,7 @@ classdef NeuroManager < handle
                                            simspecFilename);
             obj.log.write(['Constructing SimSet from file '...
                            obj.simSpecFullPath    '.']);
-            simset = SimSet(obj.simSpecFullPath, 0, obj.simResultsDir,...
+            simset = SimSet(obj.simSpecFullPath, 0, obj.sessionID, obj.simResultsDir,...
                             obj.maxNumSimSpecParams, ...
                             obj.log, obj.simNotificationSet);
             obj.log.write('SimSet constructed.'); % NEED ERROR MSG IF FAILS
@@ -614,6 +629,29 @@ classdef NeuroManager < handle
             % Restore the old MATLAB search path
             path(obj.oldPath);
         end
+
+        % ---
+        function attachInvestigationDatabase(obj, investigationDir, dbH)
+            % check for existence (not implemented yet)
+            obj.investigationDir = investigationDir;
+            % Assume not null
+            obj.dbH = dbH;
+            obj.log.write(['Investigation database attached with ' ...
+                'investigationDir = ' investigationDir ' and ' ...
+                'database name = ' obj.dbH.getDatabaseName()]);
+            % Add the session to the database
+            obj.sessionIndex = ...
+                obj.dbH.addSession(obj.sessionID, obj.customSimDir, ...
+                                   obj.simSpecFileDir, obj.modelFileDir, ...
+                                   obj.simResultsDir);
+            obj.log.write(['Added session ' obj.sessionID ...
+                           ' to investigation database ' obj.dbH.getDatabaseName() '.']);
+        end
+                
+        % ---
+        function dir = getABIUtilsDir(obj)
+            dir = obj.abiUtilsDir;
+        end
         
         % ---
         function tf = isSingleMachine(obj)
@@ -658,6 +696,10 @@ classdef NeuroManager < handle
         % ---
         function id = getSessionID(obj)
             id = obj.sessionID;
+        end
+        % ---
+        function id = getSessionIndex(obj)
+            id = obj.sessionIndex;
         end
         
         % ---
