@@ -49,7 +49,7 @@ function addWisp(obj, varargin)
     catch ME
         msg = ['Error processing %s. Possible syntax error.\n' ...
                    'Information given is: %s, %s.'];
-        error(msg, imageFile, ME.identifier, ME.message);
+        error(msg, cloudInfoFileName, ME.identifier, ME.message);
     end
     requestedCloudType = cloudInfo.cloudManagementType;
     try
